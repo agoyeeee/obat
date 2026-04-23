@@ -16,22 +16,52 @@ export default function MedicineModal({ medicine, onClose, onContact }) {
           </View>
           
           <ScrollView className="p-6">
-            <Text className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Indikasi</Text>
-            <Text className="text-slate-700 text-sm font-medium leading-relaxed mb-4">{medicine.indikasi || '-'}</Text>
+            {/* Merks */}
+            {medicine.merks && medicine.merks.length > 0 && (
+              <View className="mb-5">
+                <Text className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Merk Dagang</Text>
+                <View className="flex-row flex-wrap gap-2">
+                  {medicine.merks.map((merk, index) => (
+                    <View key={index} className="bg-teal-50 px-3 py-1.5 rounded-lg border border-teal-100">
+                      <Text className="text-teal-700 font-bold text-sm">{merk.nama_merk}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {/* Dosis */}
+            {(medicine.dosis_target || medicine.frekuensi_default) && (
+              <View className="mb-5 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                <Text className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Dosis Target & Frekuensi</Text>
+                <Text className="text-slate-700 text-sm font-semibold">{medicine.dosis_target || '-'} • {medicine.frekuensi_default || '-'}</Text>
+              </View>
+            )}
+
+            <View className="mb-5">
+              <Text className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Indikasi</Text>
+              <Text className="text-slate-700 text-sm font-medium leading-relaxed">{medicine.indikasi || '-'}</Text>
+            </View>
             
-            <Text className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Kontraindikasi</Text>
-            <Text className="text-slate-700 text-sm font-medium leading-relaxed mb-4">{medicine.kontraindikasi || '-'}</Text>
+            <View className="mb-5">
+              <Text className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Kontraindikasi</Text>
+              <Text className="text-slate-700 text-sm font-medium leading-relaxed">{medicine.kontraindikasi || '-'}</Text>
+            </View>
             
-            <Text className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Efek Samping</Text>
-            <Text className="text-slate-700 text-sm font-medium leading-relaxed mb-4">{medicine.efek_samping || '-'}</Text>
+            <View className="mb-5">
+              <Text className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Efek Samping</Text>
+              <Text className="text-slate-700 text-sm font-medium leading-relaxed">{medicine.efek_samping || '-'}</Text>
+            </View>
             
-            <Text className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Monitoring</Text>
-            <Text className="text-slate-700 text-sm font-medium leading-relaxed mb-4">{medicine.monitoring || '-'}</Text>
+            <View className="mb-2">
+              <Text className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Monitoring</Text>
+              <Text className="text-slate-700 text-sm font-medium leading-relaxed">{medicine.monitoring || '-'}</Text>
+            </View>
           </ScrollView>
 
-          <View className="p-6 pt-2">
-            <Pressable className="bg-teal-600 rounded-xl py-4 items-center active:bg-teal-700" onPress={() => onContact(medicine.nama_obat)}>
-              <Text className="text-white font-bold text-base">Tanya via WhatsApp</Text>
+          <View className="p-5 pt-2 border-t border-slate-100">
+            <Pressable className="bg-teal-600 rounded-xl py-4 items-center active:bg-teal-700 shadow-sm" onPress={() => onContact(medicine.nama_obat)}>
+              <Text className="text-white font-bold text-[15px]">Tanya via WhatsApp</Text>
             </Pressable>
           </View>
         </View>

@@ -60,9 +60,9 @@ export default function MainTabNavigator({ route }) {
           backgroundColor: '#FFFFFF',
           borderTopWidth: 1,
           borderTopColor: '#F1F5F9',
-          paddingBottom: 5,
+          paddingBottom: 12,
           paddingTop: 5,
-          height: 60,
+          height: 70,
         },
         tabBarLabelStyle: {
           fontSize: 12,
