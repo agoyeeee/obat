@@ -1,0 +1,274 @@
+openapi: 3.0.3
+info:
+  title: Obat Reminder API
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000/api
+
+tags:
+  - name: Auth
+  - name: Medicines
+  - name: Schedules
+  - name: IntakeLogs
+  - name: Adherence
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: token
+
+  schemas:
+    LoginRequest:
+      type: object
+      required: [name, password]
+      properties:
+        name:
+          type: string
+        password:
+          type: string
+
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: '#/components/schemas/User'
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        role:
+          type: string
+          enum: [APOTEKER, PASIEN]
+        name:
+          type: string
+
+    Medicine:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        brand:
+          type: string
+        usage_text:
+          type: string
+        how_to_use:
+          type: string
+        warning_text:
+          type: string
+        side_effects_text:
+          type: string
+
+    ScheduleCreateRequest:
+      type: object
+      required:
+        - patient_id
+        - medicine_id
+        - dosage
+        - medicine_type
+        - intake_time
+        - quantity_given
+        - start_date
+      properties:
+        patient_id:
+          type: integer
+        medicine_id:
+          type: integer
+        dosage:
+          type: string
+        medicine_type:
+          type: string
+        intake_time:
+          type: string
+          format: time
+        quantity_given:
+          type: integer
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+          nullable: true
+
+    IntakeLogCreateRequest:
+      type: object
+      required: [schedule_id, intake_date, intake_time, status]
+      properties:
+        schedule_id:
+          type: integer
+        intake_date:
+          type: string
+          format: date
+        intake_time:
+          type: string
+          format: time
+        status:
+          type: string
+          enum: [SUDAH_MINUM, TIDAK_MINUM]
+        notes:
+          type: string
+
+security:
+  - bearerAuth: []
+
+paths:
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login user apoteker/pasien
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout user
+      responses:
+        '200':
+          description: OK
+
+  /medicines:
+    get:
+      tags: [Medicines]
+      summary: Ambil daftar obat statis
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Medicine'
+
+  /medicines/{id}:
+    get:
+      tags: [Medicines]
+      summary: Ambil detail obat
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+
+  /schedules:
+    post:
+      tags: [Schedules]
+      summary: Apoteker membuat jadwal obat pasien
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleCreateRequest'
+      responses:
+        '201':
+          description: Created
+
+    get:
+      tags: [Schedules]
+      summary: Ambil jadwal obat (difilter role user)
+      parameters:
+        - in: query
+          name: patient_id
+          schema:
+            type: integer
+        - in: query
+          name: date
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: OK
+
+  /intake-logs:
+    post:
+      tags: [IntakeLogs]
+      summary: Pasien input status konsumsi obat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IntakeLogCreateRequest'
+      responses:
+        '201':
+          description: Created
+
+    get:
+      tags: [IntakeLogs]
+      summary: Ambil riwayat konsumsi
+      parameters:
+        - in: query
+          name: patient_id
+          schema:
+            type: integer
+        - in: query
+          name: start_date
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: end_date
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: OK
+
+  /adherence/weekly:
+    get:
+      tags: [Adherence]
+      summary: Ambil evaluasi kepatuhan mingguan pasien
+      parameters:
+        - in: query
+          name: patient_id
+          required: true
+          schema:
+            type: integer
+        - in: query
+          name: week_start
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_schedules:
+                    type: integer
+                  taken_count:
+                    type: integer
+                  adherence_percent:
+                    type: number
+                    format: float

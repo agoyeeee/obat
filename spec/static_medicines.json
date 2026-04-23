@@ -1,0 +1,34 @@
+[
+  {
+    "name": "Paracetamol 500 mg",
+    "brand": "Sanmol",
+    "usage": "Menurunkan demam dan meredakan nyeri ringan sampai sedang.",
+    "howToUse": "Diminum sesudah makan, 3 kali sehari atau sesuai anjuran tenaga kesehatan.",
+    "warning": "Hati-hati pada pasien gangguan fungsi hati.",
+    "sideEffects": "Mual, ruam kulit, reaksi alergi (jarang)."
+  },
+  {
+    "name": "Amoxicillin 500 mg",
+    "brand": "Amoxsan",
+    "usage": "Antibiotik untuk infeksi bakteri tertentu.",
+    "howToUse": "Diminum sesuai resep, harus dihabiskan meskipun gejala membaik.",
+    "warning": "Jangan digunakan jika alergi penisilin.",
+    "sideEffects": "Diare, mual, ruam, kandidiasis mulut."
+  },
+  {
+    "name": "Amlodipine 5 mg",
+    "brand": "Norvasc",
+    "usage": "Mengontrol tekanan darah tinggi dan angina.",
+    "howToUse": "Diminum 1 kali sehari pada jam yang sama.",
+    "warning": "Waspada pusing saat awal penggunaan.",
+    "sideEffects": "Edema perifer, pusing, kemerahan wajah."
+  },
+  {
+    "name": "Metformin 500 mg",
+    "brand": "Glucophage",
+    "usage": "Membantu kontrol gula darah pada diabetes tipe 2.",
+    "howToUse": "Diminum sesudah makan untuk mengurangi efek samping lambung.",
+    "warning": "Konsultasikan jika ada gangguan ginjal.",
+    "sideEffects": "Mual, diare, rasa logam di mulut."
+  }
+]
