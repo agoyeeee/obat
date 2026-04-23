@@ -11,9 +11,11 @@ return new class extends Migration
         Schema::create('rekapan_cairan', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('pasien_id')->constrained('pasien')->cascadeOnDelete();
-            $table->date('tanggal');
-            $table->integer('total_skor');
+            $table->date('minggu_mulai');
+            $table->enum('status_kepatuhan', ['PATUH', 'TIDAK_PATUH'])->default('TIDAK_PATUH');
             $table->timestamps();
+
+            $table->unique(['pasien_id', 'minggu_mulai']);
         });
     }
 

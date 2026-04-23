@@ -18,7 +18,7 @@ return new class extends Migration
             $table->integer('jumlah_obat');
             $table->foreignId('waktu_konsumsi_id')->constrained('waktu_konsumsi')->cascadeOnDelete();
             $table->text('cara_pemakaian');
-            $table->integer('skor_kepatuhan')->default(0);
+            $table->enum('skor_kepatuhan', ['PATUH', 'TIDAK_PATUH'])->default('TIDAK_PATUH');
             $table->timestamps();
         });
     }
