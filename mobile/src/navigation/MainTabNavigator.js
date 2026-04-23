@@ -4,12 +4,12 @@ import { View, Text } from 'react-native';
 import { Home, Pill, Activity, ClipboardList } from 'lucide-react-native';
 
 // Tab Screens (Entry points)
-import DashboardHomeScreen from '../screens/dashboard/DashboardHomeScreen';
-import MedicineListScreen from '../screens/obat/MedicineListScreen';
-import MonitoringListScreen from '../screens/monitoring/MonitoringListScreen';
-import QuestionnaireListScreen from '../screens/kuisioner/QuestionnaireListScreen';
+import DashboardHomeScreen from '../screens/apoteker/DashboardHomeScreen';
+import MedicineListScreen from '../screens/apoteker/MedicineListScreen';
+import MonitoringListScreen from '../screens/apoteker/MonitoringListScreen';
+import QuestionnaireListScreen from '../screens/apoteker/QuestionnaireListScreen';
 
-import PatientDetailScreen from '../screens/dashboard/PatientDetailScreen';
+import PatientDetailScreen from '../screens/apoteker/PatientDetailScreen';
 
 const Tab = createBottomTabNavigator();
 const DashboardStack = createNativeStackNavigator();
