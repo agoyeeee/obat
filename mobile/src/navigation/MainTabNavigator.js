@@ -9,6 +9,8 @@ import MedicineListScreen from '../screens/obat/MedicineListScreen';
 import MonitoringListScreen from '../screens/monitoring/MonitoringListScreen';
 import QuestionnaireListScreen from '../screens/kuisioner/QuestionnaireListScreen';
 
+import PatientDetailScreen from '../screens/dashboard/PatientDetailScreen';
+
 const Tab = createBottomTabNavigator();
 const DashboardStack = createNativeStackNavigator();
 const MonitoringStack = createNativeStackNavigator();
@@ -22,7 +24,7 @@ function DashboardStackNavigator({ route }) {
       <DashboardStack.Screen name="DashboardHome" initialParams={{ user, onLogout }}>
         {(props) => <DashboardHomeScreen {...props} />}
       </DashboardStack.Screen>
-      {/* Patient detail will go here */}
+      <DashboardStack.Screen name="PatientDetail" component={PatientDetailScreen} />
     </DashboardStack.Navigator>
   );
 }

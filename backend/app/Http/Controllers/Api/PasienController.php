@@ -13,8 +13,13 @@ class PasienController extends Controller
     {
         $apoteker = $request->user();
 
-        // Tampilkan pasien yang terhubung dengan apoteker ini
-        $pasiens = $apoteker->pasiens()->orderBy('nama')->get();
+        // Tampilkan pasien yang terhubung dengan apoteker ini beserta rekapan terbaru
+        $pasiens = $apoteker->pasiens()
+            ->with(['rekapanObat' => function($q) {
+                $q->orderBy('minggu_mulai', 'desc');
+            }])
+            ->orderBy('nama')
+            ->get();
 
         return response()->json($pasiens);
     }

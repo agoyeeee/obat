@@ -1,152 +1,158 @@
-import { useState, useEffect } from 'react';
-import { View, Text, TextInput, Pressable, ScrollView, FlatList, Alert } from 'react-native';
+import { useState, useEffect, useMemo } from 'react';
+import { View, Text, TextInput, Pressable, ScrollView, FlatList, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { useReminders } from '../../hooks/useReminders';
-import { openWhatsAppHelper } from '../../utils/helpers';
-import ReminderItem from '../../components/ReminderItem';
-import MedicineModal from '../../components/MedicineModal';
-import { ShieldPlus } from 'lucide-react-native';
+import { usePatients } from '../../hooks/usePatients';
+import { ShieldPlus, Users, CheckCircle, XCircle, Search, ChevronRight, LogOut } from 'lucide-react-native';
 
-export default function DashboardScreen({ user, onLogout }) {
-  const { schedules, medicines, adherence, loadData, markIntake, addReminder } = useReminders();
-  
-  const [selectedPatientId, setSelectedPatientId] = useState('');
-  const [selectedMedicine, setSelectedMedicine] = useState(null);
-  
-  const [form, setForm] = useState({
-    pasien_id: '', obat_id: '', dosis: '', sediaan: '', waktu_konsumsi_id: '1', jumlah_obat: '1', cara_pemakaian: ''
-  });
+export default function DashboardHomeScreen({ route, navigation }) {
+  const { user, onLogout } = route.params || {};
+  const { patients, isLoading, fetchPatients } = usePatients();
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    loadData(); // Fetch initial data (like medicines catalog)
-  }, [loadData]);
+    fetchPatients();
+  }, [fetchPatients]);
 
-  const handleSearch = () => {
-    loadData(selectedPatientId);
-  };
+  const { totalPatients, patuhCount, tidakPatuhCount } = useMemo(() => {
+    let patuh = 0;
+    let tidakPatuh = 0;
+    
+    patients.forEach(p => {
+      const latestRekapan = p.rekapan_obat?.[0];
+      if (latestRekapan?.status_kepatuhan === 'PATUH') patuh++;
+      else if (latestRekapan?.status_kepatuhan === 'TIDAK_PATUH') tidakPatuh++;
+    });
 
-  const handleCreate = async () => {
-    const res = await addReminder(form);
-    if (res.success) {
-      Alert.alert('Berhasil', 'Jadwal obat berhasil dibuat.');
-      setForm(prev => ({ ...prev, dosis: '', sediaan: '', cara_pemakaian: '', jumlah_obat: '1' }));
-      loadData(selectedPatientId);
-    } else {
-      Alert.alert('Gagal', res.message);
-    }
-  };
+    return {
+      totalPatients: patients.length,
+      patuhCount: patuh,
+      tidakPatuhCount: tidakPatuh,
+    };
+  }, [patients]);
 
-  const handleMarkIntake = async (id, status) => {
-    const res = await markIntake(id, status);
-    if (res.success) {
-      Alert.alert('Berhasil', 'Status kepatuhan berhasil diubah.');
-      loadData(selectedPatientId);
-    } else {
-      Alert.alert('Gagal', res.message);
-    }
-  };
+  const filteredPatients = useMemo(() => {
+    if (!searchQuery) return patients;
+    return patients.filter(p => 
+      p.nama.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      String(p.id).includes(searchQuery)
+    );
+  }, [patients, searchQuery]);
 
   return (
     <View className="flex-1 bg-slate-50">
       <StatusBar style="dark" />
-      <ScrollView 
-        className="flex-1" 
-        contentContainerStyle={{ padding: 20, paddingBottom: 40, flexGrow: 1 }} 
-        showsVerticalScrollIndicator={false}
-      >
-        
-        <View className="flex-row items-center justify-between mb-4 mt-3">
+      
+      {/* HEADER */}
+      <View className="bg-white pt-12 pb-4 px-5 border-b border-slate-100 shadow-sm z-10">
+        <View className="flex-row items-center justify-between mb-4 mt-2">
           <View>
-            <Text className="text-3xl font-extrabold text-slate-900 tracking-tight">Halo, {user?.nama}</Text>
+            <Text className="text-3xl font-extrabold text-slate-900 tracking-tight">Halo, {user?.nama || 'Apoteker'}</Text>
             <View className="flex-row items-center mt-1">
               <ShieldPlus color="#0D9488" size={16} />
               <Text className="text-sm font-semibold text-teal-600 ml-1.5">Apoteker Aktif</Text>
             </View>
           </View>
-          <Pressable className="bg-teal-100 rounded-xl py-2.5 px-4" onPress={onLogout}>
-            <Text className="text-teal-800 font-bold text-sm">Keluar</Text>
+          <Pressable className="w-11 h-11 rounded-full bg-teal-50 items-center justify-center active:bg-teal-100" onPress={onLogout}>
+            <LogOut color="#0F766E" size={20} />
           </Pressable>
         </View>
 
-        <View className="bg-white rounded-[24px] p-5 shadow-sm shadow-slate-200 border border-slate-100 mb-4">
-          <Text className="text-[18px] font-extrabold text-slate-900 mb-4 tracking-tight">Filter Pasien</Text>
-          <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">ID Pasien</Text>
-          <View className="flex-row items-start">
-            <TextInput
-              className="border-2 border-slate-200 rounded-l-2xl border-r-0 px-4 py-3.5 flex-1 bg-slate-50 text-slate-900 font-medium text-[15px]"
-              placeholder="Contoh: 1"
-              keyboardType="number-pad"
-              value={selectedPatientId}
-              onChangeText={setSelectedPatientId}
-            />
-            <Pressable className="bg-teal-600 py-4 px-6 rounded-r-2xl justify-center active:bg-teal-700 h-[56px]" onPress={handleSearch}>
-              <Text className="text-white font-bold text-base">Cari</Text>
-            </Pressable>
-          </View>
-        </View>
 
-        <View className="bg-teal-600 rounded-[24px] p-6 shadow-md shadow-teal-600/25 mb-4">
-          <Text className="text-base font-semibold text-teal-100 mb-2">Evaluasi Mingguan</Text>
-          <View className="flex-row items-center justify-between">
-            <Text className="text-3xl font-black text-white tracking-tighter">
-              {adherence ? adherence.status_kepatuhan : 'Belum Tersedia'}
-            </Text>
-            {adherence && (
-              <View className="bg-white/20 px-3 py-1.5 rounded-full">
-                <Text className="text-white text-xs font-bold">Minggu: {adherence.minggu_mulai}</Text>
+      </View>
+
+      <ScrollView 
+        className="flex-1" 
+        contentContainerStyle={{ padding: 20, paddingBottom: 40, flexGrow: 1 }} 
+        showsVerticalScrollIndicator={false}
+      >
+        {/* SUMMARY CARDS */}
+        <View className="flex-row flex-wrap justify-between mb-6">
+          <View className="w-full bg-white p-5 rounded-2xl shadow-sm border border-slate-100 mb-4">
+            <View className="flex-row items-center justify-between">
+              <View>
+                <Text className="text-3xl font-black text-slate-900">{totalPatients}</Text>
+                <Text className="text-sm font-bold text-slate-500 mt-1">Total Pasien</Text>
               </View>
-            )}
+              <View className="w-12 h-12 rounded-full bg-blue-50 items-center justify-center">
+                <Users color="#3B82F6" size={24} />
+              </View>
+            </View>
+          </View>
+          
+          <View className="w-[48%] bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+            <View className="w-10 h-10 rounded-full bg-emerald-50 items-center justify-center mb-3">
+              <CheckCircle color="#10B981" size={20} />
+            </View>
+            <Text className="text-3xl font-black text-emerald-600">{patuhCount}</Text>
+            <Text className="text-sm font-bold text-slate-500 mt-1">Patuh</Text>
+          </View>
+
+          <View className="w-[48%] bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+            <View className="w-10 h-10 rounded-full bg-rose-50 items-center justify-center mb-3">
+              <XCircle color="#F43F5E" size={20} />
+            </View>
+            <Text className="text-3xl font-black text-rose-600">{tidakPatuhCount}</Text>
+            <Text className="text-sm font-bold text-slate-500 mt-1">Tidak Patuh</Text>
           </View>
         </View>
 
-        <View className="bg-white rounded-[24px] p-5 shadow-sm shadow-slate-200 border border-slate-100 mb-4">
-          <Text className="text-[18px] font-extrabold text-slate-900 mb-4 tracking-tight">Tambah Jadwal Obat</Text>
-          <View className="flex-row gap-3 mb-3">
-            <View className="flex-1">
-              <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">ID Pasien</Text>
-              <TextInput className="border-2 border-slate-200 rounded-xl px-4 py-3 bg-slate-50" keyboardType="number-pad" value={form.pasien_id} onChangeText={(v) => setForm((p) => ({ ...p, pasien_id: v }))} />
-            </View>
-            <View className="flex-1">
-              <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">ID Obat</Text>
-              <TextInput className="border-2 border-slate-200 rounded-xl px-4 py-3 bg-slate-50" keyboardType="number-pad" value={form.obat_id} onChangeText={(v) => setForm((p) => ({ ...p, obat_id: v }))} />
-            </View>
-          </View>
-          <View className="flex-row gap-3 mb-3">
-            <View className="flex-1">
-              <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Waktu (1-3)</Text>
-              <TextInput className="border-2 border-slate-200 rounded-xl px-4 py-3 bg-slate-50" keyboardType="number-pad" value={form.waktu_konsumsi_id} onChangeText={(v) => setForm((p) => ({ ...p, waktu_konsumsi_id: v }))} />
-            </View>
-            <View className="flex-1">
-              <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Jumlah</Text>
-              <TextInput className="border-2 border-slate-200 rounded-xl px-4 py-3 bg-slate-50" keyboardType="number-pad" value={form.jumlah_obat} onChangeText={(v) => setForm((p) => ({ ...p, jumlah_obat: v }))} />
-            </View>
-          </View>
-          <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Sediaan</Text>
-          <TextInput className="border-2 border-slate-200 rounded-xl px-4 py-3 bg-slate-50 mb-3" value={form.sediaan} onChangeText={(v) => setForm((p) => ({ ...p, sediaan: v }))} />
-          <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Dosis</Text>
-          <TextInput className="border-2 border-slate-200 rounded-xl px-4 py-3 bg-slate-50 mb-3" value={form.dosis} onChangeText={(v) => setForm((p) => ({ ...p, dosis: v }))} />
-          <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Cara Pakai</Text>
-          <TextInput className="border-2 border-slate-200 rounded-xl px-4 py-3 bg-slate-50 mb-4" value={form.cara_pemakaian} onChangeText={(v) => setForm((p) => ({ ...p, cara_pemakaian: v }))} />
-
-          <Pressable className="bg-teal-600 rounded-xl py-3.5 items-center shadow-sm active:bg-teal-700" onPress={handleCreate}>
-            <Text className="text-white font-bold text-[15px]">+ Simpan Jadwal Baru</Text>
-          </Pressable>
+        {/* PATIENT LIST & SEARCH */}
+        <Text className="text-[18px] font-extrabold text-slate-900 mb-3 tracking-tight">Daftar Pasien</Text>
+        
+        <View className="flex-row items-center bg-white border border-slate-100 shadow-sm rounded-xl px-4 py-3 mb-4">
+          <Search color="#94A3B8" size={20} />
+          <TextInput
+            className="flex-1 ml-3 text-slate-900 text-base font-medium"
+            placeholder="Cari nama atau ID pasien..."
+            placeholderTextColor="#94A3B8"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
         </View>
-
-        <View className="bg-white rounded-[24px] p-5 shadow-sm shadow-slate-200 border border-slate-100 mb-4">
-          <Text className="text-[18px] font-extrabold text-slate-900 mb-4 tracking-tight">Daftar Reminder Obat</Text>
-          {schedules.length > 0 ? (
-            schedules.map((item) => (
-              <ReminderItem key={item.id} item={item} onDetail={setSelectedMedicine} onMarkIntake={handleMarkIntake} />
-            ))
-          ) : (
-            <Text className="text-sm font-medium text-slate-500 text-center py-4">Belum ada reminder terjadwal.</Text>
-          )}
-        </View>
+        
+        {isLoading ? (
+          <ActivityIndicator size="large" color="#0D9488" className="mt-10" />
+        ) : filteredPatients.length > 0 ? (
+          <View className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            {filteredPatients.map((item, index) => {
+              const status = item.rekapan_obat?.[0]?.status_kepatuhan;
+              const isPatuh = status === 'PATUH';
+              const isTidakPatuh = status === 'TIDAK_PATUH';
+              
+              return (
+                <Pressable 
+                  key={item.id} 
+                  className={`flex-row items-center p-4 active:bg-slate-50 ${index !== filteredPatients.length - 1 ? 'border-b border-slate-100' : ''}`}
+                  onPress={() => navigation.navigate('PatientDetail', { pasien_id: item.id })}
+                >
+                  <View className="w-12 h-12 rounded-full bg-teal-50 items-center justify-center mr-4">
+                    <Text className="text-teal-700 font-black text-lg">{item.nama.charAt(0).toUpperCase()}</Text>
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-base font-bold text-slate-900">{item.nama}</Text>
+                    <Text className="text-sm font-medium text-slate-500 mt-0.5">ID: {item.id} • Usia {item.usia}</Text>
+                  </View>
+                  
+                  {status ? (
+                    <View className={`px-2.5 py-1 rounded-full mr-2 ${isPatuh ? 'bg-emerald-100' : 'bg-rose-100'}`}>
+                      <Text className={`text-[10px] font-extrabold ${isPatuh ? 'text-emerald-700' : 'text-rose-700'}`}>
+                        {status}
+                      </Text>
+                    </View>
+                  ) : null}
+                  
+                  <ChevronRight color="#CBD5E1" size={20} />
+                </Pressable>
+              );
+            })}
+          </View>
+        ) : (
+          <View className="bg-white rounded-2xl p-8 items-center border border-slate-100">
+            <Text className="text-slate-400 font-medium text-center">Belum ada pasien yang ditemukan.</Text>
+          </View>
+        )}
 
       </ScrollView>
-
-      <MedicineModal medicine={selectedMedicine} onClose={() => setSelectedMedicine(null)} onContact={openWhatsAppHelper} />
     </View>
   );
 }
