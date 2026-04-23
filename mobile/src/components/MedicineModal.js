@@ -38,23 +38,23 @@ export default function MedicineModal({ medicine, onClose, onContact }) {
               </View>
             )}
 
-            <View className="mb-5">
-              <Text className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Indikasi</Text>
+            <View className="mb-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
+              <Text className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5">Indikasi</Text>
               <Text className="text-slate-700 text-sm font-medium leading-relaxed">{medicine.indikasi || '-'}</Text>
             </View>
             
-            <View className="mb-5">
-              <Text className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Kontraindikasi</Text>
+            <View className="mb-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
+              <Text className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5">Kontraindikasi</Text>
               <Text className="text-slate-700 text-sm font-medium leading-relaxed">{medicine.kontraindikasi || '-'}</Text>
             </View>
             
-            <View className="mb-5">
-              <Text className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Efek Samping</Text>
+            <View className="mb-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
+              <Text className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5">Efek Samping</Text>
               <Text className="text-slate-700 text-sm font-medium leading-relaxed">{medicine.efek_samping || '-'}</Text>
             </View>
             
-            <View className="mb-2">
-              <Text className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Monitoring</Text>
+            <View className="mb-8 bg-slate-50 p-4 rounded-xl border border-slate-100">
+              <Text className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5">Monitoring</Text>
               <Text className="text-slate-700 text-sm font-medium leading-relaxed">{medicine.monitoring || '-'}</Text>
             </View>
           </ScrollView>
