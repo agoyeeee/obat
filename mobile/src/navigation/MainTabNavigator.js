@@ -1,6 +1,7 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { View, Text } from 'react-native';
+import { Home, Pill, Activity, ClipboardList } from 'lucide-react-native';
 
 // Tab Screens (Entry points)
 import DashboardHomeScreen from '../screens/dashboard/DashboardHomeScreen';
@@ -73,7 +74,7 @@ export default function MainTabNavigator({ route }) {
         initialParams={{ user, onLogout }}
         options={{ 
           tabBarLabel: 'Beranda',
-          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>🏠</Text>
+          tabBarIcon: ({ color, size }) => <Home color={color} size={size} />
         }} 
       />
       <Tab.Screen 
@@ -81,7 +82,7 @@ export default function MainTabNavigator({ route }) {
         component={MedicineListScreen} 
         options={{ 
           tabBarLabel: 'Obat',
-          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>💊</Text>
+          tabBarIcon: ({ color, size }) => <Pill color={color} size={size} />
         }} 
       />
       <Tab.Screen 
@@ -89,7 +90,7 @@ export default function MainTabNavigator({ route }) {
         component={MonitoringStackNavigator} 
         options={{ 
           tabBarLabel: 'Pantau',
-          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>📈</Text>
+          tabBarIcon: ({ color, size }) => <Activity color={color} size={size} />
         }} 
       />
       <Tab.Screen 
@@ -97,7 +98,7 @@ export default function MainTabNavigator({ route }) {
         component={KuisionerStackNavigator} 
         options={{ 
           tabBarLabel: 'Kuisioner',
-          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>📋</Text>
+          tabBarIcon: ({ color, size }) => <ClipboardList color={color} size={size} />
         }} 
       />
     </Tab.Navigator>

@@ -1,6 +1,7 @@
 import { View, Text, FlatList, Pressable } from 'react-native';
 import { useReminders } from '../../hooks/useReminders';
 import { useEffect } from 'react';
+import { Pill } from 'lucide-react-native';
 
 export default function MedicineListScreen() {
   const { medicines, loadData } = useReminders();
@@ -20,7 +21,7 @@ export default function MedicineListScreen() {
           <View className="bg-white rounded-2xl p-4 mb-4 shadow-sm border border-slate-100">
             <View className="flex-row items-center mb-3">
               <View className="w-10 h-10 rounded-full bg-teal-50 items-center justify-center mr-3">
-                <Text>💊</Text>
+                <Pill color="#0D9488" size={20} />
               </View>
               <Text className="text-lg font-bold text-slate-900">{item.nama_obat}</Text>
             </View>

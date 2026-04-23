@@ -1,4 +1,5 @@
 import { View, Text, Pressable } from 'react-native';
+import { Clock, Pill, Info, Check, X } from 'lucide-react-native';
 
 export default function ReminderItem({ item, onDetail, onMarkIntake }) {
   const isPatuh = item.skor_kepatuhan === 'PATUH';
@@ -14,32 +15,43 @@ export default function ReminderItem({ item, onDetail, onMarkIntake }) {
         </View>
       </View>
       
-      <View className="bg-white p-3 rounded-xl mb-3 space-y-1.5">
-        <Text className="text-slate-500 text-sm font-medium">⏱️ {item.waktu_konsumsi?.label_waktu}</Text>
-        <Text className="text-slate-500 text-sm font-medium">💊 {item.dosis} ({item.sediaan})</Text>
-        <Text className="text-slate-500 text-sm font-medium">ℹ️ {item.cara_pemakaian}</Text>
+      <View className="bg-white p-3 rounded-xl mb-3 space-y-2">
+        <View className="flex-row items-center">
+          <Clock color="#64748B" size={14} />
+          <Text className="text-slate-500 text-sm font-medium ml-2">{item.waktu_konsumsi?.label_waktu}</Text>
+        </View>
+        <View className="flex-row items-center">
+          <Pill color="#64748B" size={14} />
+          <Text className="text-slate-500 text-sm font-medium ml-2">{item.dosis} ({item.sediaan})</Text>
+        </View>
+        <View className="flex-row items-start">
+          <Info color="#64748B" size={14} style={{ marginTop: 2 }} />
+          <Text className="text-slate-500 text-sm font-medium ml-2 flex-1">{item.cara_pemakaian}</Text>
+        </View>
       </View>
 
       <View className="flex-row gap-2">
         <Pressable 
-          className="flex-1 border-2 border-slate-200 rounded-xl py-2 items-center active:bg-slate-100" 
+          className="flex-1 border-2 border-slate-200 rounded-xl py-2 items-center justify-center active:bg-slate-100" 
           onPress={() => onDetail(item.obat)}
         >
           <Text className="text-slate-700 font-bold text-[13px]">Detail</Text>
         </Pressable>
 
         <Pressable 
-          className="flex-1 bg-emerald-500 rounded-xl py-2 items-center active:bg-emerald-600" 
+          className="flex-1 bg-emerald-500 rounded-xl py-2 flex-row items-center justify-center active:bg-emerald-600" 
           onPress={() => onMarkIntake(item.id, 'PATUH')}
         >
-          <Text className="text-white font-bold text-[13px]">✓ Patuh</Text>
+          <Check color="#FFFFFF" size={14} />
+          <Text className="text-white font-bold text-[13px] ml-1.5">Patuh</Text>
         </Pressable>
         
         <Pressable 
-          className="flex-1 bg-red-500 rounded-xl py-2 items-center active:bg-red-600" 
+          className="flex-1 bg-red-500 rounded-xl py-2 flex-row items-center justify-center active:bg-red-600" 
           onPress={() => onMarkIntake(item.id, 'TIDAK_PATUH')}
         >
-          <Text className="text-white font-bold text-[13px]">✕ Tdk Patuh</Text>
+          <X color="#FFFFFF" size={14} />
+          <Text className="text-white font-bold text-[13px] ml-1.5">Tdk Patuh</Text>
         </Pressable>
       </View>
     </View>

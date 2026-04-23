@@ -1,4 +1,5 @@
 import { Modal, View, Text, ScrollView, Pressable } from 'react-native';
+import { X } from 'lucide-react-native';
 
 export default function MedicineModal({ medicine, onClose, onContact }) {
   if (!medicine) return null;
@@ -10,7 +11,7 @@ export default function MedicineModal({ medicine, onClose, onContact }) {
           <View className="flex-row justify-between items-center p-6 border-b border-slate-100">
             <Text className="text-xl font-extrabold text-slate-900 flex-1">{medicine.nama_obat}</Text>
             <Pressable onPress={onClose} className="w-9 h-9 rounded-full bg-slate-100 items-center justify-center ml-2">
-              <Text className="text-slate-500 font-bold text-base">✕</Text>
+              <X color="#64748B" size={20} />
             </Pressable>
           </View>
           

@@ -5,6 +5,7 @@ import { useReminders } from '../../hooks/useReminders';
 import { openWhatsAppHelper } from '../../utils/helpers';
 import ReminderItem from '../../components/ReminderItem';
 import MedicineModal from '../../components/MedicineModal';
+import { ShieldPlus } from 'lucide-react-native';
 
 export default function DashboardScreen({ user, onLogout }) {
   const { schedules, medicines, adherence, loadData, markIntake, addReminder } = useReminders();
@@ -57,7 +58,10 @@ export default function DashboardScreen({ user, onLogout }) {
         <View className="flex-row items-center justify-between mb-4 mt-3">
           <View>
             <Text className="text-3xl font-extrabold text-slate-900 tracking-tight">Halo, {user?.nama}</Text>
-            <Text className="text-sm font-semibold text-teal-600 mt-1">⚕️ Apoteker Aktif</Text>
+            <View className="flex-row items-center mt-1">
+              <ShieldPlus color="#0D9488" size={16} />
+              <Text className="text-sm font-semibold text-teal-600 ml-1.5">Apoteker Aktif</Text>
+            </View>
           </View>
           <Pressable className="bg-teal-100 rounded-xl py-2.5 px-4" onPress={onLogout}>
             <Text className="text-teal-800 font-bold text-sm">Keluar</Text>
