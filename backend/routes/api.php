@@ -25,6 +25,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/kuisioner', [KuisionerController::class, 'index']);
 
     // Monitoring (Dynamic Adherence)
+    Route::get('/monitoring/today-summary', [\App\Http\Controllers\Api\MonitoringController::class, 'todaySummary']);
     Route::get('/monitoring/mingguan', [\App\Http\Controllers\Api\MonitoringController::class, 'weeklyMonitoring']);
     Route::get('/monitoring/bulanan', [\App\Http\Controllers\Api\MonitoringController::class, 'monthlyMonitoring']);
     Route::post('/monitoring/log', [\App\Http\Controllers\Api\MonitoringController::class, 'logConsumption']);

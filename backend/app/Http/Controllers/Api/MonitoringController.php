@@ -155,4 +155,68 @@ class MonitoringController extends Controller
             'weeks' => $weeks
         ]);
     }
+    /**
+     * Get summary for the "Today" dashboard
+     */
+    public function todaySummary(Request $request): JsonResponse
+    {
+        $today = now()->toDateString();
+
+        // 1. Reminder Stats Today (Medicine)
+        $totalReminders = DB::table('reminder_obat')->count();
+        $logsToday = LogKonsumsiObat::where('tanggal', $today)->get();
+        
+        $takenCount = $logsToday->where('status', 'diminum')->count();
+        $missedCount = $logsToday->where('status', 'terlewat')->count();
+        $notYetCount = max(0, $totalReminders - $logsToday->count());
+
+        // 2. Alert Count (Patients who missed medication today)
+        $problematicPatientIds = LogKonsumsiObat::where('tanggal', $today)
+            ->where('status', 'terlewat')
+            ->distinct()
+            ->pluck('pasien_id');
+
+        // Patients with 2+ consecutive missed days
+        $criticalPatientIds = LogKonsumsiObat::where('status', 'terlewat')
+            ->whereBetween('tanggal', [now()->subDays(2)->toDateString(), $today])
+            ->groupBy('pasien_id')
+            ->having(DB::raw('count(*)'), '>=', 2)
+            ->pluck('pasien_id');
+
+        $allAlertPatientIds = $problematicPatientIds->merge($criticalPatientIds)->unique();
+        
+        $problematicPatients = Pasien::whereIn('id', $allAlertPatientIds)
+            ->with(['logsObat' => function($q) use ($today) {
+                $q->where('tanggal', $today)->latest();
+            }])
+            ->get()
+            ->map(function($p) {
+                $p->last_status = $p->logsObat->first()?->status ?? 'Belum ada data';
+                return $p;
+            });
+
+        // 3. Recent Activity (Patients added in last 7 days)
+        $recentActivity = Pasien::latest()->limit(5)->get()->map(function($p) {
+            return [
+                'id' => $p->id,
+                'title' => 'Pasien Baru: ' . $p->nama,
+                'time' => $p->created_at->diffForHumans(),
+                'type' => 'new_patient'
+            ];
+        });
+
+        return response()->json([
+            'today' => [
+                'total' => $totalReminders,
+                'taken' => $takenCount,
+                'missed' => $missedCount,
+                'pending' => $notYetCount,
+            ],
+            'alerts' => [
+                'count' => $allAlertPatientIds->count(),
+                'patients' => $problematicPatients
+            ],
+            'recent_activity' => $recentActivity
+        ]);
+    }
 }

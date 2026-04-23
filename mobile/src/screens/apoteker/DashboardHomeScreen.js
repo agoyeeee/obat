@@ -1,156 +1,197 @@
-import { useState, useEffect, useMemo } from 'react';
-import { View, Text, TextInput, Pressable, ScrollView, FlatList, ActivityIndicator } from 'react-native';
+import { useState, useEffect, useCallback } from 'react';
+import { View, Text, ScrollView, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { usePatients } from '../../hooks/usePatients';
-import { ShieldPlus, Users, CheckCircle, XCircle, Search, ChevronRight, LogOut } from 'lucide-react-native';
+import api from '../../services/api';
+import { 
+  Bell, 
+  AlertTriangle, 
+  Activity, 
+  CheckCircle2, 
+  Clock, 
+  ChevronRight, 
+  UserMinus, 
+  UserPlus,
+  LogOut,
+  ShieldPlus
+} from 'lucide-react-native';
 
 export default function DashboardHomeScreen({ route, navigation }) {
   const { user, onLogout } = route.params || {};
-  const { patients, isLoading, fetchPatients } = usePatients();
-  const [searchQuery, setSearchQuery] = useState('');
+  const [data, setData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const fetchData = useCallback(async () => {
+    try {
+      const res = await api.get('/monitoring/today-summary');
+      setData(res.data);
+    } catch (error) {
+      console.error('Error fetching today summary:', error);
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  }, []);
 
   useEffect(() => {
-    fetchPatients();
-  }, [fetchPatients]);
+    fetchData();
+  }, [fetchData]);
 
-  const { totalPatients, patuhCount, tidakPatuhCount } = useMemo(() => {
-    let patuh = 0;
-    let tidakPatuh = 0;
-    
-    patients.forEach(p => {
-      const latestRekapan = p.rekapan_obat?.[0];
-      if (latestRekapan?.status_kepatuhan === 'PATUH') patuh++;
-      else if (latestRekapan?.status_kepatuhan === 'TIDAK_PATUH') tidakPatuh++;
-    });
+  const onRefresh = () => {
+    setIsRefreshing(true);
+    fetchData();
+  };
 
-    return {
-      totalPatients: patients.length,
-      patuhCount: patuh,
-      tidakPatuhCount: tidakPatuh,
-    };
-  }, [patients]);
-
-  const filteredPatients = useMemo(() => {
-    if (!searchQuery) return patients;
-    return patients.filter(p => 
-      p.nama.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      String(p.id).includes(searchQuery)
+  if (isLoading) {
+    return (
+      <View className="flex-1 bg-slate-50 justify-center items-center">
+        <ActivityIndicator size="large" color="#0D9488" />
+      </View>
     );
-  }, [patients, searchQuery]);
+  }
 
   return (
     <View className="flex-1 bg-slate-50">
       <StatusBar style="dark" />
       
       {/* HEADER */}
-      <View className="bg-white pt-12 pb-4 px-5 border-b border-slate-100 shadow-sm z-10">
-        <View className="flex-row items-center justify-between mb-4 mt-2">
+      <View className="bg-white pt-14 pb-6 px-6 border-b border-slate-100 shadow-sm z-10">
+        <View className="flex-row items-center justify-between">
           <View>
-            <Text className="text-3xl font-extrabold text-slate-900 tracking-tight">Halo, {user?.nama || 'Apoteker'}</Text>
-            <View className="flex-row items-center mt-1">
-              <ShieldPlus color="#0D9488" size={16} />
-              <Text className="text-sm font-semibold text-teal-600 ml-1.5">Apoteker Aktif</Text>
-            </View>
+            <Text className="text-sm font-bold text-slate-400 uppercase tracking-widest">
+              {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
+            </Text>
+            <Text className="text-3xl font-black text-slate-900 tracking-tight mt-1">
+              Halo, {user?.nama?.split(' ')[0] || 'Apoteker'}
+            </Text>
           </View>
-          <Pressable className="w-11 h-11 rounded-full bg-teal-50 items-center justify-center active:bg-teal-100" onPress={onLogout}>
-            <LogOut color="#0F766E" size={20} />
+          <Pressable 
+            onPress={onLogout}
+            className="w-12 h-12 rounded-2xl bg-rose-50 items-center justify-center border border-rose-100 active:bg-rose-100"
+          >
+            <LogOut color="#F43F5E" size={20} />
           </Pressable>
         </View>
-
-
       </View>
 
       <ScrollView 
-        className="flex-1" 
-        contentContainerStyle={{ padding: 20, paddingBottom: 40, flexGrow: 1 }} 
+        className="flex-1"
+        contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
       >
-        {/* SUMMARY CARDS */}
-        <View className="flex-row flex-wrap justify-between mb-6">
-          <View className="w-full bg-white p-5 rounded-2xl shadow-sm border border-slate-100 mb-4">
-            <View className="flex-row items-center justify-between">
-              <View>
-                <Text className="text-3xl font-black text-slate-900">{totalPatients}</Text>
-                <Text className="text-sm font-bold text-slate-500 mt-1">Total Pasien</Text>
-              </View>
-              <View className="w-12 h-12 rounded-full bg-blue-50 items-center justify-center">
-                <Users color="#3B82F6" size={24} />
-              </View>
+        
+        {/* MAIN ACTION CARD: REMINDER TODAY */}
+        <View className="bg-teal-600 rounded-[32px] p-6 shadow-xl shadow-teal-900/20 mb-6 overflow-hidden">
+          <View className="flex-row justify-between items-start mb-6">
+            <View>
+              <Text className="text-teal-100 font-bold text-sm uppercase tracking-wider">Aktivitas Hari Ini</Text>
+              <Text className="text-white text-4xl font-black mt-1">{data?.today?.total || 0}</Text>
+              <Text className="text-teal-100 font-semibold">Total Jadwal Obat</Text>
             </View>
-          </View>
-          
-          <View className="w-[48%] bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
-            <View className="w-10 h-10 rounded-full bg-emerald-50 items-center justify-center mb-3">
-              <CheckCircle color="#10B981" size={20} />
+            <View className="w-12 h-12 rounded-2xl bg-white/20 items-center justify-center">
+              <Bell color="#FFFFFF" size={24} />
             </View>
-            <Text className="text-3xl font-black text-emerald-600">{patuhCount}</Text>
-            <Text className="text-sm font-bold text-slate-500 mt-1">Patuh</Text>
           </View>
 
-          <View className="w-[48%] bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
-            <View className="w-10 h-10 rounded-full bg-rose-50 items-center justify-center mb-3">
-              <XCircle color="#F43F5E" size={20} />
+          <View className="flex-row bg-black/10 rounded-2xl p-4 justify-between items-center">
+            <View className="items-center flex-1 border-r border-white/10">
+              <Text className="text-white text-xl font-black">{data?.today?.taken || 0}</Text>
+              <Text className="text-teal-100 text-[10px] font-bold uppercase">Diminum</Text>
             </View>
-            <Text className="text-3xl font-black text-rose-600">{tidakPatuhCount}</Text>
-            <Text className="text-sm font-bold text-slate-500 mt-1">Tidak Patuh</Text>
+            <View className="items-center flex-1 border-r border-white/10">
+              <Text className="text-rose-200 text-xl font-black">{data?.today?.missed || 0}</Text>
+              <Text className="text-teal-100 text-[10px] font-bold uppercase">Terlewat</Text>
+            </View>
+            <View className="items-center flex-1">
+              <Text className="text-white text-xl font-black">{data?.today?.pending || 0}</Text>
+              <Text className="text-teal-100 text-[10px] font-bold uppercase">Menunggu</Text>
+            </View>
           </View>
         </View>
 
-        {/* PATIENT LIST & SEARCH */}
-        <Text className="text-[18px] font-extrabold text-slate-900 mb-3 tracking-tight">Daftar Pasien</Text>
-        
-        <View className="flex-row items-center bg-white border border-slate-100 shadow-sm rounded-xl px-4 py-3 mb-4">
-          <Search color="#94A3B8" size={20} />
-          <TextInput
-            className="flex-1 ml-3 text-slate-900 text-base font-medium"
-            placeholder="Cari nama atau ID pasien..."
-            placeholderTextColor="#94A3B8"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
+        {/* ALERT CARD: PERLU PERHATIAN */}
+        <View className="flex-row gap-4 mb-6">
+          <View className="flex-1 bg-white rounded-3xl p-5 shadow-sm border border-slate-100 border-l-4 border-l-rose-500">
+            <View className="flex-row items-center justify-between mb-3">
+              <View className="w-10 h-10 rounded-xl bg-rose-50 items-center justify-center">
+                <AlertTriangle color="#F43F5E" size={20} />
+              </View>
+              {data?.alerts?.count > 0 && (
+                <View className="bg-rose-500 px-2 py-0.5 rounded-full">
+                  <Text className="text-white text-[10px] font-black">URGENT</Text>
+                </View>
+              )}
+            </View>
+            <Text className="text-3xl font-black text-slate-900">{data?.alerts?.count || 0}</Text>
+            <Text className="text-xs font-bold text-slate-500 uppercase mt-1">Perlu Perhatian</Text>
+          </View>
+
+          <View className="flex-1 bg-white rounded-3xl p-5 shadow-sm border border-slate-100 border-l-4 border-l-blue-500">
+            <View className="w-10 h-10 rounded-xl bg-blue-50 items-center justify-center mb-3">
+              <Activity color="#3B82F6" size={20} />
+            </View>
+            <Text className="text-3xl font-black text-slate-900">{data?.recent_activity?.length || 0}</Text>
+            <Text className="text-xs font-bold text-slate-500 uppercase mt-1">Update Terbaru</Text>
+          </View>
         </View>
-        
-        {isLoading ? (
-          <ActivityIndicator size="large" color="#0D9488" className="mt-10" />
-        ) : filteredPatients.length > 0 ? (
-          <View className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-            {filteredPatients.map((item, index) => {
-              const status = item.rekapan_obat?.[0]?.status_kepatuhan;
-              const isPatuh = status === 'PATUH';
-              const isTidakPatuh = status === 'TIDAK_PATUH';
-              
-              return (
-                <Pressable 
-                  key={item.id} 
-                  className={`flex-row items-center p-4 active:bg-slate-50 ${index !== filteredPatients.length - 1 ? 'border-b border-slate-100' : ''}`}
-                  onPress={() => navigation.navigate('MonitoringTab', { screen: 'PatientDetail', params: { pasien_id: item.id } })}
-                >
-                  <View className="w-12 h-12 rounded-full bg-teal-50 items-center justify-center mr-4">
-                    <Text className="text-teal-700 font-black text-lg">{item.nama.charAt(0).toUpperCase()}</Text>
-                  </View>
-                  <View className="flex-1">
-                    <Text className="text-base font-bold text-slate-900">{item.nama}</Text>
-                    <Text className="text-sm font-medium text-slate-500 mt-0.5">Usia {item.usia}</Text>
-                  </View>
-                  
-                  {status ? (
-                    <View className={`px-2.5 py-1 rounded-full mr-2 ${isPatuh ? 'bg-emerald-100' : 'bg-rose-100'}`}>
-                      <Text className={`text-[10px] font-extrabold ${isPatuh ? 'text-emerald-700' : 'text-rose-700'}`}>
-                        {status}
-                      </Text>
-                    </View>
-                  ) : null}
-                  
-                  <ChevronRight color="#CBD5E1" size={20} />
-                </Pressable>
-              );
-            })}
+
+        {/* LIST: PASIEN BERMASALAH HARI INI */}
+        <View className="mb-6">
+          <View className="flex-row items-center justify-between mb-4">
+            <Text className="text-xl font-black text-slate-900 tracking-tight">Pasien Bermasalah Hari Ini</Text>
+            <Pressable onPress={() => navigation.navigate('MonitoringTab')}>
+              <Text className="text-sm font-bold text-teal-600">Lihat Semua</Text>
+            </Pressable>
           </View>
-        ) : (
-          <View className="bg-white rounded-2xl p-8 items-center border border-slate-100">
-            <Text className="text-slate-400 font-medium text-center">Belum ada pasien yang ditemukan.</Text>
+
+          {data?.alerts?.patients?.length > 0 ? (
+            data.alerts.patients.map((patient) => (
+              <Pressable 
+                key={patient.id}
+                onPress={() => navigation.navigate('MonitoringTab', { screen: 'PatientDetail', params: { pasien_id: patient.id } })}
+                className="bg-white rounded-2xl p-4 mb-3 shadow-sm border border-slate-100 flex-row items-center active:bg-slate-50"
+              >
+                <View className="w-12 h-12 rounded-full bg-rose-50 items-center justify-center mr-4 border border-rose-100">
+                  <UserMinus color="#F43F5E" size={24} />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-base font-black text-slate-900">{patient.nama}</Text>
+                  <Text className="text-xs font-bold text-rose-500 mt-0.5">Status: {patient.last_status.toUpperCase()}</Text>
+                </View>
+                <View className="w-8 h-8 rounded-full bg-slate-50 items-center justify-center">
+                  <ChevronRight color="#CBD5E1" size={18} />
+                </View>
+              </Pressable>
+            ))
+          ) : (
+            <View className="bg-emerald-50 rounded-2xl p-8 items-center border border-dashed border-emerald-200">
+              <CheckCircle2 color="#10B981" size={40} />
+              <Text className="text-emerald-700 font-bold mt-3 text-center">Luar Biasa! Semua pasien patuh hari ini.</Text>
+            </View>
+          )}
+        </View>
+
+        {/* OPTIONAL: AKTIVITAS TERBARU */}
+        <View>
+          <Text className="text-xl font-black text-slate-900 tracking-tight mb-4">Aktivitas Terbaru</Text>
+          <View className="bg-white rounded-3xl p-2 border border-slate-100">
+            {data?.recent_activity?.map((activity, idx) => (
+              <View 
+                key={idx} 
+                className={`flex-row items-center p-4 ${idx !== data.recent_activity.length - 1 ? 'border-b border-slate-50' : ''}`}
+              >
+                <View className="w-10 h-10 rounded-full bg-slate-100 items-center justify-center mr-4">
+                  {activity.type === 'new_patient' ? <UserPlus color="#64748B" size={18} /> : <Clock color="#64748B" size={18} />}
+                </View>
+                <View className="flex-1">
+                  <Text className="text-sm font-bold text-slate-900">{activity.title}</Text>
+                  <Text className="text-[10px] font-semibold text-slate-400 mt-0.5 uppercase">{activity.time}</Text>
+                </View>
+              </View>
+            ))}
           </View>
-        )}
+        </View>
 
       </ScrollView>
     </View>
