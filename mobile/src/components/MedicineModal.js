@@ -59,11 +59,6 @@ export default function MedicineModal({ medicine, onClose, onContact }) {
             </View>
           </ScrollView>
 
-          <View className="p-5 pt-2 border-t border-slate-100">
-            <Pressable className="bg-teal-600 rounded-xl py-4 items-center active:bg-teal-700 shadow-sm" onPress={() => onContact(medicine.nama_obat)}>
-              <Text className="text-white font-bold text-[15px]">Tanya via WhatsApp</Text>
-            </Pressable>
-          </View>
         </View>
       </View>
     </Modal>

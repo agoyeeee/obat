@@ -74,7 +74,6 @@ export default function MedicineListScreen() {
       <MedicineModal 
         medicine={selectedMedicine} 
         onClose={() => setSelectedMedicine(null)} 
-        onContact={openWhatsAppHelper} 
       />
     </View>
   );
