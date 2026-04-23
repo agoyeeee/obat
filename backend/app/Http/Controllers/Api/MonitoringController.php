@@ -46,14 +46,16 @@ class MonitoringController extends Controller
                 'logs' => $logsObat->groupBy(fn($log) => Carbon::parse($log->tanggal)->format('Y-m-d')),
                 'summary' => [
                     'total_skor' => $logsObat->sum('skor'),
-                    'persentase' => DB::table('reminder_obat')->where('pasien_id', $pasienId)->count() * 7 > 0 ? ($logsObat->sum('skor') / (DB::table('reminder_obat')->where('pasien_id', $pasienId)->count() * 7)) * 100 : 0
+                    'total_logs' => $logsObat->count(),
+                    'persentase' => $logsObat->count() > 0 ? ($logsObat->sum('skor') / $logsObat->count()) * 100 : 0
                 ]
             ],
             'cairan' => [
                 'logs' => $logsCairan->groupBy(fn($log) => Carbon::parse($log->tanggal)->format('Y-m-d')),
                 'summary' => [
                     'total_skor' => $logsCairan->sum('skor'),
-                    'persentase' => (DB::table('reminder_cairan')->where('pasien_id', $pasienId)->count() * 7) > 0 ? ($logsCairan->sum('skor') / (DB::table('reminder_cairan')->where('pasien_id', $pasienId)->count() * 7)) * 100 : 0
+                    'total_logs' => $logsCairan->count(),
+                    'persentase' => $logsCairan->count() > 0 ? ($logsCairan->sum('skor') / $logsCairan->count()) * 100 : 0
                 ]
             ]
         ]);
@@ -117,32 +119,30 @@ class MonitoringController extends Controller
             $weekEnd = $currentDate->copy()->addDays(6);
             
             // OBAT Stats
-            $remindersObatCount = DB::table('reminder_obat')->where('pasien_id', $pasienId)->count();
-            $scheduledObat = $remindersObatCount * 7;
             $logsObat = LogKonsumsiObat::where('pasien_id', $pasienId)
                 ->whereBetween('tanggal', [$weekStart->toDateString(), $weekEnd->toDateString()])
                 ->get();
             $scoreObat = $logsObat->sum('skor');
-            $percentageObat = $scheduledObat > 0 ? round(($scoreObat / $scheduledObat) * 100, 2) : 0;
+            $countObat = $logsObat->count();
+            $percentageObat = $countObat > 0 ? round(($scoreObat / $countObat) * 100, 2) : 0;
 
             // CAIRAN Stats
-            $remindersCairanCount = DB::table('reminder_cairan')->where('pasien_id', $pasienId)->count();
-            $scheduledCairan = $remindersCairanCount * 7;
             $logsCairan = \App\Models\LogKonsumsiCairan::where('pasien_id', $pasienId)
                 ->whereBetween('tanggal', [$weekStart->toDateString(), $weekEnd->toDateString()])
                 ->get();
             $scoreCairan = $logsCairan->sum('skor');
-            $percentageCairan = $scheduledCairan > 0 ? round(($scoreCairan / $scheduledCairan) * 100, 2) : 0;
+            $countCairan = $logsCairan->count();
+            $percentageCairan = $countCairan > 0 ? round(($scoreCairan / $countCairan) * 100, 2) : 0;
 
             $weeks[] = [
                 'minggu_mulai' => $weekStart->toDateString(),
                 'minggu_akhir' => $weekEnd->toDateString(),
                 'obat' => [
-                    'status_kepatuhan' => $percentageObat >= 80 ? 'PATUH' : 'TIDAK_PATUH',
+                    'status_kepatuhan' => ($countObat > 0 && $percentageObat >= 80) ? 'PATUH' : ($countObat > 0 ? 'TIDAK_PATUH' : 'BELUM_ADA_DATA'),
                     'persentase' => $percentageObat,
                 ],
                 'cairan' => [
-                    'status_kepatuhan' => $percentageCairan >= 80 ? 'PATUH' : 'TIDAK_PATUH',
+                    'status_kepatuhan' => ($countCairan > 0 && $percentageCairan >= 80) ? 'PATUH' : ($countCairan > 0 ? 'TIDAK_PATUH' : 'BELUM_ADA_DATA'),
                     'persentase' => $percentageCairan,
                 ]
             ];

@@ -25,11 +25,11 @@ class PasienController extends Controller
             ->get()
             ->map(function($pasien) {
                 // Kalkulasi kepatuhan mingguan secara dinamis untuk dashboard
-                $totalScheduled = $pasien->reminder_obat_count * 7;
                 $totalScore = $pasien->logsObat->sum('skor');
+                $totalLogs = $pasien->logsObat->count();
                 
-                $percentage = $totalScheduled > 0 ? ($totalScore / $totalScheduled) * 100 : 0;
-                $status = $percentage >= 80 ? 'PATUH' : 'TIDAK_PATUH';
+                $percentage = $totalLogs > 0 ? ($totalScore / $totalLogs) * 100 : 0;
+                $status = ($totalLogs > 0 && $percentage >= 80) ? 'PATUH' : ($totalLogs > 0 ? 'TIDAK_PATUH' : 'BELUM_ADA_DATA');
 
                 // Format agar kompatibel dengan frontend yang lama (rekapan_obat[0])
                 $pasien->rekapan_obat = [
