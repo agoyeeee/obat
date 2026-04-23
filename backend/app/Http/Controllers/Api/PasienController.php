@@ -12,14 +12,31 @@ class PasienController extends Controller
     public function index(Request $request): JsonResponse
     {
         $apoteker = $request->user();
+        $startDate = now()->startOfWeek();
+        $endDate = now()->endOfWeek();
 
-        // Tampilkan pasien yang terhubung dengan apoteker ini beserta rekapan terbaru
+        // Tampilkan pasien yang terhubung dengan apoteker ini
         $pasiens = $apoteker->pasiens()
-            ->with(['rekapanObat' => function($q) {
-                $q->orderBy('minggu_mulai', 'desc');
+            ->with(['logsObat' => function($q) use ($startDate, $endDate) {
+                $q->whereBetween('tanggal', [$startDate->toDateString(), $endDate->toDateString()]);
             }])
+            ->withCount('reminderObat')
             ->orderBy('nama')
-            ->get();
+            ->get()
+            ->map(function($pasien) {
+                // Kalkulasi kepatuhan mingguan secara dinamis untuk dashboard
+                $totalScheduled = $pasien->reminder_obat_count * 7;
+                $totalScore = $pasien->logsObat->sum('skor');
+                
+                $percentage = $totalScheduled > 0 ? ($totalScore / $totalScheduled) * 100 : 0;
+                $status = $percentage >= 80 ? 'PATUH' : 'TIDAK_PATUH';
+
+                // Format agar kompatibel dengan frontend yang lama (rekapan_obat[0])
+                $pasien->rekapan_obat = [
+                    ['status_kepatuhan' => $status]
+                ];
+                return $pasien;
+            });
 
         return response()->json($pasiens);
     }

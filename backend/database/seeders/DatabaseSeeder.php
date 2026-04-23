@@ -28,7 +28,6 @@ class DatabaseSeeder extends Seeder
             // Tabel transaksi (bergantung pada tabel relasi)
             ReminderObatSeeder::class,
             ReminderCairanSeeder::class,
-            RekapanCairanSeeder::class,
             RekapKuisionerSeeder::class,
             JawabanKuisionerSeeder::class,
             LogKonsumsiObatSeeder::class,

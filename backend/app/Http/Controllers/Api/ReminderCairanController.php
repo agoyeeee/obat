@@ -28,7 +28,6 @@ class ReminderCairanController extends Controller
             'pasien_id'      => ['required', 'integer', 'exists:pasien,id'],
             'jumlah_ml'      => ['required', 'integer', 'min:1'],
             'waktu'          => ['required', 'date_format:H:i'],
-            'skor_kepatuhan' => ['sometimes', 'in:PATUH,TIDAK_PATUH'],
         ]);
 
         $reminder = ReminderCairan::query()->create($validated);
@@ -52,7 +51,6 @@ class ReminderCairanController extends Controller
         $validated = $request->validate([
             'jumlah_ml'      => ['sometimes', 'integer', 'min:1'],
             'waktu'          => ['sometimes', 'date_format:H:i'],
-            'skor_kepatuhan' => ['sometimes', 'in:PATUH,TIDAK_PATUH'],
         ]);
 
         $reminder->update($validated);

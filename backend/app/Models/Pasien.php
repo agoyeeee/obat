@@ -51,11 +51,6 @@ class Pasien extends Model
         return $this->hasMany(LogKonsumsiObat::class);
     }
 
-    public function rekapanCairan(): HasMany
-    {
-        return $this->hasMany(RekapanCairan::class);
-    }
-
     public function rekapKuisioner(): HasMany
     {
         return $this->hasMany(RekapKuisioner::class);

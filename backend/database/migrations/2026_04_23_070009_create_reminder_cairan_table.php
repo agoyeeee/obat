@@ -13,7 +13,6 @@ return new class extends Migration
             $table->foreignId('pasien_id')->constrained('pasien')->cascadeOnDelete();
             $table->integer('jumlah_ml');
             $table->time('waktu');
-            $table->enum('skor_kepatuhan', ['PATUH', 'TIDAK_PATUH'])->default('TIDAK_PATUH');
             $table->timestamps();
         });
     }
