@@ -18,8 +18,12 @@ class ReminderObat extends Model
         'jumlah_obat',
         'waktu_konsumsi_id',
         'cara_pemakaian',
-        'skor_kepatuhan',
     ];
+
+    public function logs()
+    {
+        return $this->hasMany(LogKonsumsiObat::class, 'reminder_obat_id');
+    }
 
     public function pasien(): BelongsTo
     {

@@ -24,6 +24,10 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/waktu-konsumsi', [WaktuKonsumsiController::class, 'index']);
     Route::get('/kuisioner', [KuisionerController::class, 'index']);
 
+    // Monitoring (Dynamic Adherence)
+    Route::get('/monitoring/mingguan', [\App\Http\Controllers\Api\MonitoringController::class, 'weeklyMonitoring']);
+    Route::post('/monitoring/log', [\App\Http\Controllers\Api\MonitoringController::class, 'logConsumption']);
+
     // Pasien
     Route::apiResource('pasien', PasienController::class);
 
@@ -37,15 +41,6 @@ Route::middleware('auth:sanctum')->group(function (): void {
 
     // Reminder Cairan
     Route::apiResource('reminder-cairan', ReminderCairanController::class);
-
-    // Rekapan Mingguan
-    Route::get('/rekapan-obat', [RekapanObatController::class, 'index']);
-    Route::post('/rekapan-obat', [RekapanObatController::class, 'store']);
-    Route::get('/rekapan-obat/{id}', [RekapanObatController::class, 'show']);
-
-    Route::get('/rekapan-cairan', [RekapanCairanController::class, 'index']);
-    Route::post('/rekapan-cairan', [RekapanCairanController::class, 'store']);
-    Route::get('/rekapan-cairan/{id}', [RekapanCairanController::class, 'show']);
 
     // Kuisioner Rekap
     Route::get('/rekap-kuisioner', [RekapKuisionerController::class, 'index']);
