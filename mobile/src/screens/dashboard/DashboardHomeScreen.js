@@ -130,7 +130,7 @@ export default function DashboardHomeScreen({ route, navigation }) {
                   </View>
                   <View className="flex-1">
                     <Text className="text-base font-bold text-slate-900">{item.nama}</Text>
-                    <Text className="text-sm font-medium text-slate-500 mt-0.5">ID: {item.id} • Usia {item.usia}</Text>
+                    <Text className="text-sm font-medium text-slate-500 mt-0.5">Usia {item.usia}</Text>
                   </View>
                   
                   {status ? (
