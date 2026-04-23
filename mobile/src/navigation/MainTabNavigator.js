@@ -24,7 +24,6 @@ function DashboardStackNavigator({ route }) {
       <DashboardStack.Screen name="DashboardHome" initialParams={{ user, onLogout }}>
         {(props) => <DashboardHomeScreen {...props} />}
       </DashboardStack.Screen>
-      <DashboardStack.Screen name="PatientDetail" component={PatientDetailScreen} />
     </DashboardStack.Navigator>
   );
 }
@@ -33,7 +32,7 @@ function MonitoringStackNavigator() {
   return (
     <MonitoringStack.Navigator screenOptions={{ headerShown: false }}>
       <MonitoringStack.Screen name="MonitoringList" component={MonitoringListScreen} />
-      {/* Monitoring detail will go here */}
+      <MonitoringStack.Screen name="PatientDetail" component={PatientDetailScreen} />
     </MonitoringStack.Navigator>
   );
 }

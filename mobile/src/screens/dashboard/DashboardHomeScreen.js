@@ -123,7 +123,7 @@ export default function DashboardHomeScreen({ route, navigation }) {
                 <Pressable 
                   key={item.id} 
                   className={`flex-row items-center p-4 active:bg-slate-50 ${index !== filteredPatients.length - 1 ? 'border-b border-slate-100' : ''}`}
-                  onPress={() => navigation.navigate('PatientDetail', { pasien_id: item.id })}
+                  onPress={() => navigation.navigate('MonitoringTab', { screen: 'PatientDetail', params: { pasien_id: item.id } })}
                 >
                   <View className="w-12 h-12 rounded-full bg-teal-50 items-center justify-center mr-4">
                     <Text className="text-teal-700 font-black text-lg">{item.nama.charAt(0).toUpperCase()}</Text>
