@@ -26,6 +26,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
 
     // Monitoring (Dynamic Adherence)
     Route::get('/monitoring/mingguan', [\App\Http\Controllers\Api\MonitoringController::class, 'weeklyMonitoring']);
+    Route::get('/monitoring/bulanan', [\App\Http\Controllers\Api\MonitoringController::class, 'monthlyMonitoring']);
     Route::post('/monitoring/log', [\App\Http\Controllers\Api\MonitoringController::class, 'logConsumption']);
 
     // Pasien

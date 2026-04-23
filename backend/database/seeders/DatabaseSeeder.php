@@ -31,6 +31,7 @@ class DatabaseSeeder extends Seeder
             RekapKuisionerSeeder::class,
             JawabanKuisionerSeeder::class,
             LogKonsumsiObatSeeder::class,
+            LogKonsumsiCairanSeeder::class,
         ]);
     }
 }

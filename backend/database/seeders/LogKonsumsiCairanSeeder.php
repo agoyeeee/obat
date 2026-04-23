@@ -2,17 +2,15 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use App\Models\ReminderCairan;
+use App\Models\LogKonsumsiCairan;
 
-class LogKonsumsiObatSeeder extends Seeder
+class LogKonsumsiCairanSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        $reminders = \App\Models\ReminderObat::all();
+        $reminders = ReminderCairan::all();
         $startOfMonth = now()->startOfMonth();
         $today = now();
 
@@ -22,20 +20,11 @@ class LogKonsumsiObatSeeder extends Seeder
             while ($currentDate->lte($today)) {
                 $isPatuh = rand(0, 10) > 2; // 80% chance
                 
-                $labelWaktu = $reminder->waktuKonsumsi->label_waktu ?? 'Pagi';
-                $timeMap = [
-                    'Pagi' => '08:00:00',
-                    'Siang' => '13:00:00',
-                    'Sore' => '17:00:00',
-                    'Malam' => '21:00:00',
-                ];
-                $time = $timeMap[$labelWaktu] ?? '08:00:00';
-
-                \App\Models\LogKonsumsiObat::create([
-                    'reminder_obat_id' => $reminder->id,
+                LogKonsumsiCairan::create([
+                    'reminder_cairan_id' => $reminder->id,
                     'pasien_id' => $reminder->pasien_id,
                     'tanggal' => $currentDate->toDateString(),
-                    'waktu' => $time,
+                    'waktu' => $reminder->waktu,
                     'status' => $isPatuh ? 'diminum' : 'terlewat',
                     'skor' => $isPatuh ? 1 : 0,
                 ]);

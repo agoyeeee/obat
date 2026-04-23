@@ -28,15 +28,16 @@ export default function PatientDetailScreen({ route, navigation }) {
     const fetchMonitoringData = async () => {
       try {
         setIsLoading(true);
-        const [pasienRes, obatRes, cairanRes] = await Promise.all([
+        const [pasienRes, monitoringRes] = await Promise.all([
           api.get(`/pasien/${pasien_id}`),
-          api.get(`/rekapan-obat?pasien_id=${pasien_id}`),
-          api.get(`/rekapan-cairan?pasien_id=${pasien_id}`)
+          api.get(`/monitoring/bulanan?pasien_id=${pasien_id}&month=${selectedMonth}&year=${selectedYear}`)
         ]);
 
         setPasien(pasienRes.data);
-        setRekapanObat(obatRes.data || []);
-        setRekapanCairan(cairanRes.data || []);
+        // Map backend response to separate states for backward compatibility if needed, 
+        // or just use monitoringRes.data.weeks
+        setRekapanObat(monitoringRes.data.weeks.map(w => ({ ...w, ...w.obat })));
+        setRekapanCairan(monitoringRes.data.weeks.map(w => ({ ...w, ...w.cairan })));
       } catch (error) {
         console.error('Error fetching monitoring data:', error);
       } finally {
@@ -47,15 +48,21 @@ export default function PatientDetailScreen({ route, navigation }) {
     if (pasien_id) {
       fetchMonitoringData();
     }
-  }, [pasien_id]);
+  }, [pasien_id, selectedMonth, selectedYear]);
 
-  const handleShowDetail = async (type, id) => {
+  const handleShowDetail = async (type, startDate) => {
     try {
       setIsDetailLoading(true);
       setShowModal(true);
-      const endpoint = type === 'obat' ? `/rekapan-obat/${id}` : `/rekapan-cairan/${id}`;
-      const res = await api.get(endpoint);
-      setDetailData({ ...res.data, type });
+      const res = await api.get(`/monitoring/mingguan?pasien_id=${pasien_id}&start_date=${startDate}`);
+      
+      // Adapt detailData to what the modal expects
+      const logs = type === 'obat' ? res.data.obat.logs : res.data.cairan.logs;
+      setDetailData({ 
+        detail_harian: logs,
+        minggu_mulai: startDate,
+        type 
+      });
     } catch (error) {
       console.error('Error fetching detail:', error);
       setShowModal(false);
@@ -71,16 +78,11 @@ export default function PatientDetailScreen({ route, navigation }) {
   };
 
   const filteredData = useMemo(() => {
-    const filterFn = (item) => {
-      const date = new Date(item.minggu_mulai);
-      return date.getMonth() === selectedMonth && date.getFullYear() === selectedYear;
-    };
-
     return {
-      obat: rekapanObat.filter(filterFn),
-      cairan: rekapanCairan.filter(filterFn)
+      obat: rekapanObat,
+      cairan: rekapanCairan
     };
-  }, [rekapanObat, rekapanCairan, selectedMonth, selectedYear]);
+  }, [rekapanObat, rekapanCairan]);
 
   // Generate last 6 months for filter
   const filterOptions = useMemo(() => {
@@ -167,8 +169,8 @@ export default function PatientDetailScreen({ route, navigation }) {
                   const weekNum = getWeekOfMonth(rekap.minggu_mulai);
                   return (
                     <Pressable 
-                      key={rekap.id} 
-                      onPress={() => handleShowDetail('obat', rekap.id)}
+                      key={rekap.minggu_mulai} 
+                      onPress={() => handleShowDetail('obat', rekap.minggu_mulai)}
                       className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-3 flex-row items-center justify-between active:bg-slate-50"
                     >
                       <View>
@@ -212,8 +214,8 @@ export default function PatientDetailScreen({ route, navigation }) {
                   const weekNum = getWeekOfMonth(rekap.minggu_mulai);
                   return (
                     <Pressable 
-                      key={rekap.id} 
-                      onPress={() => handleShowDetail('cairan', rekap.id)}
+                      key={rekap.minggu_mulai} 
+                      onPress={() => handleShowDetail('cairan', rekap.minggu_mulai)}
                       className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-3 flex-row items-center justify-between active:bg-slate-50"
                     >
                       <View>
@@ -261,15 +263,17 @@ export default function PatientDetailScreen({ route, navigation }) {
             <ScrollView className="p-4">
               {isDetailLoading ? (
                 <ActivityIndicator size="large" color="#0D9488" className="my-10" />
-              ) : detailData?.detail_harian?.length > 0 ? (
-                ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'].map((day, dayIdx) => (
+              ) : (detailData?.detail_harian && Object.keys(detailData.detail_harian).length > 0) ? (
+                Object.entries(detailData.detail_harian).sort((a, b) => a[0].localeCompare(b[0])).map(([date, logs], dayIdx) => (
                   <View key={dayIdx} className="mb-6">
                     <View className="flex-row items-center mb-2 px-2">
                       <View className="w-2 h-2 rounded-full bg-teal-500 mr-2" />
-                      <Text className="text-sm font-black text-slate-900 uppercase tracking-tighter">{day}</Text>
+                      <Text className="text-sm font-black text-slate-900 uppercase tracking-tighter">
+                        {date}
+                      </Text>
                     </View>
                     
-                    {detailData.detail_harian.map((item, idx) => (
+                    {logs.map((item, idx) => (
                       <View key={idx} className="bg-slate-50 rounded-2xl p-4 mb-2 border border-slate-100 flex-row items-center">
                         <View className={`w-10 h-10 rounded-full items-center justify-center mr-4 ${
                           detailData.type === 'obat' ? 'bg-teal-100' : 'bg-blue-100'
@@ -278,21 +282,21 @@ export default function PatientDetailScreen({ route, navigation }) {
                         </View>
                         <View className="flex-1">
                           <Text className="text-sm font-black text-slate-900">
-                            {detailData.type === 'obat' ? item.obat : `${item.jumlah_ml} ml`}
+                            {detailData.type === 'obat' ? item.reminder_obat?.obat?.nama : `${item.reminder_cairan?.jumlah_ml} ml`}
                           </Text>
                           <View className="flex-row items-center">
                             <Text className="text-[10px] font-bold text-slate-500 uppercase">
-                              {item.waktu} {item.merk ? `• ${item.merk}` : ''}
+                              {item.waktu} {item.reminder_obat?.merk ? `• ${item.reminder_obat.merk.nama}` : ''}
                             </Text>
                           </View>
                         </View>
                         <View className={`px-2 py-1 rounded-full ${
-                          item.skor_kepatuhan === 'PATUH' ? 'bg-emerald-100' : 'bg-rose-100'
+                          item.status === 'diminum' ? 'bg-emerald-100' : 'bg-rose-100'
                         }`}>
                           <Text className={`text-[10px] font-black ${
-                            item.skor_kepatuhan === 'PATUH' ? 'text-emerald-700' : 'text-rose-700'
+                            item.status === 'diminum' ? 'text-emerald-700' : 'text-rose-700'
                           }`}>
-                            {item.skor_kepatuhan}
+                            {item.status === 'diminum' ? 'PATUH' : 'TERLEWAT'}
                           </Text>
                         </View>
                       </View>
