@@ -14,7 +14,7 @@ import {
   CalendarDays,
 } from 'lucide-react-native';
 
-export default function PatientDashboardScreen({ profile, onEditProfile, onBack }) {
+export default function PatientDashboardScreen({ profile, onEditProfile, onBack, onOpenMenu }) {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const onRefresh = useCallback(() => {
@@ -24,7 +24,12 @@ export default function PatientDashboardScreen({ profile, onEditProfile, onBack 
     }, 500);
   }, []);
 
-  const openMenu = (menuName) => {
+  const openMenu = (menuKey, menuName) => {
+    if (onOpenMenu) {
+      onOpenMenu(menuKey);
+      return;
+    }
+
     Alert.alert('Menu', `${menuName} akan dibuka di update berikutnya.`);
   };
 
@@ -35,7 +40,7 @@ export default function PatientDashboardScreen({ profile, onEditProfile, onBack 
       subtitle: 'Lihat jadwal dan status minum obat',
       icon: <Bell color="#0D9488" size={20} />,
       bgClass: 'bg-teal-50 border-teal-100',
-      onPress: () => openMenu('Reminder Minum Obat'),
+      onPress: () => openMenu('obat', 'Reminder Minum Obat'),
     },
     {
       key: 'cairan',
@@ -43,7 +48,7 @@ export default function PatientDashboardScreen({ profile, onEditProfile, onBack 
       subtitle: 'Pantau target cairan harian',
       icon: <Droplets color="#3B82F6" size={20} />,
       bgClass: 'bg-blue-50 border-blue-100',
-      onPress: () => openMenu('Reminder Minum Cairan'),
+      onPress: () => openMenu('cairan', 'Reminder Minum Cairan'),
     },
     {
       key: 'tanya-apoteker',
@@ -51,7 +56,7 @@ export default function PatientDashboardScreen({ profile, onEditProfile, onBack 
       subtitle: 'Konsultasi cepat seputar terapi',
       icon: <MessageCircle color="#8B5CF6" size={20} />,
       bgClass: 'bg-violet-50 border-violet-100',
-      onPress: () => openMenu('Tanya Apoteker'),
+      onPress: () => openMenu('tanya-apoteker', 'Tanya Apoteker'),
     },
     {
       key: 'kuisioner',
@@ -59,7 +64,7 @@ export default function PatientDashboardScreen({ profile, onEditProfile, onBack 
       subtitle: 'Isi evaluasi berkala kondisi',
       icon: <ClipboardList color="#F59E0B" size={20} />,
       bgClass: 'bg-amber-50 border-amber-100',
-      onPress: () => openMenu('Kuisioner'),
+      onPress: () => openMenu('kuisioner', 'Kuisioner'),
     },
   ];
 
