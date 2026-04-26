@@ -69,32 +69,33 @@ export default function AppNavigator() {
 
   // ================= INIT NOTIFICATION + SYNC =================
   useEffect(() => {
-    initializeReminderAlarmNotifications();
+    // KOMENTAR: Dimatikan sementara untuk mencegah error push notification di Expo Go
+    // initializeReminderAlarmNotifications();
 
-    const responseSubscription =
-      addReminderAlarmResponseListener(async (data) => {
-        try {
-          await publicLogKonsumsiObat({
-            reminder_obat_id: data.reminderObatId,
-            status: 'diminum',
-            logged_at: data.loggedAt,
-            tanggal: data.tanggal,
-            waktu: data.waktu,
-            alarm_waktu: data.alarmWaktu,
-          });
-        } catch (error) {
-          await enqueuePatientAlarmLog({
-            reminder_obat_id: data.reminderObatId,
-            status: 'diminum',
-            logged_at: data.loggedAt,
-            tanggal: data.tanggal,
-            waktu: data.waktu,
-            alarm_waktu: data.alarmWaktu,
-          });
+    // const responseSubscription =
+    //   addReminderAlarmResponseListener(async (data) => {
+    //     try {
+    //       await publicLogKonsumsiObat({
+    //         reminder_obat_id: data.reminderObatId,
+    //         status: 'diminum',
+    //         logged_at: data.loggedAt,
+    //         tanggal: data.tanggal,
+    //         waktu: data.waktu,
+    //         alarm_waktu: data.alarmWaktu,
+    //       });
+    //     } catch (error) {
+    //       await enqueuePatientAlarmLog({
+    //         reminder_obat_id: data.reminderObatId,
+    //         status: 'diminum',
+    //         logged_at: data.loggedAt,
+    //         tanggal: data.tanggal,
+    //         waktu: data.waktu,
+    //         alarm_waktu: data.alarmWaktu,
+    //       });
 
-          console.error('Offline queue:', error?.message || error);
-        }
-      });
+    //       console.error('Offline queue:', error?.message || error);
+    //     }
+    //   });
 
     const unsubscribeNetInfo = NetInfo.addEventListener((state) => {
       if (state.isConnected && state.isInternetReachable !== false) {
@@ -115,7 +116,7 @@ export default function AppNavigator() {
     return () => {
       unsubscribeNetInfo();
       appStateSub.remove();
-      responseSubscription.remove();
+      // if (responseSubscription) responseSubscription.remove();
     };
   }, [patientProfile]);
 
