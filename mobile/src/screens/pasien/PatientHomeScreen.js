@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { View, Text, Pressable, SafeAreaView, ScrollView, TextInput, Alert, Platform } from 'react-native';
+import { useEffect, useMemo, useState, useCallback } from 'react';
+import { View, Text, Pressable, ScrollView, TextInput, Alert, Platform, RefreshControl } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { ArrowLeft, UserRound } from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -13,6 +13,14 @@ export default function PatientHomeScreen({ onBack, onSubmitSuccess, existingPro
   const [tanggalDiagnosa, setTanggalDiagnosa] = useState('');
   const [showDate, setShowDate] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const onRefresh = useCallback(() => {
+    setIsRefreshing(true);
+    setTimeout(() => {
+      setIsRefreshing(false);
+    }, 500);
+  }, []);
 
   useEffect(() => {
     if (existingProfile) {
@@ -83,7 +91,7 @@ export default function PatientHomeScreen({ onBack, onSubmitSuccess, existingPro
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-50">
+    <View className="flex-1 bg-slate-50">
       <StatusBar style="dark" />
       <ScrollView
         className="flex-1"
@@ -91,6 +99,7 @@ export default function PatientHomeScreen({ onBack, onSubmitSuccess, existingPro
         keyboardShouldPersistTaps="always"
         keyboardDismissMode="on-drag"
         showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
         nestedScrollEnabled={true}
       >
         <Pressable onPress={onBack} className="self-start mb-6 px-3 py-2 rounded-full bg-slate-100 active:bg-slate-200 flex-row items-center">
@@ -231,6 +240,6 @@ export default function PatientHomeScreen({ onBack, onSubmitSuccess, existingPro
           </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }

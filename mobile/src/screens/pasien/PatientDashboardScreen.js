@@ -1,5 +1,6 @@
-import { View, Text, Pressable, SafeAreaView, ScrollView, Alert } from 'react-native';
+import { View, Text, Pressable, ScrollView, Alert, RefreshControl } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { useState, useCallback } from 'react';
 import {
   LogOut,
   UserRound,
@@ -14,6 +15,15 @@ import {
 } from 'lucide-react-native';
 
 export default function PatientDashboardScreen({ profile, onEditProfile, onBack }) {
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const onRefresh = useCallback(() => {
+    setIsRefreshing(true);
+    setTimeout(() => {
+      setIsRefreshing(false);
+    }, 500);
+  }, []);
+
   const openMenu = (menuName) => {
     Alert.alert('Menu', `${menuName} akan dibuka di update berikutnya.`);
   };
@@ -54,7 +64,7 @@ export default function PatientDashboardScreen({ profile, onEditProfile, onBack 
   ];
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-50">
+    <View className="flex-1 bg-slate-50">
       <StatusBar style="dark" />
 
       <View className="bg-white pt-14 pb-6 px-6 border-b border-slate-100 shadow-sm z-10">
@@ -80,6 +90,7 @@ export default function PatientDashboardScreen({ profile, onEditProfile, onBack 
         className="flex-1"
         contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
       >
         <View className="bg-teal-600 rounded-[32px] p-6 shadow-xl shadow-teal-900/20 mb-6 overflow-hidden">
           <View className="flex-row justify-between items-start mb-6">
@@ -168,6 +179,6 @@ export default function PatientDashboardScreen({ profile, onEditProfile, onBack 
           <Text className="text-white font-bold text-base">Ubah Biodata</Text>
         </Pressable>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
