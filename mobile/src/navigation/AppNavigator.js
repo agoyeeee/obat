@@ -1,37 +1,45 @@
 import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useAuth } from '../hooks/useAuth';
 import LoginScreen from '../screens/LoginScreen';
 import { View, ActivityIndicator } from 'react-native';
-
-const Stack = createNativeStackNavigator();
-
 import MainTabNavigator from './MainTabNavigator';
+import PatientDetailScreen from '../screens/apoteker/PatientDetailScreen';
+
+const RootTab = createBottomTabNavigator();
 
 export default function AppNavigator() {
   const { user, isLoading, login, logout } = useAuth();
 
   const renderLoading = () => (
-    <View className="flex-1 justify-center items-center bg-slate-50">
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F8FAFC' }}>
       <ActivityIndicator size="large" color="#0D9488" />
     </View>
   );
 
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false, animation: 'none' }}>
+      <RootTab.Navigator 
+        screenOptions={{ 
+          headerShown: false, 
+          tabBarStyle: { display: 'none' } 
+        }}
+      >
         {isLoading ? (
-          <Stack.Screen name="Splash">
+          <RootTab.Screen name="Splash">
             {() => renderLoading()}
-          </Stack.Screen>
+          </RootTab.Screen>
         ) : !user ? (
-          <Stack.Screen name="Login">
+          <RootTab.Screen name="Login">
             {(props) => <LoginScreen {...props} onLogin={login} />}
-          </Stack.Screen>
+          </RootTab.Screen>
         ) : (
-          <Stack.Screen name="Dashboard" component={MainTabNavigator} initialParams={{ user, onLogout: logout }} />
+          <>
+            <RootTab.Screen name="Dashboard" component={MainTabNavigator} initialParams={{ user, onLogout: logout }} />
+            <RootTab.Screen name="PatientDetail" component={PatientDetailScreen} />
+          </>
         )}
-      </Stack.Navigator>
+      </RootTab.Navigator>
     </NavigationContainer>
   );
 }
