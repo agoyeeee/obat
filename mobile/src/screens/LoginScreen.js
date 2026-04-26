@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { View, Text, TextInput, Pressable, SafeAreaView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 
-export default function LoginScreen({ onLogin }) {
+export default function LoginScreen({ onLogin, onBack }) {
   const [nama, setNama] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -17,12 +17,15 @@ export default function LoginScreen({ onLogin }) {
     <SafeAreaView className="flex-1 bg-slate-50">
       <StatusBar style="dark" />
       <View className="flex-1 px-6 justify-center">
+        <Pressable onPress={onBack} className="self-start mb-6 px-3 py-2 rounded-full bg-slate-100 active:bg-slate-200">
+          <Text className="text-sm font-bold text-slate-700">Kembali</Text>
+        </Pressable>
         <View className="items-center mb-10">
           <View className="w-16 h-16 rounded-3xl bg-teal-100 items-center justify-center mb-4">
             <Text className="text-3xl">💊</Text>
           </View>
           <Text className="text-3xl font-extrabold text-slate-900 tracking-tight">MedReminder</Text>
-          <Text className="text-base font-semibold text-teal-600 mt-1">Portal Apoteker</Text>
+          <Text className="text-base font-semibold text-teal-600 mt-1">Portal Login Apoteker</Text>
         </View>
 
         <View className="bg-white p-6 rounded-3xl shadow-lg shadow-teal-900/5 border border-slate-100">

@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\WaktuKonsumsiController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/auth/login', [AuthController::class, 'login']);
+Route::post('/pasien/public-register', [PasienController::class, 'publicStore']);
 
 Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('/auth/logout', [AuthController::class, 'logout']);

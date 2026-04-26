@@ -9,6 +9,24 @@ use Illuminate\Http\Request;
 
 class PasienController extends Controller
 {
+    public function publicStore(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'nama'          => ['required', 'string', 'max:100'],
+            'usia'          => ['required', 'integer', 'min:0'],
+            'jenis_kelamin' => ['required', 'in:L,P'],
+            'berat_badan'   => ['required', 'numeric', 'min:0'],
+            'tgl_diagnosa'  => ['required', 'date'],
+        ]);
+
+        $pasien = Pasien::query()->create($validated);
+
+        return response()->json([
+            'message' => 'Biodata pasien berhasil disimpan.',
+            'data' => $pasien,
+        ], 201);
+    }
+
     public function index(Request $request): JsonResponse
     {
         $apoteker = $request->user();
@@ -27,7 +45,7 @@ class PasienController extends Controller
                 // Kalkulasi kepatuhan mingguan secara dinamis untuk dashboard
                 $totalScore = $pasien->logsObat->sum('skor');
                 $totalLogs = $pasien->logsObat->count();
-                
+
                 $percentage = $totalLogs > 0 ? ($totalScore / $totalLogs) * 100 : 0;
                 $status = ($totalLogs > 0 && $percentage >= 80) ? 'PATUH' : ($totalLogs > 0 ? 'TIDAK_PATUH' : 'BELUM_ADA_DATA');
 
