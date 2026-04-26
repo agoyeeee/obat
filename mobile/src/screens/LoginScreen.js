@@ -14,86 +14,42 @@ export default function LoginScreen({ onLogin, onBack }) {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F8FAFC' }}>
+    <SafeAreaView className="flex-1 bg-slate-50">
       <StatusBar style="dark" />
 
-      <View style={{ flex: 1, paddingHorizontal: 24, justifyContent: 'center' }}>
+      <View className="flex-1 px-6 justify-center">
         
         {/* Back Button */}
         <Pressable
           onPress={onBack}
-          style={{
-            alignSelf: 'flex-start',
-            marginBottom: 24,
-            paddingHorizontal: 12,
-            paddingVertical: 8,
-            borderRadius: 999,
-            backgroundColor: '#F1F5F9',
-          }}
+          className="self-start mb-6 px-4 py-2 rounded-full bg-slate-100 active:bg-slate-200"
         >
-          <Text style={{ fontSize: 12, fontWeight: '700', color: '#334155' }}>
+          <Text className="text-xs font-bold text-slate-700">
             Kembali
           </Text>
         </Pressable>
 
         {/* Header */}
-        <View style={{ alignItems: 'center', marginBottom: 40 }}>
-          <View
-            style={{
-              width: 64,
-              height: 64,
-              borderRadius: 24,
-              backgroundColor: '#CCFBF1',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: 16,
-            }}
-          >
-            <Text style={{ fontSize: 30 }}>💊</Text>
+        <View className="items-center mb-10">
+          <View className="w-16 h-16 rounded-3xl bg-teal-100 items-center justify-center mb-4">
+            <Text className="text-3xl">💊</Text>
           </View>
 
-          <Text
-            style={{
-              fontSize: 30,
-              fontWeight: '900',
-              color: '#0F172A',
-              letterSpacing: -0.5,
-            }}
-          >
+          <Text className="text-3xl font-black text-slate-900 tracking-tight">
             MedReminder
           </Text>
 
-          <Text
-            style={{
-              fontSize: 16,
-              fontWeight: '600',
-              color: '#0D9488',
-              marginTop: 4,
-            }}
-          >
+          <Text className="text-base font-semibold text-teal-600 mt-1">
             Portal Apoteker
           </Text>
         </View>
 
         {/* Form */}
-        <View
-          style={{
-            backgroundColor: '#FFFFFF',
-            padding: 24,
-            borderRadius: 32,
-            shadowColor: '#0D9488',
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.05,
-            shadowRadius: 12,
-            elevation: 4,
-            borderWidth: 1,
-            borderColor: '#F1F5F9',
-          }}
-        >
+        <View className="bg-white p-6 rounded-[32px] shadow-lg shadow-teal-600/5 border border-slate-100">
           {/* Nama */}
-          <Text style={labelStyle}>Nama Apoteker</Text>
+          <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-widest">Nama Apoteker</Text>
           <TextInput
-            style={inputStyle}
+            className="border-2 border-slate-200 rounded-2xl px-4 py-3.5 mb-4 bg-slate-50 text-slate-900 font-medium text-[15px]"
             placeholder="Masukkan nama Anda"
             placeholderTextColor="#94A3B8"
             value={nama}
@@ -101,12 +57,12 @@ export default function LoginScreen({ onLogin, onBack }) {
           />
 
           {/* Password */}
-          <Text style={labelStyle}>Password</Text>
+          <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-widest">Password</Text>
           <TextInput
-            style={inputStyle}
+            className="border-2 border-slate-200 rounded-2xl px-4 py-3.5 mb-5 bg-slate-50 text-slate-900 font-medium text-[15px]"
             placeholder="Masukkan kata sandi"
             placeholderTextColor="#94A3B8"
-            secureTextEntry
+            secureTextEntry={true}
             value={password}
             onChangeText={setPassword}
           />
@@ -115,98 +71,29 @@ export default function LoginScreen({ onLogin, onBack }) {
           <Pressable
             onPress={handleLogin}
             disabled={isLoading}
-            style={({ pressed }) => ({
-              backgroundColor: '#0D9488',
-              opacity: pressed ? 0.9 : 1,
-              borderRadius: 16,
-              paddingVertical: 16,
-              alignItems: 'center',
-              marginTop: 8,
-              shadowColor: '#0D9488',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.3,
-              shadowRadius: 8,
-              elevation: 3,
-            })}
+            className={`bg-teal-600 rounded-2xl py-4 items-center mt-2 shadow-lg shadow-teal-600/30 active:opacity-90 ${isLoading ? 'opacity-70' : ''}`}
           >
-            <Text style={{ color: '#FFF', fontWeight: '700', fontSize: 16 }}>
+            <Text className="text-white font-bold text-base">
               {isLoading ? 'Memproses...' : 'Masuk Sekarang'}
             </Text>
           </Pressable>
         </View>
 
         {/* Demo Account */}
-        <View
-          style={{
-            marginTop: 32,
-            padding: 20,
-            backgroundColor: '#F1F5F9',
-            borderRadius: 24,
-            borderWidth: 1.5,
-            borderColor: '#CBD5E1',
-          }}
-        >
-          <Text style={demoTitle}>Akun Demo (Apoteker):</Text>
+        <View className="mt-8 p-5 bg-slate-100 rounded-3xl border-[1.5px] border-slate-300">
+          <Text className="text-xs font-bold text-slate-500 mb-2">Akun Demo (Apoteker):</Text>
 
-          <View style={rowStyle}>
-            <Text style={rowLabel}>Nama:</Text>
-            <Text style={rowValue}>Siti Rahmawati</Text>
+          <View className="flex-row justify-between py-1">
+            <Text className="text-sm font-medium text-slate-500">Nama:</Text>
+            <Text className="text-sm font-bold text-slate-900">Siti Rahmawati</Text>
           </View>
 
-          <View style={rowStyle}>
-            <Text style={rowLabel}>Pass:</Text>
-            <Text style={rowValue}>coba</Text>
+          <View className="flex-row justify-between py-1">
+            <Text className="text-sm font-medium text-slate-500">Pass:</Text>
+            <Text className="text-sm font-bold text-slate-900">coba</Text>
           </View>
         </View>
       </View>
     </SafeAreaView>
   );
 }
-
-// ================= STYLE HELPER =================
-const labelStyle = {
-  fontSize: 12,
-  fontWeight: '700',
-  color: '#64748B',
-  marginBottom: 6,
-  textTransform: 'uppercase',
-  letterSpacing: 1,
-};
-
-const inputStyle = {
-  borderWidth: 2,
-  borderColor: '#E2E8F0',
-  borderRadius: 16,
-  paddingHorizontal: 16,
-  paddingVertical: 14,
-  marginBottom: 16,
-  backgroundColor: '#F8FAFC',
-  color: '#0F172A',
-  fontWeight: '500',
-  fontSize: 15,
-};
-
-const demoTitle = {
-  fontSize: 12,
-  fontWeight: '700',
-  color: '#64748B',
-  marginBottom: 8,
-};
-
-const rowStyle = {
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  paddingVertical: 4,
-};
-
-const rowLabel = {
-  fontSize: 14,
-  fontWeight: '500',
-  color: '#64748B',
-};
-
-const rowValue = {
-  fontSize: 14,
-  fontWeight: '700',
-  color: '#0F172A',
-};

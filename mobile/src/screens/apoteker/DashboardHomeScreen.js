@@ -14,32 +14,15 @@ import {
   Pill,
 } from 'lucide-react-native';
 
-const C = {
-  bg: '#F0F4F3',
-  card: '#FFFFFF',
-  border: '#EEF0EF',
-  teal900: '#1A2820',
-  teal700: '#0D7A6A',
-  teal600: '#0D9488',
-  teal100: '#E8F8F3',
-  teal200: '#52C7A0',
-  muted: '#9DB0AA',
-  rose: '#F43F5E',
-  roseBg: '#FFF0F2',
-  roseBorder: '#FFD6DB',
-  blue: '#3B82F6',
-  blueBg: '#EFF4FF',
-};
-
 function SectionHeader({ title, onPressAll }) {
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
-      <Text style={{ fontSize: 24, fontWeight: '800', color: C.teal900, letterSpacing: -0.5 }}>
+    <View className="flex-row items-center justify-between mb-4">
+      <Text className="text-2xl font-black text-[#1A2820] tracking-tight">
         {title}
       </Text>
       {onPressAll && (
-        <Pressable onPress={onPressAll} style={{ paddingVertical: 8, paddingLeft: 12 }}>
-          <Text style={{ fontSize: 16, fontWeight: '700', color: C.teal600 }}>Lihat Semua →</Text>
+        <Pressable onPress={onPressAll} className="py-2 pl-3">
+          <Text className="text-base font-bold text-[#0D9488]">Lihat Semua →</Text>
         </Pressable>
       )}
     </View>
@@ -48,17 +31,17 @@ function SectionHeader({ title, onPressAll }) {
 
 function MetricCard({ icon, iconBg, value, label, badge }) {
   return (
-    <View style={{ backgroundColor: '#FFFFFF', borderRadius: 28, borderWidth: 1.5, borderColor: '#EEF0EF', flex: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 12, elevation: 3, padding: 22, alignItems: 'center' }}>
-      <View style={{ width: 56, height: 56, borderRadius: 18, backgroundColor: iconBg, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+    <View className="bg-white rounded-3xl border-[1.5px] border-[#EEF0EF] flex-1 shadow-sm shadow-black/5 p-5 items-center">
+      <View className={`w-14 h-14 rounded-2xl ${iconBg} items-center justify-center mb-4`}>
         {icon}
       </View>
-      <Text style={{ fontSize: 42, fontWeight: '800', color: C.teal900, lineHeight: 46, textAlign: 'center' }}>{value ?? 0}</Text>
-      <Text style={{ fontSize: 13, fontWeight: '700', color: C.muted, textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 8, textAlign: 'center' }}>
+      <Text className="text-[42px] font-black text-[#1A2820] leading-[46px] text-center">{value ?? 0}</Text>
+      <Text className="text-xs font-extrabold text-[#9DB0AA] uppercase tracking-wider mt-2 text-center">
         {label}
       </Text>
       {badge && (
-        <View style={{ alignSelf: 'flex-start', backgroundColor: C.rose, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6, marginTop: 12 }}>
-          <Text style={{ color: '#fff', fontSize: 13, fontWeight: '900', letterSpacing: 0.5 }}>PENTING</Text>
+        <View className="self-start bg-rose-500 rounded-full px-3 py-1.5 mt-3">
+          <Text className="text-white text-xs font-black tracking-widest">PENTING</Text>
         </View>
       )}
     </View>
@@ -69,33 +52,19 @@ function PatientRow({ patient, onPress }) {
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => ({
-        backgroundColor: pressed ? '#FFF9F9' : C.card,
-        borderRadius: 24,
-        borderTopLeftRadius: 0,
-        borderBottomLeftRadius: 0,
-        padding: 20,
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 14,
-        borderWidth: 1.5,
-        borderColor: C.border,
-        borderLeftWidth: 8,
-        borderLeftColor: C.rose,
-        shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2
-      })}
+      className="bg-white rounded-[24px] rounded-tl-none rounded-bl-none p-5 flex-row items-center mb-3 border-[1.5px] border-[#EEF0EF] border-l-[8px] border-l-rose-500 shadow-sm shadow-black/5 active:bg-rose-50"
     >
-      <View style={{ width: 64, height: 64, borderRadius: 20, backgroundColor: C.roseBg, borderWidth: 1.5, borderColor: C.roseBorder, alignItems: 'center', justifyContent: 'center', marginRight: 18 }}>
-        <UserMinus color={C.rose} size={32} />
+      <View className="w-16 h-16 rounded-[20px] bg-rose-50 border-[1.5px] border-rose-100 items-center justify-center mr-4">
+        <UserMinus color="#F43F5E" size={32} />
       </View>
-      <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 22, fontWeight: '800', color: C.teal900 }}>{patient.nama}</Text>
-        <Text style={{ fontSize: 16, fontWeight: '800', color: C.rose, textTransform: 'uppercase', letterSpacing: 0.8, marginTop: 6 }}>
+      <View className="flex-1">
+        <Text className="text-[22px] font-black text-[#1A2820]">{patient.nama}</Text>
+        <Text className="text-base font-extrabold text-rose-500 uppercase tracking-widest mt-1.5">
           ● {patient.last_status}
         </Text>
       </View>
-      <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: '#F4F6F5', alignItems: 'center', justifyContent: 'center' }}>
-        <ChevronRight color={C.muted} size={24} />
+      <View className="w-11 h-11 rounded-2xl bg-[#F4F6F5] items-center justify-center">
+        <ChevronRight color="#9DB0AA" size={24} />
       </View>
     </Pressable>
   );
@@ -103,13 +72,13 @@ function PatientRow({ patient, onPress }) {
 
 function ActivityItem({ activity, isLast }) {
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', padding: 20, borderBottomWidth: isLast ? 0 : 1, borderBottomColor: '#F4F6F5' }}>
-      <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: activity.type === 'new_patient' ? C.teal100 : '#F4F6F5', alignItems: 'center', justifyContent: 'center', marginRight: 18 }}>
-        {activity.type === 'new_patient' ? <UserPlus color={C.teal700} size={28} /> : <Clock color="#64748B" size={28} />}
+    <View className={`flex-row items-center p-5 ${isLast ? '' : 'border-b-[1.5px] border-[#F4F6F5]'}`}>
+      <View className={`w-14 h-14 rounded-2xl items-center justify-center mr-4 ${activity.type === 'new_patient' ? 'bg-[#E8F8F3]' : 'bg-[#F4F6F5]'}`}>
+        {activity.type === 'new_patient' ? <UserPlus color="#0D7A6A" size={28} /> : <Clock color="#64748B" size={28} />}
       </View>
-      <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 18, fontWeight: '700', color: C.teal900 }}>{activity.title}</Text>
-        <Text style={{ fontSize: 14, fontWeight: '700', color: C.muted, textTransform: 'uppercase', letterSpacing: 0.8, marginTop: 4 }}>
+      <View className="flex-1">
+        <Text className="text-lg font-bold text-[#1A2820]">{activity.title}</Text>
+        <Text className="text-sm font-bold text-[#9DB0AA] uppercase tracking-widest mt-1">
           {activity.time}
         </Text>
       </View>
@@ -140,8 +109,8 @@ export default function DashboardHomeScreen({ route, navigation }) {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, backgroundColor: C.bg, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color={C.teal700} />
+      <View className="flex-1 bg-[#F0F4F3] justify-center items-center">
+        <ActivityIndicator size="large" color="#0D7A6A" />
       </View>
     );
   }
@@ -151,63 +120,60 @@ export default function DashboardHomeScreen({ route, navigation }) {
   const activities = data?.recent_activity || [];
 
   return (
-    <View style={{ flex: 1, backgroundColor: C.bg }}>
+    <View className="flex-1 bg-[#F0F4F3]">
       <StatusBar style="dark" />
 
       {/* HEADER */}
-      <View style={{ backgroundColor: C.card, paddingTop: 64, paddingBottom: 28, paddingHorizontal: 24, borderBottomWidth: 1.5, borderBottomColor: C.border }}>
-        <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+      <View className="bg-white pt-16 pb-7 px-6 border-b-[1.5px] border-[#EEF0EF]">
+        <View className="flex-row items-start justify-between">
           <View>
-            <Text style={{ fontSize: 14, fontWeight: '700', color: C.muted, textTransform: 'uppercase', letterSpacing: 1.5 }}>
+            <Text className="text-sm font-bold text-[#9DB0AA] uppercase tracking-[1.5px]">
               {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
             </Text>
-            <Text style={{ fontSize: 36, fontWeight: '800', color: C.teal900, letterSpacing: -0.8, marginTop: 4 }}>
+            <Text className="text-4xl font-black text-[#1A2820] tracking-tight mt-1">
               Halo, {user?.nama?.split(' ')[0] || 'Apoteker'} 👋
             </Text>
           </View>
           <Pressable
             onPress={onLogout}
-            style={({ pressed }) => ({
-              width: 56, height: 56, borderRadius: 18,
-              backgroundColor: pressed ? '#FFE4E8' : C.roseBg,
-              alignItems: 'center', justifyContent: 'center',
-              borderWidth: 1.5, borderColor: C.roseBorder,
-            })}
+            className="w-14 h-14 rounded-[18px] bg-rose-50 items-center justify-center border-[1.5px] border-rose-100 active:bg-rose-100"
           >
-            <LogOut color={C.rose} size={24} />
+            <LogOut color="#F43F5E" size={24} />
           </Pressable>
         </View>
       </View>
 
       <ScrollView
-        style={{ flex: 1 }}
+        className="flex-1"
         contentContainerStyle={{ padding: 22, paddingBottom: 64 }}
         showsVerticalScrollIndicator={false}
       >
         {/* MAIN CARD */}
-        <View style={{ backgroundColor: C.teal700, borderRadius: 32, padding: 28, shadowColor: C.teal900, shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.2, shadowRadius: 20, elevation: 8 }}>
-          <View style={{ position: 'absolute', top: -35, right: -35, width: 140, height: 140, borderRadius: 70, backgroundColor: 'rgba(255,255,255,0.06)' }} />
-          <View style={{ position: 'absolute', top: 28, right: 28, width: 64, height: 64, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' }}>
+        <View className="bg-[#0D7A6A] rounded-[32px] p-7 shadow-lg shadow-[#0D7A6A]/30 relative overflow-hidden">
+          <View className="absolute -top-9 -right-9 w-[140px] h-[140px] rounded-full bg-white/5" />
+          <View className="absolute top-7 right-7 w-16 h-16 rounded-[20px] bg-white/15 items-center justify-center">
             <Pill color="#fff" size={32} />
           </View>
-          <Text style={{ fontSize: 14, fontWeight: '800', color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: 1.2 }}>
+          
+          <Text className="text-sm font-extrabold text-white/70 uppercase tracking-widest">
             Aktivitas Hari Ini
           </Text>
-          <Text style={{ fontSize: 64, fontWeight: '900', color: '#fff', lineHeight: 72, marginVertical: 6 }}>
+          <Text className="text-[64px] font-black text-white leading-[72px] my-1">
             {today.total ?? 0}
           </Text>
-          <Text style={{ fontSize: 18, color: 'rgba(255,255,255,0.85)', fontWeight: '700', marginBottom: 28 }}>
+          <Text className="text-lg text-white/85 font-bold mb-7">
             Total Jadwal Obat
           </Text>
-          <View style={{ flexDirection: 'row', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: 24, paddingVertical: 20 }}>
+          
+          <View className="flex-row bg-black/20 rounded-3xl py-5">
             {[
-              { num: today.taken ?? 0, label: 'Diminum', color: '#fff' },
-              { num: today.missed ?? 0, label: 'Tidak Patuh', color: '#FFA0AA' },
-              { num: today.pending ?? 0, label: 'Antri', color: '#fff' },
+              { num: today.taken ?? 0, label: 'Diminum', color: 'text-white' },
+              { num: today.missed ?? 0, label: 'Tidak Patuh', color: 'text-[#FFA0AA]' },
+              { num: today.pending ?? 0, label: 'Antri', color: 'text-white' },
             ].map(({ num, label, color }, i, arr) => (
-              <View key={label} style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4, borderRightWidth: i < arr.length - 1 ? 1 : 0, borderRightColor: 'rgba(255,255,255,0.15)' }}>
-                <Text style={{ fontSize: 30, fontWeight: '900', color, textAlign: 'center' }}>{num}</Text>
-                <Text style={{ fontSize: 11, fontWeight: '800', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 4, textAlign: 'center' }}>
+              <View key={label} className={`flex-1 items-center justify-center px-1 ${i < arr.length - 1 ? 'border-r border-white/15' : ''}`}>
+                <Text className={`text-3xl font-black text-center ${color}`}>{num}</Text>
+                <Text className="text-[11px] font-extrabold text-white/60 uppercase tracking-wider mt-1 text-center">
                   {label}
                 </Text>
               </View>
@@ -216,27 +182,27 @@ export default function DashboardHomeScreen({ route, navigation }) {
         </View>
 
         {/* METRIC CARDS */}
-        <View style={{ flexDirection: 'row', marginTop: 20 }}>
-          <MetricCard icon={<AlertTriangle color={C.rose} size={22} />} iconBg={C.roseBg} value={alerts.count} label="Perlu Perhatian" badge={alerts.count > 0} />
-          <View style={{ width: 12 }} />
-          <MetricCard icon={<Activity color={C.blue} size={22} />} iconBg={C.blueBg} value={activities.length} label="Update Terbaru" />
+        <View className="flex-row mt-5">
+          <MetricCard icon={<AlertTriangle color="#F43F5E" size={22} />} iconBg="bg-rose-50" value={alerts.count} label="Perlu Perhatian" badge={alerts.count > 0} />
+          <View className="w-3" />
+          <MetricCard icon={<Activity color="#3B82F6" size={22} />} iconBg="bg-blue-50" value={activities.length} label="Update Terbaru" />
         </View>
 
         {/* PROBLEM PATIENTS */}
-        <View style={{ marginTop: 24 }}>
+        <View className="mt-6">
           <SectionHeader title="Pasien Bermasalah" onPressAll={() => navigation.navigate('MonitoringTab')} />
           {alerts.patients?.length > 0 ? (
             alerts.patients.map((patient) => (
               <PatientRow
                 key={patient.id}
                 patient={patient}
-                onPress={() => navigation.navigate('MonitoringTab', { screen: 'PatientDetail', params: { pasien_id: patient.id } })}
+                onPress={() => navigation.navigate('PatientDetail', { pasien_id: patient.id })}
               />
             ))
           ) : (
-            <View style={{ backgroundColor: C.teal100, borderWidth: 2, borderColor: C.teal200, borderRadius: 22, padding: 30, alignItems: 'center' }}>
-              <CheckCircle2 color={C.teal700} size={40} />
-              <Text style={{ fontSize: 15, fontWeight: '600', color: C.teal700, textAlign: 'center', marginTop: 12, lineHeight: 22 }}>
+            <View className="bg-[#E8F8F3] border-2 border-[#52C7A0] rounded-[22px] p-8 items-center">
+              <CheckCircle2 color="#0D7A6A" size={40} />
+              <Text className="text-[15px] font-bold text-[#0D7A6A] text-center mt-3 leading-[22px]">
                 Luar biasa! Semua pasien patuh hari ini.
               </Text>
             </View>
@@ -245,9 +211,9 @@ export default function DashboardHomeScreen({ route, navigation }) {
 
         {/* ACTIVITY */}
         {activities.length > 0 && (
-          <View style={{ marginTop: 24 }}>
+          <View className="mt-6">
             <SectionHeader title="Aktivitas Terbaru" />
-            <View style={{ backgroundColor: C.card, borderRadius: 22, borderWidth: 1, borderColor: C.border, overflow: 'hidden' }}>
+            <View className="bg-white rounded-[22px] border-[1.5px] border-[#EEF0EF] overflow-hidden">
               {activities.map((activity, idx) => (
                 <ActivityItem key={idx} activity={activity} isLast={idx === activities.length - 1} />
               ))}

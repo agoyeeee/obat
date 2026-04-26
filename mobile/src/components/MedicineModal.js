@@ -6,24 +6,27 @@ export default function MedicineModal({ medicine, onClose }) {
 
   return (
     <Modal visible={medicine !== null} transparent={true} animationType="fade" onRequestClose={onClose}>
-      <View style={{ flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.6)', justifyContent: 'center', padding: 20 }}>
-        <View style={{ backgroundColor: '#FFFFFF', borderRadius: 28, maxHeight: '80%', overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.25, shadowRadius: 20, elevation: 10 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 24, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' }}>
-            <Text style={{ fontSize: 20, fontWeight: '800', color: '#0F172A', flex: 1 }}>{medicine.nama_obat}</Text>
-            <Pressable onPress={onClose} style={({ pressed }) => ({ width: 36, height: 36, borderRadius: 18, backgroundColor: pressed ? '#E2E8F0' : '#F1F5F9', alignItems: 'center', justifyContent: 'center', marginLeft: 8 })}>
+      <View className="flex-1 bg-slate-900/60 justify-center p-5">
+        <View className="bg-white rounded-[28px] max-h-[80%] overflow-hidden shadow-xl shadow-black/20">
+          <View className="flex-row justify-between items-center p-6 border-b border-slate-100">
+            <Text className="text-xl font-extrabold text-slate-900 flex-1">{medicine.nama_obat}</Text>
+            <Pressable 
+              onPress={onClose} 
+              className="w-9 h-9 rounded-full bg-slate-100 items-center justify-center ml-2 active:bg-slate-200"
+            >
               <X color="#64748B" size={20} />
             </Pressable>
           </View>
           
-          <ScrollView style={{ padding: 24 }}>
+          <ScrollView className="p-6">
             {/* Merks */}
             {medicine.merks && medicine.merks.length > 0 && (
-              <View style={{ marginBottom: 20 }}>
-                <Text style={{ fontSize: 12, fontWeight: '700', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 8 }}>Merk Dagang</Text>
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+              <View className="mb-5">
+                <Text className="text-xs font-bold text-slate-400 uppercase tracking-[1.5px] mb-2">Merk Dagang</Text>
+                <View className="flex-row flex-wrap">
                   {medicine.merks.map((merk, index) => (
-                    <View key={index} style={{ backgroundColor: '#F0FDFA', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: '#CCFBF1', marginRight: 8, marginBottom: 8 }}>
-                      <Text style={{ color: '#0F766E', fontWeight: '700', fontSize: 14 }}>{merk.nama_merk}</Text>
+                    <View key={index} className="bg-teal-50 px-3 py-1.5 rounded-lg border border-teal-100 mr-2 mb-2">
+                      <Text className="text-teal-700 font-bold text-sm">{merk.nama_merk}</Text>
                     </View>
                   ))}
                 </View>
@@ -32,30 +35,30 @@ export default function MedicineModal({ medicine, onClose }) {
 
             {/* Dosis */}
             {(medicine.dosis_target || medicine.frekuensi_default) && (
-              <View style={{ marginBottom: 20, backgroundColor: '#F8FAFC', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: '#F1F5F9' }}>
-                <Text style={{ fontSize: 12, fontWeight: '700', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 4 }}>Dosis Target & Frekuensi</Text>
-                <Text style={{ color: '#334155', fontSize: 14, fontWeight: '600' }}>{medicine.dosis_target || '-'} • {medicine.frekuensi_default || '-'}</Text>
+              <View className="mb-5 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                <Text className="text-xs font-bold text-slate-400 uppercase tracking-[1.5px] mb-1">Dosis Target & Frekuensi</Text>
+                <Text className="text-slate-700 text-sm font-semibold">{medicine.dosis_target || '-'} • {medicine.frekuensi_default || '-'}</Text>
               </View>
             )}
 
-            <View style={{ marginBottom: 16, backgroundColor: '#F8FAFC', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: '#F1F5F9' }}>
-              <Text style={{ fontSize: 12, fontWeight: '700', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 6 }}>Indikasi</Text>
-              <Text style={{ color: '#334155', fontSize: 14, fontWeight: '500', lineHeight: 22 }}>{medicine.indikasi || '-'}</Text>
+            <View className="mb-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
+              <Text className="text-xs font-bold text-slate-400 uppercase tracking-[1.5px] mb-1.5">Indikasi</Text>
+              <Text className="text-slate-700 text-sm font-medium leading-relaxed">{medicine.indikasi || '-'}</Text>
             </View>
             
-            <View style={{ marginBottom: 16, backgroundColor: '#F8FAFC', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: '#F1F5F9' }}>
-              <Text style={{ fontSize: 12, fontWeight: '700', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 6 }}>Kontraindikasi</Text>
-              <Text style={{ color: '#334155', fontSize: 14, fontWeight: '500', lineHeight: 22 }}>{medicine.kontraindikasi || '-'}</Text>
+            <View className="mb-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
+              <Text className="text-xs font-bold text-slate-400 uppercase tracking-[1.5px] mb-1.5">Kontraindikasi</Text>
+              <Text className="text-slate-700 text-sm font-medium leading-relaxed">{medicine.kontraindikasi || '-'}</Text>
             </View>
             
-            <View style={{ marginBottom: 16, backgroundColor: '#F8FAFC', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: '#F1F5F9' }}>
-              <Text style={{ fontSize: 12, fontWeight: '700', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 6 }}>Efek Samping</Text>
-              <Text style={{ color: '#334155', fontSize: 14, fontWeight: '500', lineHeight: 22 }}>{medicine.efek_samping || '-'}</Text>
+            <View className="mb-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
+              <Text className="text-xs font-bold text-slate-400 uppercase tracking-[1.5px] mb-1.5">Efek Samping</Text>
+              <Text className="text-slate-700 text-sm font-medium leading-relaxed">{medicine.efek_samping || '-'}</Text>
             </View>
             
-            <View style={{ marginBottom: 32, backgroundColor: '#F8FAFC', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: '#F1F5F9' }}>
-              <Text style={{ fontSize: 12, fontWeight: '700', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 6 }}>Monitoring</Text>
-              <Text style={{ color: '#334155', fontSize: 14, fontWeight: '500', lineHeight: 22 }}>{medicine.monitoring || '-'}</Text>
+            <View className="mb-8 bg-slate-50 p-4 rounded-xl border border-slate-100">
+              <Text className="text-xs font-bold text-slate-400 uppercase tracking-[1.5px] mb-1.5">Monitoring</Text>
+              <Text className="text-slate-700 text-sm font-medium leading-relaxed">{medicine.monitoring || '-'}</Text>
             </View>
           </ScrollView>
         </View>
