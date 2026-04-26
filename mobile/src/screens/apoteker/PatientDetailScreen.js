@@ -100,25 +100,30 @@ export default function PatientDetailScreen({ route, navigation }) {
   }, []);
 
   return (
-    <View className="flex-1 bg-slate-50">
+    <View style={{ flex: 1, backgroundColor: '#F0F4F3' }}>
       <StatusBar style="dark" />
       
       {/* Header */}
-      <View className="bg-white pt-12 pb-4 px-5 border-b border-slate-100 shadow-sm z-10">
-        <View className="flex-row items-center mt-2 mb-4">
-          <Pressable onPress={() => navigation.goBack()} className="w-10 h-10 rounded-full bg-slate-50 items-center justify-center mr-3 active:bg-slate-100">
-            <ArrowLeft color="#0F172A" size={20} />
+      <View style={{ backgroundColor: '#FFFFFF', paddingTop: 64, paddingBottom: 24, paddingHorizontal: 24, borderBottomWidth: 1.5, borderBottomColor: '#EEF0EF' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
+          <Pressable 
+            onPress={() => navigation.goBack()} 
+            style={({ pressed }) => ({
+              width: 52, height: 52, borderRadius: 18, 
+              backgroundColor: pressed ? '#EEF0EF' : '#F4F6F5', 
+              alignItems: 'center', justifyContent: 'center', marginRight: 18
+            })}
+          >
+            <ArrowLeft color="#1A2820" size={28} />
           </Pressable>
-          <View>
-            <Text className="text-xl font-extrabold text-slate-900 tracking-tight">
-              Pantau Kepatuhan
-            </Text>
-            {pasien && <Text className="text-sm font-semibold text-slate-500">{pasien.nama}</Text>}
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 28, fontWeight: '900', color: '#1A2820', letterSpacing: -0.8 }}>Pantau Pasien</Text>
+            {pasien && <Text style={{ fontSize: 18, fontWeight: '700', color: '#0D7A6A' }}>{pasien.nama}</Text>}
           </View>
         </View>
 
         {/* Month Filter */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row">
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {filterOptions.map((opt, idx) => (
             <Pressable
               key={idx}
@@ -126,41 +131,43 @@ export default function PatientDetailScreen({ route, navigation }) {
                 setSelectedMonth(opt.month);
                 setSelectedYear(opt.year);
               }}
-              className={`mr-2 px-4 py-2 rounded-full border ${
-                selectedMonth === opt.month && selectedYear === opt.year
-                  ? 'bg-teal-600 border-teal-600'
-                  : 'bg-white border-slate-200'
-              }`}
+              style={{
+                paddingHorizontal: 20, paddingVertical: 12, borderRadius: 24, borderWidth: 2,
+                backgroundColor: selectedMonth === opt.month && selectedYear === opt.year ? '#0D7A6A' : '#FFFFFF',
+                borderColor: selectedMonth === opt.month && selectedYear === opt.year ? '#0D7A6A' : '#EEF0EF'
+              }}
             >
-              <Text className={`text-xs font-bold ${
-                selectedMonth === opt.month && selectedYear === opt.year ? 'text-white' : 'text-slate-500'
-              }`}>
+              <Text style={{ 
+                fontSize: 15, fontWeight: '800', 
+                color: selectedMonth === opt.month && selectedYear === opt.year ? '#FFFFFF' : '#9DB0AA' 
+              }}>
                 {opt.label}
               </Text>
             </Pressable>
           ))}
+          <View style={{ width: 12 }} />
         </ScrollView>
       </View>
 
       <ScrollView 
-        className="flex-1" 
-        contentContainerStyle={{ padding: 20, paddingBottom: 40, flexGrow: 1 }} 
+        style={{ flex: 1 }}
+        contentContainerStyle={{ padding: 22, paddingBottom: 64 }}
         showsVerticalScrollIndicator={false}
       >
         {isLoading ? (
-          <ActivityIndicator size="large" color="#0D9488" className="mt-10" />
+          <ActivityIndicator size="large" color="#0D7A6A" style={{ marginTop: 40 }} />
         ) : (
           <>
             {/* Rekap Obat Section */}
-            <View className="mb-8">
-              <View className="flex-row items-center justify-between mb-4">
-                <View className="flex-row items-center">
-                  <View className="w-8 h-8 rounded-full bg-teal-100 items-center justify-center mr-2">
-                    <Pill color="#0D9488" size={16} />
+            <View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <View style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: '#E8F8F3', alignItems: 'center', justifyContent: 'center', marginRight: 14 }}>
+                    <Pill color="#0D7A6A" size={24} />
                   </View>
-                  <Text className="text-lg font-extrabold text-slate-900">Obat</Text>
+                  <Text style={{ fontSize: 24, fontWeight: '900', color: '#1A2820' }}>Obat</Text>
                 </View>
-                <Text className="text-xs font-bold text-slate-400 uppercase">{MONTHS[selectedMonth]}</Text>
+                <Text style={{ fontSize: 14, fontWeight: '800', color: '#9DB0AA', textTransform: 'uppercase' }}>{MONTHS[selectedMonth]}</Text>
               </View>
 
               {filteredData.obat.length > 0 ? (
@@ -171,41 +178,46 @@ export default function PatientDetailScreen({ route, navigation }) {
                     <Pressable 
                       key={rekap.minggu_mulai} 
                       onPress={() => handleShowDetail('obat', rekap.minggu_mulai)}
-                      className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-3 flex-row items-center justify-between active:bg-slate-50"
+                      style={({ pressed }) => ({
+                        backgroundColor: pressed ? '#F8FAFA' : '#FFFFFF',
+                        borderRadius: 28, padding: 22, borderWidth: 1.5, borderColor: '#EEF0EF', marginBottom: 14,
+                        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+                        shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2
+                      })}
                     >
                       <View>
-                        <Text className="text-base font-black text-slate-900">Minggu ke-{weekNum}</Text>
-                        <Text className="text-[10px] font-bold text-slate-400 mb-1">{rekap.minggu_mulai}</Text>
-                        <View className={`self-start px-2 py-0.5 rounded-full ${isPatuh ? 'bg-emerald-100' : 'bg-rose-100'}`}>
-                          <Text className={`text-[10px] font-black ${isPatuh ? 'text-emerald-700' : 'text-rose-700'}`}>
-                            {rekap.status_kepatuhan}
+                        <Text style={{ fontSize: 22, fontWeight: '800', color: '#1A2820' }}>Minggu ke-{weekNum}</Text>
+                        <Text style={{ fontSize: 14, fontWeight: '700', color: '#9DB0AA', marginTop: 4 }}>{rekap.minggu_mulai}</Text>
+                        <View style={{ alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, marginTop: 10, backgroundColor: isPatuh ? '#E8F8F3' : '#FFF0F2' }}>
+                          <Text style={{ fontSize: 13, fontWeight: '900', color: isPatuh ? '#0D7A6A' : '#F43F5E', textTransform: 'uppercase' }}>
+                            {isPatuh ? 'PATUH' : 'TIDAK PATUH'}
                           </Text>
                         </View>
                       </View>
-                      <View className={`w-10 h-10 rounded-full items-center justify-center ${isPatuh ? 'bg-emerald-50' : 'bg-rose-50'}`}>
-                        {isPatuh ? <CheckCircle color="#10B981" size={20} /> : <XCircle color="#F43F5E" size={20} />}
+                      <View style={{ width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', backgroundColor: isPatuh ? '#E8F8F3' : '#FFF0F2' }}>
+                        {isPatuh ? <CheckCircle color="#10B981" size={32} /> : <XCircle color="#F43F5E" size={32} />}
                       </View>
                     </Pressable>
                   );
                 })
               ) : (
-                <View className="bg-white rounded-2xl p-8 items-center border border-dashed border-slate-200">
-                  <Calendar color="#CBD5E1" size={32} />
-                  <Text className="text-slate-400 font-bold mt-2">Tidak ada data obat</Text>
+                <View style={{ backgroundColor: '#FFFFFF', borderRadius: 28, padding: 40, alignItems: 'center', borderWidth: 1.5, borderColor: '#EEF0EF' }}>
+                  <Calendar color="#CBD5E1" size={56} />
+                  <Text style={{ color: '#9DB0AA', fontSize: 18, fontWeight: '700', marginTop: 16 }}>Tidak ada data obat</Text>
                 </View>
               )}
             </View>
 
             {/* Rekap Cairan Section */}
-            <View className="mb-6">
-              <View className="flex-row items-center justify-between mb-4">
-                <View className="flex-row items-center">
-                  <View className="w-8 h-8 rounded-full bg-blue-100 items-center justify-center mr-2">
-                    <Droplets color="#3B82F6" size={16} />
+            <View style={{ marginTop: 24 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <View style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: '#EFF4FF', alignItems: 'center', justifyContent: 'center', marginRight: 14 }}>
+                    <Droplets color="#3B82F6" size={24} />
                   </View>
-                  <Text className="text-lg font-extrabold text-slate-900">Cairan</Text>
+                  <Text style={{ fontSize: 24, fontWeight: '900', color: '#1A2820' }}>Cairan</Text>
                 </View>
-                <Text className="text-xs font-bold text-slate-400 uppercase">{MONTHS[selectedMonth]}</Text>
+                <Text style={{ fontSize: 14, fontWeight: '800', color: '#9DB0AA', textTransform: 'uppercase' }}>{MONTHS[selectedMonth]}</Text>
               </View>
 
               {filteredData.cairan.length > 0 ? (
@@ -216,27 +228,32 @@ export default function PatientDetailScreen({ route, navigation }) {
                     <Pressable 
                       key={rekap.minggu_mulai} 
                       onPress={() => handleShowDetail('cairan', rekap.minggu_mulai)}
-                      className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-3 flex-row items-center justify-between active:bg-slate-50"
+                      style={({ pressed }) => ({
+                        backgroundColor: pressed ? '#F8FAFA' : '#FFFFFF',
+                        borderRadius: 28, padding: 22, borderWidth: 1.5, borderColor: '#EEF0EF', marginBottom: 14,
+                        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+                        shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2
+                      })}
                     >
                       <View>
-                        <Text className="text-base font-black text-slate-900">Minggu ke-{weekNum}</Text>
-                        <Text className="text-[10px] font-bold text-slate-400 mb-1">{rekap.minggu_mulai}</Text>
-                        <View className={`self-start px-2 py-0.5 rounded-full ${isPatuh ? 'bg-emerald-100' : 'bg-rose-100'}`}>
-                          <Text className={`text-[10px] font-black ${isPatuh ? 'text-emerald-700' : 'text-rose-700'}`}>
-                            {rekap.status_kepatuhan}
+                        <Text style={{ fontSize: 22, fontWeight: '800', color: '#1A2820' }}>Minggu ke-{weekNum}</Text>
+                        <Text style={{ fontSize: 14, fontWeight: '700', color: '#9DB0AA', marginTop: 4 }}>{rekap.minggu_mulai}</Text>
+                        <View style={{ alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, marginTop: 10, backgroundColor: isPatuh ? '#E8F8F3' : '#FFF0F2' }}>
+                          <Text style={{ fontSize: 13, fontWeight: '900', color: isPatuh ? '#0D7A6A' : '#F43F5E', textTransform: 'uppercase' }}>
+                            {isPatuh ? 'PATUH' : 'TIDAK PATUH'}
                           </Text>
                         </View>
                       </View>
-                      <View className={`w-10 h-10 rounded-full items-center justify-center ${isPatuh ? 'bg-emerald-50' : 'bg-rose-50'}`}>
-                        {isPatuh ? <CheckCircle color="#10B981" size={20} /> : <XCircle color="#F43F5E" size={20} />}
+                      <View style={{ width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', backgroundColor: isPatuh ? '#E8F8F3' : '#FFF0F2' }}>
+                        {isPatuh ? <CheckCircle color="#10B981" size={32} /> : <XCircle color="#F43F5E" size={32} />}
                       </View>
                     </Pressable>
                   );
                 })
               ) : (
-                <View className="bg-white rounded-2xl p-8 items-center border border-dashed border-slate-200">
-                  <Calendar color="#CBD5E1" size={32} />
-                  <Text className="text-slate-400 font-bold mt-2">Tidak ada data cairan</Text>
+                <View style={{ backgroundColor: '#FFFFFF', borderRadius: 28, padding: 40, alignItems: 'center', borderWidth: 1.5, borderColor: '#EEF0EF' }}>
+                  <Calendar color="#CBD5E1" size={56} />
+                  <Text style={{ color: '#9DB0AA', fontSize: 18, fontWeight: '700', marginTop: 16 }}>Tidak ada data cairan</Text>
                 </View>
               )}
             </View>
@@ -245,68 +262,65 @@ export default function PatientDetailScreen({ route, navigation }) {
       </ScrollView>
 
       {/* Detail Modal */}
-      <Modal visible={showModal} transparent animationType="fade" onRequestClose={() => setShowModal(false)}>
-        <View className="flex-1 bg-slate-900/60 justify-center p-6">
-          <View className="bg-white rounded-[32px] overflow-hidden max-h-[80%]">
-            <View className="flex-row items-center justify-between p-6 border-b border-slate-100">
-              <View>
-                <Text className="text-xl font-black text-slate-900">Detail Kepatuhan</Text>
-                <Text className="text-xs font-bold text-slate-400">
-                  {detailData?.minggu_mulai ? `Minggu ${detailData.minggu_mulai}` : 'Memuat...'}
+      <Modal visible={showModal === true} transparent={true} animationType="slide" onRequestClose={() => setShowModal(false)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(26,40,32,0.85)', justifyContent: 'flex-end' }}>
+          <View style={{ backgroundColor: '#FFFFFF', borderTopLeftRadius: 40, borderTopRightRadius: 40, overflow: 'hidden', height: '85%' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 28, borderBottomWidth: 1.5, borderBottomColor: '#EEF0EF' }}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 26, fontWeight: '900', color: '#1A2820' }}>Detail Harian</Text>
+                <Text style={{ fontSize: 16, fontWeight: '700', color: '#9DB0AA', marginTop: 4 }}>
+                  {detailData?.minggu_mulai ? `Mulai ${detailData.minggu_mulai}` : 'Memuat...'}
                 </Text>
               </View>
-              <Pressable onPress={() => setShowModal(false)} className="w-10 h-10 rounded-full bg-slate-50 items-center justify-center">
-                <X color="#64748B" size={20} />
+              <Pressable 
+                onPress={() => setShowModal(false)} 
+                style={({ pressed }) => ({
+                  width: 56, height: 56, borderRadius: 28, 
+                  backgroundColor: pressed ? '#F4F6F5' : '#F0F4F3', 
+                  alignItems: 'center', justifyContent: 'center'
+                })}
+              >
+                <X color="#1A2820" size={28} />
               </Pressable>
             </View>
 
-            <ScrollView className="p-4">
+            <ScrollView style={{ padding: 22 }} contentContainerStyle={{ paddingBottom: 60 }}>
               {isDetailLoading ? (
-                <ActivityIndicator size="large" color="#0D9488" className="my-10" />
+                <ActivityIndicator size="large" color="#0D7A6A" style={{ marginTop: 40 }} />
               ) : (detailData?.detail_harian && Object.keys(detailData.detail_harian).length > 0) ? (
                 Object.entries(detailData.detail_harian).sort((a, b) => a[0].localeCompare(b[0])).map(([date, logs], dayIdx) => (
-                  <View key={dayIdx} className="mb-6">
-                    <View className="flex-row items-center mb-2 px-2">
-                      <View className="w-2 h-2 rounded-full bg-teal-500 mr-2" />
-                      <Text className="text-sm font-black text-slate-900 uppercase tracking-tighter">
+                  <View key={dayIdx} style={{ marginBottom: 32 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16, paddingHorizontal: 8 }}>
+                      <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#0D7A6A', marginRight: 12 }} />
+                      <Text style={{ fontSize: 20, fontWeight: '900', color: '#1A2820', textTransform: 'uppercase' }}>
                         {date}
                       </Text>
                     </View>
                     
                     {logs.map((item, idx) => (
-                      <View key={idx} className="bg-slate-50 rounded-2xl p-4 mb-2 border border-slate-100 flex-row items-center">
-                        <View className={`w-10 h-10 rounded-full items-center justify-center mr-4 ${
-                          detailData.type === 'obat' ? 'bg-teal-100' : 'bg-blue-100'
-                        }`}>
-                          {detailData.type === 'obat' ? <Pill color="#0D9488" size={20} /> : <Droplets color="#3B82F6" size={20} />}
+                      <View key={idx} style={{ backgroundColor: '#F8FAFA', borderRadius: 24, padding: 22, marginBottom: 12, borderWidth: 1.5, borderColor: '#EEF0EF', flexDirection: 'row', alignItems: 'center' }}>
+                        <View style={{ width: 56, height: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center', marginRight: 18, backgroundColor: detailData.type === 'obat' ? '#E8F8F3' : '#EFF4FF' }}>
+                          {detailData.type === 'obat' ? <Pill color="#0D7A6A" size={28} /> : <Droplets color="#3B82F6" size={28} />}
                         </View>
-                        <View className="flex-1">
-                          <Text className="text-sm font-black text-slate-900">
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ fontSize: 18, fontWeight: '800', color: '#1A2820' }}>
                             {detailData.type === 'obat' ? item.reminder_obat?.obat?.nama : `${item.reminder_cairan?.jumlah_ml} ml`}
                           </Text>
-                          <View className="flex-row items-center">
-                            <Text className="text-[10px] font-bold text-slate-500 uppercase">
-                              {item.waktu} {item.reminder_obat?.merk ? `• ${item.reminder_obat.merk.nama}` : ''}
-                            </Text>
-                          </View>
-                        </View>
-                        <View className={`px-2 py-1 rounded-full ${
-                          item.status === 'diminum' ? 'bg-emerald-100' : 'bg-rose-100'
-                        }`}>
-                          <Text className={`text-[10px] font-black ${
-                            item.status === 'diminum' ? 'text-emerald-700' : 'text-rose-700'
-                          }`}>
-                            {item.status === 'diminum' ? 'PATUH' : 'TERLEWAT'}
+                          <Text style={{ fontSize: 14, fontWeight: '700', color: '#9DB0AA', marginTop: 4, textTransform: 'uppercase' }}>
+                            {item.waktu} {item.reminder_obat?.merk ? `• ${item.reminder_obat.merk.nama}` : ''}
                           </Text>
+                        </View>
+                        <View style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 14, backgroundColor: item.status === 'diminum' ? '#E8F8F3' : '#FFF0F2' }}>
+                            {item.status === 'diminum' ? 'PATUH' : 'TIDAK PATUH'}
                         </View>
                       </View>
                     ))}
                   </View>
                 ))
               ) : (
-                <View className="items-center py-10">
-                  <Info color="#CBD5E1" size={48} />
-                  <Text className="text-slate-400 font-bold mt-4">Data harian tidak ditemukan</Text>
+                <View style={{ alignItems: 'center', paddingVertical: 60 }}>
+                  <Info color="#CBD5E1" size={64} />
+                  <Text style={{ color: '#9DB0AA', fontSize: 18, fontWeight: '700', marginTop: 20 }}>Data tidak ditemukan</Text>
                 </View>
               )}
             </ScrollView>

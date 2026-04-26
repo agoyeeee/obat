@@ -5,53 +5,59 @@ export default function ReminderItem({ item, onDetail, onMarkIntake }) {
   const isPatuh = item.skor_kepatuhan === 'PATUH';
 
   return (
-    <View className="border border-slate-200 rounded-[20px] p-4 mb-3 bg-slate-50">
-      <View className="flex-row justify-between items-center mb-3">
-        <Text className="text-base font-bold text-slate-900 flex-1">{item.obat?.nama_obat || 'Obat'}</Text>
-        <View className={`px-2.5 py-1 rounded-full ${isPatuh ? 'bg-emerald-100' : 'bg-red-100'}`}>
-          <Text className={`text-[11px] font-extrabold ${isPatuh ? 'text-emerald-700' : 'text-red-700'}`}>
+    <View style={{ borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 20, padding: 16, marginBottom: 12, backgroundColor: '#F8FAFC' }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+        <Text style={{ fontSize: 16, fontWeight: '700', color: '#0F172A', flex: 1 }}>{item.obat?.nama_obat || 'Obat'}</Text>
+        <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 99, backgroundColor: isPatuh ? '#D1FAE5' : '#FEE2E2' }}>
+          <Text style={{ fontSize: 11, fontWeight: '800', color: isPatuh ? '#047857' : '#B91C1C' }}>
             {item.skor_kepatuhan}
           </Text>
         </View>
       </View>
       
-      <View className="bg-white p-3 rounded-xl mb-3 space-y-2">
-        <View className="flex-row items-center">
+      <View style={{ backgroundColor: '#FFFFFF', padding: 12, borderRadius: 12, marginBottom: 12 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
           <Clock color="#64748B" size={14} />
-          <Text className="text-slate-500 text-sm font-medium ml-2">{item.waktu_konsumsi?.label_waktu}</Text>
+          <Text style={{ color: '#64748B', fontSize: 14, fontWeight: '500', marginLeft: 8 }}>{item.waktu_konsumsi?.label_waktu}</Text>
         </View>
-        <View className="flex-row items-center">
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
           <Pill color="#64748B" size={14} />
-          <Text className="text-slate-500 text-sm font-medium ml-2">{item.dosis} ({item.sediaan})</Text>
+          <Text style={{ color: '#64748B', fontSize: 14, fontWeight: '500', marginLeft: 8 }}>{item.dosis} ({item.sediaan})</Text>
         </View>
-        <View className="flex-row items-start">
+        <View style={{ flexDirection: 'row', alignItems: 'start' }}>
           <Info color="#64748B" size={14} style={{ marginTop: 2 }} />
-          <Text className="text-slate-500 text-sm font-medium ml-2 flex-1">{item.cara_pemakaian}</Text>
+          <Text style={{ color: '#64748B', fontSize: 14, fontWeight: '500', marginLeft: 8, flex: 1 }}>{item.cara_pemakaian}</Text>
         </View>
       </View>
 
-      <View className="flex-row gap-2">
+      <View style={{ flexDirection: 'row' }}>
         <Pressable 
-          className="flex-1 border-2 border-slate-200 rounded-xl py-2 items-center justify-center active:bg-slate-100" 
+          style={({ pressed }) => ({
+            flex: 1, borderWidth: 2, borderColor: '#E2E8F0', borderRadius: 12, paddingVertical: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? '#F1F5F9' : 'transparent'
+          })} 
           onPress={() => onDetail(item.obat)}
         >
-          <Text className="text-slate-700 font-bold text-[13px]">Detail</Text>
+          <Text style={{ color: '#334155', fontWeight: '700', fontSize: 13 }}>Detail</Text>
         </Pressable>
-
+        <View style={{ width: 8 }} />
         <Pressable 
-          className="flex-1 bg-emerald-500 rounded-xl py-2 flex-row items-center justify-center active:bg-emerald-600" 
+          style={({ pressed }) => ({
+            flex: 1, backgroundColor: '#10B981', borderRadius: 12, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.9 : 1
+          })} 
           onPress={() => onMarkIntake(item.id, 'PATUH')}
         >
           <Check color="#FFFFFF" size={14} />
-          <Text className="text-white font-bold text-[13px] ml-1.5">Patuh</Text>
+          <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 13, marginLeft: 6 }}>Patuh</Text>
         </Pressable>
-        
+        <View style={{ width: 8 }} />
         <Pressable 
-          className="flex-1 bg-red-500 rounded-xl py-2 flex-row items-center justify-center active:bg-red-600" 
+          style={({ pressed }) => ({
+            flex: 1, backgroundColor: '#EF4444', borderRadius: 12, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.9 : 1
+          })} 
           onPress={() => onMarkIntake(item.id, 'TIDAK_PATUH')}
         >
           <X color="#FFFFFF" size={14} />
-          <Text className="text-white font-bold text-[13px] ml-1.5">Tdk Patuh</Text>
+          <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 13, marginLeft: 6 }}>Tdk Patuh</Text>
         </Pressable>
       </View>
     </View>

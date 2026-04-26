@@ -38,107 +38,111 @@ export default function MonitoringListScreen({ navigation }) {
   }, [patients, searchQuery]);
 
   return (
-    <View className="flex-1 bg-slate-50">
+    <View style={{ flex: 1, backgroundColor: '#F0F4F3' }}>
       <StatusBar style="dark" />
       
       {/* HEADER */}
-      <View className="bg-white pt-12 pb-4 px-5 border-b border-slate-100 shadow-sm z-10">
-        <Text className="text-2xl font-black text-slate-900 tracking-tight mt-2">Pantau Pasien</Text>
-        <Text className="text-sm font-semibold text-slate-500 mt-1">Monitoring Kepatuhan Mingguan</Text>
+      <View style={{ backgroundColor: '#FFFFFF', paddingTop: 64, paddingBottom: 28, paddingHorizontal: 24, borderBottomWidth: 1.5, borderBottomColor: '#EEF0EF' }}>
+        <Text style={{ fontSize: 32, fontWeight: '900', color: '#1A2820', letterSpacing: -0.8 }}>Pantau Pasien</Text>
+        <Text style={{ fontSize: 16, fontWeight: '700', color: '#9DB0AA', marginTop: 4 }}>Monitoring Kepatuhan Mingguan</Text>
       </View>
 
       <ScrollView 
-        className="flex-1" 
-        contentContainerStyle={{ padding: 20, paddingBottom: 40, flexGrow: 1 }} 
+        style={{ flex: 1 }}
+        contentContainerStyle={{ padding: 22, paddingBottom: 64 }}
         showsVerticalScrollIndicator={false}
       >
         {/* SUMMARY CARDS */}
-        <View className="flex-row flex-wrap justify-between mb-6">
-          <View className="w-full bg-white p-5 rounded-2xl shadow-sm border border-slate-100 mb-4">
-            <View className="flex-row items-center justify-between">
+        <View style={{ marginBottom: 20 }}>
+          <View style={{ backgroundColor: '#FFFFFF', borderRadius: 28, padding: 28, borderWidth: 1.5, borderColor: '#EEF0EF', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2, marginBottom: 16 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <View>
-                <Text className="text-3xl font-black text-slate-900">{totalPatients}</Text>
-                <Text className="text-sm font-bold text-slate-500 mt-1">Total Monitoring</Text>
+                <Text style={{ fontSize: 48, fontWeight: '900', color: '#1A2820', lineHeight: 54 }}>{totalPatients}</Text>
+                <Text style={{ fontSize: 16, fontWeight: '800', color: '#9DB0AA', textTransform: 'uppercase', letterSpacing: 1, marginTop: 4 }}>Total Monitoring</Text>
               </View>
-              <View className="w-12 h-12 rounded-full bg-blue-50 items-center justify-center">
-                <Users color="#3B82F6" size={24} />
+              <View style={{ width: 64, height: 64, borderRadius: 20, backgroundColor: '#EFF4FF', alignItems: 'center', justifyContent: 'center' }}>
+                <Users color="#3B82F6" size={32} />
               </View>
             </View>
           </View>
           
-          <View className="w-[48%] bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
-            <View className="w-10 h-10 rounded-full bg-emerald-50 items-center justify-center mb-3">
-              <CheckCircle color="#10B981" size={20} />
+          <View style={{ flexDirection: 'row' }}>
+            <View style={{ flex: 1, backgroundColor: '#FFFFFF', borderRadius: 24, padding: 22, borderWidth: 1.5, borderColor: '#EEF0EF', alignItems: 'center' }}>
+              <View style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: '#E8F8F3', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
+                <CheckCircle color="#10B981" size={24} />
+              </View>
+              <Text style={{ fontSize: 36, fontWeight: '900', color: '#10B981', textAlign: 'center' }}>{patuhCount}</Text>
+              <Text style={{ fontSize: 13, fontWeight: '800', color: '#9DB0AA', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 4, textAlign: 'center' }}>Patuh</Text>
             </View>
-            <Text className="text-3xl font-black text-emerald-600">{patuhCount}</Text>
-            <Text className="text-sm font-bold text-slate-500 mt-1">Status Patuh</Text>
-          </View>
 
-          <View className="w-[48%] bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
-            <View className="w-10 h-10 rounded-full bg-rose-50 items-center justify-center mb-3">
-              <XCircle color="#F43F5E" size={20} />
+            <View style={{ flex: 1, backgroundColor: '#FFFFFF', borderRadius: 24, padding: 22, borderWidth: 1.5, borderColor: '#EEF0EF', alignItems: 'center' }}>
+              <View style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: '#FFF0F2', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
+                <XCircle color="#F43F5E" size={24} />
+              </View>
+              <Text style={{ fontSize: 36, fontWeight: '900', color: '#F43F5E', textAlign: 'center' }}>{tidakPatuhCount}</Text>
+              <Text style={{ fontSize: 13, fontWeight: '800', color: '#9DB0AA', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 4, textAlign: 'center' }}>Tidak Patuh</Text>
             </View>
-            <Text className="text-3xl font-black text-rose-600">{tidakPatuhCount}</Text>
-            <Text className="text-sm font-bold text-slate-500 mt-1">Perlu Perhatian</Text>
           </View>
         </View>
 
         {/* SEARCH BAR */}
-        <View className="flex-row items-center bg-white border border-slate-100 shadow-sm rounded-xl px-4 py-3 mb-6">
-          <Search color="#94A3B8" size={20} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', borderWidth: 1.5, borderColor: '#EEF0EF', borderRadius: 20, paddingHorizontal: 20, paddingVertical: 18, marginBottom: 20 }}>
+          <Search color="#9DB0AA" size={28} />
           <TextInput
-            className="flex-1 ml-3 text-slate-900 text-base font-medium"
+            style={{ flex: 1, marginLeft: 14, fontSize: 18, fontWeight: '600', color: '#1A2820' }}
             placeholder="Cari pasien untuk dipantau..."
-            placeholderTextColor="#94A3B8"
+            placeholderTextColor="#9DB0AA"
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
         </View>
 
         {isLoading ? (
-          <ActivityIndicator size="large" color="#0D9488" className="mt-10" />
+          <ActivityIndicator size="large" color="#0D7A6A" style={{ marginTop: 40 }} />
         ) : filteredPatients.length > 0 ? (
-          <View className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+          <View style={{ backgroundColor: '#FFFFFF', borderRadius: 28, borderWidth: 1.5, borderColor: '#EEF0EF', overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 12, elevation: 3 }}>
             {filteredPatients.map((item, index) => {
               const status = item.rekapan_obat?.[0]?.status_kepatuhan;
               const isPatuh = status === 'PATUH';
-              const isTidakPatuh = status === 'TIDAK_PATUH';
               
               return (
                 <Pressable 
                   key={item.id} 
-                  className={`flex-row items-center p-4 active:bg-slate-50 ${index !== filteredPatients.length - 1 ? 'border-b border-slate-100' : ''}`}
+                  style={({ pressed }) => ({
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    padding: 22,
+                    backgroundColor: pressed ? '#F8FAFA' : '#FFFFFF',
+                    borderBottomWidth: index !== filteredPatients.length - 1 ? 1.5 : 0,
+                    borderBottomColor: '#EEF0EF'
+                  })}
                   onPress={() => navigation.navigate('PatientDetail', { pasien_id: item.id })}
                 >
-                  <View className="w-12 h-12 rounded-full bg-teal-50 items-center justify-center mr-4">
-                    <Activity color="#0D9488" size={20} />
+                  <View style={{ width: 64, height: 64, borderRadius: 20, backgroundColor: '#E8F8F3', alignItems: 'center', justifyContent: 'center', marginRight: 18 }}>
+                    <Activity color="#0D7A6A" size={32} />
                   </View>
-                  <View className="flex-1">
-                    <Text className="text-base font-bold text-slate-900">{item.nama}</Text>
-                    <Text className="text-xs font-bold text-slate-400 mt-0.5">Terakhir diperbarui: {new Date().toLocaleDateString('id-ID')}</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 22, fontWeight: '800', color: '#1A2820' }}>{item.nama}</Text>
+                    <Text style={{ fontSize: 14, fontWeight: '700', color: '#9DB0AA', marginTop: 4 }}>ID: {item.id}</Text>
                   </View>
                   
                   {status ? (
-                    <View className={`px-3 py-1.5 rounded-full mr-2 ${isPatuh ? 'bg-emerald-100' : 'bg-rose-100'}`}>
-                      <Text className={`text-[10px] font-black ${isPatuh ? 'text-emerald-700' : 'text-rose-700'}`}>
-                        {status}
+                    <View style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, marginRight: 12, backgroundColor: isPatuh ? '#E8F8F3' : '#FFF0F2' }}>
+                      <Text style={{ fontSize: 13, fontWeight: '900', color: isPatuh ? '#0D7A6A' : '#F43F5E', textTransform: 'uppercase' }}>
+                        {status === 'TIDAK_PATUH' ? 'TIDAK PATUH' : status}
                       </Text>
                     </View>
-                  ) : (
-                    <View className="px-3 py-1.5 rounded-full bg-slate-100 mr-2">
-                      <Text className="text-[10px] font-black text-slate-400">NO DATA</Text>
-                    </View>
-                  )}
+                  ) : null}
                   
-                  <ChevronRight color="#CBD5E1" size={20} />
+                  <ChevronRight color="#CBD5E1" size={28} />
                 </Pressable>
               );
             })}
           </View>
         ) : (
-          <View className="bg-white rounded-2xl p-10 items-center border border-slate-100 shadow-sm">
-            <Calendar color="#CBD5E1" size={48} />
-            <Text className="text-slate-400 font-bold mt-4 text-center">Tidak ada data pasien yang ditemukan</Text>
+          <View style={{ backgroundColor: '#FFFFFF', borderRadius: 28, padding: 40, alignItems: 'center', borderWidth: 1.5, borderColor: '#EEF0EF' }}>
+            <Calendar color="#CBD5E1" size={64} />
+            <Text style={{ color: '#9DB0AA', fontSize: 18, fontWeight: '700', marginTop: 20, textAlign: 'center' }}>Tidak ada data pasien</Text>
           </View>
         )}
       </ScrollView>

@@ -1,5 +1,5 @@
-import './global.css';
-import { Text, TextInput } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AppNavigator from './src/navigation/AppNavigator';
 import { 
   useFonts, 
@@ -10,32 +10,6 @@ import {
   Inter_800ExtraBold, 
   Inter_900Black 
 } from '@expo-google-fonts/inter';
-
-// Set global default font family
-const customTextProps = {
-  style: {
-    fontFamily: 'Inter_400Regular',
-  }
-};
-
-const customTextInputProps = {
-  style: {
-    fontFamily: 'Inter_400Regular',
-  }
-};
-
-// Apply to Text and TextInput (safe hack for React Native)
-if (Text.defaultProps) {
-  Text.defaultProps.style = { ...Text.defaultProps.style, ...customTextProps.style };
-} else {
-  Text.defaultProps = customTextProps;
-}
-
-if (TextInput.defaultProps) {
-  TextInput.defaultProps.style = { ...TextInput.defaultProps.style, ...customTextInputProps.style };
-} else {
-  TextInput.defaultProps = customTextInputProps;
-}
 
 export default function App() {
   let [fontsLoaded] = useFonts({
@@ -48,8 +22,14 @@ export default function App() {
   });
 
   if (!fontsLoaded) {
-    return null; // Or a loading screen
+    return null;
   }
 
-  return <AppNavigator />;
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <AppNavigator />
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
+  );
 }

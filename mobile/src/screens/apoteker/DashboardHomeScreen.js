@@ -2,18 +2,120 @@ import { useState, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import api from '../../services/api';
-import { 
-  Bell, 
-  AlertTriangle, 
-  Activity, 
-  CheckCircle2, 
-  Clock, 
-  ChevronRight, 
-  UserMinus, 
+import {
+  AlertTriangle,
+  Activity,
+  CheckCircle2,
+  Clock,
+  ChevronRight,
+  UserMinus,
   UserPlus,
   LogOut,
-  ShieldPlus
+  Pill,
 } from 'lucide-react-native';
+
+const C = {
+  bg: '#F0F4F3',
+  card: '#FFFFFF',
+  border: '#EEF0EF',
+  teal900: '#1A2820',
+  teal700: '#0D7A6A',
+  teal600: '#0D9488',
+  teal100: '#E8F8F3',
+  teal200: '#52C7A0',
+  muted: '#9DB0AA',
+  rose: '#F43F5E',
+  roseBg: '#FFF0F2',
+  roseBorder: '#FFD6DB',
+  blue: '#3B82F6',
+  blueBg: '#EFF4FF',
+};
+
+function SectionHeader({ title, onPressAll }) {
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+      <Text style={{ fontSize: 24, fontWeight: '800', color: C.teal900, letterSpacing: -0.5 }}>
+        {title}
+      </Text>
+      {onPressAll && (
+        <Pressable onPress={onPressAll} style={{ paddingVertical: 8, paddingLeft: 12 }}>
+          <Text style={{ fontSize: 16, fontWeight: '700', color: C.teal600 }}>Lihat Semua →</Text>
+        </Pressable>
+      )}
+    </View>
+  );
+}
+
+function MetricCard({ icon, iconBg, value, label, badge }) {
+  return (
+    <View style={{ backgroundColor: '#FFFFFF', borderRadius: 28, borderWidth: 1.5, borderColor: '#EEF0EF', flex: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 12, elevation: 3, padding: 22, alignItems: 'center' }}>
+      <View style={{ width: 56, height: 56, borderRadius: 18, backgroundColor: iconBg, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+        {icon}
+      </View>
+      <Text style={{ fontSize: 42, fontWeight: '800', color: C.teal900, lineHeight: 46, textAlign: 'center' }}>{value ?? 0}</Text>
+      <Text style={{ fontSize: 13, fontWeight: '700', color: C.muted, textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 8, textAlign: 'center' }}>
+        {label}
+      </Text>
+      {badge && (
+        <View style={{ alignSelf: 'flex-start', backgroundColor: C.rose, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6, marginTop: 12 }}>
+          <Text style={{ color: '#fff', fontSize: 13, fontWeight: '900', letterSpacing: 0.5 }}>PENTING</Text>
+        </View>
+      )}
+    </View>
+  );
+}
+
+function PatientRow({ patient, onPress }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => ({
+        backgroundColor: pressed ? '#FFF9F9' : C.card,
+        borderRadius: 24,
+        borderTopLeftRadius: 0,
+        borderBottomLeftRadius: 0,
+        padding: 20,
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 14,
+        borderWidth: 1.5,
+        borderColor: C.border,
+        borderLeftWidth: 8,
+        borderLeftColor: C.rose,
+        shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2
+      })}
+    >
+      <View style={{ width: 64, height: 64, borderRadius: 20, backgroundColor: C.roseBg, borderWidth: 1.5, borderColor: C.roseBorder, alignItems: 'center', justifyContent: 'center', marginRight: 18 }}>
+        <UserMinus color={C.rose} size={32} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={{ fontSize: 22, fontWeight: '800', color: C.teal900 }}>{patient.nama}</Text>
+        <Text style={{ fontSize: 16, fontWeight: '800', color: C.rose, textTransform: 'uppercase', letterSpacing: 0.8, marginTop: 6 }}>
+          ● {patient.last_status}
+        </Text>
+      </View>
+      <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: '#F4F6F5', alignItems: 'center', justifyContent: 'center' }}>
+        <ChevronRight color={C.muted} size={24} />
+      </View>
+    </Pressable>
+  );
+}
+
+function ActivityItem({ activity, isLast }) {
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', padding: 20, borderBottomWidth: isLast ? 0 : 1, borderBottomColor: '#F4F6F5' }}>
+      <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: activity.type === 'new_patient' ? C.teal100 : '#F4F6F5', alignItems: 'center', justifyContent: 'center', marginRight: 18 }}>
+        {activity.type === 'new_patient' ? <UserPlus color={C.teal700} size={28} /> : <Clock color="#64748B" size={28} />}
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={{ fontSize: 18, fontWeight: '700', color: C.teal900 }}>{activity.title}</Text>
+        <Text style={{ fontSize: 14, fontWeight: '700', color: C.muted, textTransform: 'uppercase', letterSpacing: 0.8, marginTop: 4 }}>
+          {activity.time}
+        </Text>
+      </View>
+    </View>
+  );
+}
 
 export default function DashboardHomeScreen({ route, navigation }) {
   const { user, onLogout } = route.params || {};
@@ -33,166 +135,125 @@ export default function DashboardHomeScreen({ route, navigation }) {
     }
   }, []);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  const onRefresh = () => {
-    setIsRefreshing(true);
-    fetchData();
-  };
+  useEffect(() => { fetchData(); }, [fetchData]);
+  const onRefresh = () => { setIsRefreshing(true); fetchData(); };
 
   if (isLoading) {
     return (
-      <View className="flex-1 bg-slate-50 justify-center items-center">
-        <ActivityIndicator size="large" color="#0D9488" />
+      <View style={{ flex: 1, backgroundColor: C.bg, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color={C.teal700} />
       </View>
     );
   }
 
+  const today = data?.today || {};
+  const alerts = data?.alerts || {};
+  const activities = data?.recent_activity || [];
+
   return (
-    <View className="flex-1 bg-slate-50">
+    <View style={{ flex: 1, backgroundColor: C.bg }}>
       <StatusBar style="dark" />
-      
+
       {/* HEADER */}
-      <View className="bg-white pt-14 pb-6 px-6 border-b border-slate-100 shadow-sm z-10">
-        <View className="flex-row items-center justify-between">
+      <View style={{ backgroundColor: C.card, paddingTop: 64, paddingBottom: 28, paddingHorizontal: 24, borderBottomWidth: 1.5, borderBottomColor: C.border }}>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
           <View>
-            <Text className="text-sm font-bold text-slate-400 uppercase tracking-widest">
+            <Text style={{ fontSize: 14, fontWeight: '700', color: C.muted, textTransform: 'uppercase', letterSpacing: 1.5 }}>
               {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
             </Text>
-            <Text className="text-3xl font-black text-slate-900 tracking-tight mt-1">
-              Halo, {user?.nama?.split(' ')[0] || 'Apoteker'}
+            <Text style={{ fontSize: 36, fontWeight: '800', color: C.teal900, letterSpacing: -0.8, marginTop: 4 }}>
+              Halo, {user?.nama?.split(' ')[0] || 'Apoteker'} 👋
             </Text>
           </View>
-          <Pressable 
+          <Pressable
             onPress={onLogout}
-            className="w-12 h-12 rounded-2xl bg-rose-50 items-center justify-center border border-rose-100 active:bg-rose-100"
+            style={({ pressed }) => ({
+              width: 56, height: 56, borderRadius: 18,
+              backgroundColor: pressed ? '#FFE4E8' : C.roseBg,
+              alignItems: 'center', justifyContent: 'center',
+              borderWidth: 1.5, borderColor: C.roseBorder,
+            })}
           >
-            <LogOut color="#F43F5E" size={20} />
+            <LogOut color={C.rose} size={24} />
           </Pressable>
         </View>
       </View>
 
-      <ScrollView 
-        className="flex-1"
-        contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ padding: 22, paddingBottom: 64 }}
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
       >
-        
-        {/* MAIN ACTION CARD: REMINDER TODAY */}
-        <View className="bg-teal-600 rounded-[32px] p-6 shadow-xl shadow-teal-900/20 mb-6 overflow-hidden">
-          <View className="flex-row justify-between items-start mb-6">
-            <View>
-              <Text className="text-teal-100 font-bold text-sm uppercase tracking-wider">Aktivitas Hari Ini</Text>
-              <Text className="text-white text-4xl font-black mt-1">{data?.today?.total || 0}</Text>
-              <Text className="text-teal-100 font-semibold">Total Jadwal Obat</Text>
-            </View>
-            <View className="w-12 h-12 rounded-2xl bg-white/20 items-center justify-center">
-              <Bell color="#FFFFFF" size={24} />
-            </View>
+        {/* MAIN CARD */}
+        <View style={{ backgroundColor: C.teal700, borderRadius: 32, padding: 28, shadowColor: C.teal900, shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.2, shadowRadius: 20, elevation: 8 }}>
+          <View style={{ position: 'absolute', top: -35, right: -35, width: 140, height: 140, borderRadius: 70, backgroundColor: 'rgba(255,255,255,0.06)' }} />
+          <View style={{ position: 'absolute', top: 28, right: 28, width: 64, height: 64, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' }}>
+            <Pill color="#fff" size={32} />
           </View>
-
-          <View className="flex-row bg-black/10 rounded-2xl p-4 justify-between items-center">
-            <View className="items-center flex-1 border-r border-white/10">
-              <Text className="text-white text-xl font-black">{data?.today?.taken || 0}</Text>
-              <Text className="text-teal-100 text-[10px] font-bold uppercase">Diminum</Text>
-            </View>
-            <View className="items-center flex-1 border-r border-white/10">
-              <Text className="text-rose-200 text-xl font-black">{data?.today?.missed || 0}</Text>
-              <Text className="text-teal-100 text-[10px] font-bold uppercase">Terlewat</Text>
-            </View>
-            <View className="items-center flex-1">
-              <Text className="text-white text-xl font-black">{data?.today?.pending || 0}</Text>
-              <Text className="text-teal-100 text-[10px] font-bold uppercase">Menunggu</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* ALERT CARD: PERLU PERHATIAN */}
-        <View className="flex-row gap-4 mb-6">
-          <View className="flex-1 bg-white rounded-3xl p-5 shadow-sm border border-slate-100 border-l-4 border-l-rose-500">
-            <View className="flex-row items-center justify-between mb-3">
-              <View className="w-10 h-10 rounded-xl bg-rose-50 items-center justify-center">
-                <AlertTriangle color="#F43F5E" size={20} />
-              </View>
-              {data?.alerts?.count > 0 && (
-                <View className="bg-rose-500 px-2 py-0.5 rounded-full">
-                  <Text className="text-white text-[10px] font-black">URGENT</Text>
-                </View>
-              )}
-            </View>
-            <Text className="text-3xl font-black text-slate-900">{data?.alerts?.count || 0}</Text>
-            <Text className="text-xs font-bold text-slate-500 uppercase mt-1">Perlu Perhatian</Text>
-          </View>
-
-          <View className="flex-1 bg-white rounded-3xl p-5 shadow-sm border border-slate-100 border-l-4 border-l-blue-500">
-            <View className="w-10 h-10 rounded-xl bg-blue-50 items-center justify-center mb-3">
-              <Activity color="#3B82F6" size={20} />
-            </View>
-            <Text className="text-3xl font-black text-slate-900">{data?.recent_activity?.length || 0}</Text>
-            <Text className="text-xs font-bold text-slate-500 uppercase mt-1">Update Terbaru</Text>
-          </View>
-        </View>
-
-        {/* LIST: PASIEN BERMASALAH HARI INI */}
-        <View className="mb-6">
-          <View className="flex-row items-center justify-between mb-4">
-            <Text className="text-xl font-black text-slate-900 tracking-tight">Pasien Bermasalah Hari Ini</Text>
-            <Pressable onPress={() => navigation.navigate('MonitoringTab')}>
-              <Text className="text-sm font-bold text-teal-600">Lihat Semua</Text>
-            </Pressable>
-          </View>
-
-          {data?.alerts?.patients?.length > 0 ? (
-            data.alerts.patients.map((patient) => (
-              <Pressable 
-                key={patient.id}
-                onPress={() => navigation.navigate('MonitoringTab', { screen: 'PatientDetail', params: { pasien_id: patient.id } })}
-                className="bg-white rounded-2xl p-4 mb-3 shadow-sm border border-slate-100 flex-row items-center active:bg-slate-50"
-              >
-                <View className="w-12 h-12 rounded-full bg-rose-50 items-center justify-center mr-4 border border-rose-100">
-                  <UserMinus color="#F43F5E" size={24} />
-                </View>
-                <View className="flex-1">
-                  <Text className="text-base font-black text-slate-900">{patient.nama}</Text>
-                  <Text className="text-xs font-bold text-rose-500 mt-0.5">Status: {patient.last_status.toUpperCase()}</Text>
-                </View>
-                <View className="w-8 h-8 rounded-full bg-slate-50 items-center justify-center">
-                  <ChevronRight color="#CBD5E1" size={18} />
-                </View>
-              </Pressable>
-            ))
-          ) : (
-            <View className="bg-emerald-50 rounded-2xl p-8 items-center border border-dashed border-emerald-200">
-              <CheckCircle2 color="#10B981" size={40} />
-              <Text className="text-emerald-700 font-bold mt-3 text-center">Luar Biasa! Semua pasien patuh hari ini.</Text>
-            </View>
-          )}
-        </View>
-
-        {/* OPTIONAL: AKTIVITAS TERBARU */}
-        <View>
-          <Text className="text-xl font-black text-slate-900 tracking-tight mb-4">Aktivitas Terbaru</Text>
-          <View className="bg-white rounded-3xl p-2 border border-slate-100">
-            {data?.recent_activity?.map((activity, idx) => (
-              <View 
-                key={idx} 
-                className={`flex-row items-center p-4 ${idx !== data.recent_activity.length - 1 ? 'border-b border-slate-50' : ''}`}
-              >
-                <View className="w-10 h-10 rounded-full bg-slate-100 items-center justify-center mr-4">
-                  {activity.type === 'new_patient' ? <UserPlus color="#64748B" size={18} /> : <Clock color="#64748B" size={18} />}
-                </View>
-                <View className="flex-1">
-                  <Text className="text-sm font-bold text-slate-900">{activity.title}</Text>
-                  <Text className="text-[10px] font-semibold text-slate-400 mt-0.5 uppercase">{activity.time}</Text>
-                </View>
+          <Text style={{ fontSize: 14, fontWeight: '800', color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: 1.2 }}>
+            Aktivitas Hari Ini
+          </Text>
+          <Text style={{ fontSize: 64, fontWeight: '900', color: '#fff', lineHeight: 72, marginVertical: 6 }}>
+            {today.total ?? 0}
+          </Text>
+          <Text style={{ fontSize: 18, color: 'rgba(255,255,255,0.85)', fontWeight: '700', marginBottom: 28 }}>
+            Total Jadwal Obat
+          </Text>
+          <View style={{ flexDirection: 'row', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: 24, paddingVertical: 20 }}>
+            {[
+              { num: today.taken ?? 0, label: 'Diminum', color: '#fff' },
+              { num: today.missed ?? 0, label: 'Tidak Patuh', color: '#FFA0AA' },
+              { num: today.pending ?? 0, label: 'Antri', color: '#fff' },
+            ].map(({ num, label, color }, i, arr) => (
+              <View key={label} style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4, borderRightWidth: i < arr.length - 1 ? 1 : 0, borderRightColor: 'rgba(255,255,255,0.15)' }}>
+                <Text style={{ fontSize: 30, fontWeight: '900', color, textAlign: 'center' }}>{num}</Text>
+                <Text style={{ fontSize: 11, fontWeight: '800', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 4, textAlign: 'center' }}>
+                  {label}
+                </Text>
               </View>
             ))}
           </View>
         </View>
 
+        {/* METRIC CARDS */}
+        <View style={{ flexDirection: 'row', marginTop: 20 }}>
+          <MetricCard icon={<AlertTriangle color={C.rose} size={22} />} iconBg={C.roseBg} value={alerts.count} label="Perlu Perhatian" badge={alerts.count > 0} />
+          <View style={{ width: 12 }} />
+          <MetricCard icon={<Activity color={C.blue} size={22} />} iconBg={C.blueBg} value={activities.length} label="Update Terbaru" />
+        </View>
+
+        {/* PROBLEM PATIENTS */}
+        <View style={{ marginTop: 24 }}>
+          <SectionHeader title="Pasien Bermasalah" onPressAll={() => navigation.navigate('MonitoringTab')} />
+          {alerts.patients?.length > 0 ? (
+            alerts.patients.map((patient) => (
+              <PatientRow
+                key={patient.id}
+                patient={patient}
+                onPress={() => navigation.navigate('MonitoringTab', { screen: 'PatientDetail', params: { pasien_id: patient.id } })}
+              />
+            ))
+          ) : (
+            <View style={{ backgroundColor: C.teal100, borderWidth: 2, borderColor: C.teal200, borderRadius: 22, padding: 30, alignItems: 'center' }}>
+              <CheckCircle2 color={C.teal700} size={40} />
+              <Text style={{ fontSize: 15, fontWeight: '600', color: C.teal700, textAlign: 'center', marginTop: 12, lineHeight: 22 }}>
+                Luar biasa! Semua pasien patuh hari ini.
+              </Text>
+            </View>
+          )}
+        </View>
+
+        {/* ACTIVITY */}
+        {activities.length > 0 && (
+          <View style={{ marginTop: 24 }}>
+            <SectionHeader title="Aktivitas Terbaru" />
+            <View style={{ backgroundColor: C.card, borderRadius: 22, borderWidth: 1, borderColor: C.border, overflow: 'hidden' }}>
+              {activities.map((activity, idx) => (
+                <ActivityItem key={idx} activity={activity} isLast={idx === activities.length - 1} />
+              ))}
+            </View>
+          </View>
+        )}
       </ScrollView>
     </View>
   );

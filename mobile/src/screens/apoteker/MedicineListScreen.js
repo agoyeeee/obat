@@ -24,49 +24,56 @@ export default function MedicineListScreen() {
   }, [medicines, searchQuery]);
 
   return (
-    <View className="flex-1 bg-slate-50 pt-12 px-5 pb-4">
-      <Text className="text-2xl font-extrabold text-slate-900 mb-4 tracking-tight">Ensiklopedia Obat</Text>
+    <View style={{ flex: 1, backgroundColor: '#F0F4F3', paddingTop: 64, paddingHorizontal: 22 }}>
+      <Text style={{ fontSize: 32, fontWeight: '900', color: '#1A2820', marginBottom: 20, letterSpacing: -0.8 }}>Ensiklopedia Obat</Text>
       
       {/* Search Bar */}
-      <View className="flex-row items-center bg-white border border-slate-100 shadow-sm rounded-xl px-4 py-3 mb-6">
-        <Search color="#94A3B8" size={20} />
+      <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', borderWidth: 1.5, borderColor: '#EEF0EF', borderRadius: 20, paddingHorizontal: 20, paddingVertical: 18, marginBottom: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 }}>
+        <Search color="#9DB0AA" size={28} />
         <TextInput
-          className="flex-1 ml-3 text-slate-900 text-base font-medium"
+          style={{ flex: 1, marginLeft: 14, fontSize: 18, fontWeight: '600', color: '#1A2820' }}
           placeholder="Cari nama atau indikasi obat..."
-          placeholderTextColor="#94A3B8"
+          placeholderTextColor="#9DB0AA"
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
       </View>
 
-      <View className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex-1">
+      <View style={{ backgroundColor: '#FFFFFF', borderRadius: 28, borderWidth: 1.5, borderColor: '#EEF0EF', overflow: 'hidden', flex: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 12, elevation: 3 }}>
         {filteredMedicines.length > 0 ? (
           <FlatList
             data={filteredMedicines}
           keyExtractor={item => String(item.id)}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 20 }}
+          contentContainerStyle={{ paddingBottom: 30 }}
           renderItem={({ item, index }) => (
             <Pressable 
-              className={`flex-row items-center p-4 active:bg-slate-50 ${index !== medicines.length - 1 ? 'border-b border-slate-100' : ''}`}
+              style={({ pressed }) => ({
+                flexDirection: 'row',
+                alignItems: 'center',
+                padding: 22,
+                backgroundColor: pressed ? '#F8FAFA' : '#FFFFFF',
+                borderBottomWidth: index !== filteredMedicines.length - 1 ? 1.5 : 0,
+                borderBottomColor: '#EEF0EF'
+              })}
               onPress={() => setSelectedMedicine(item)}
             >
-              <View className="w-12 h-12 rounded-full bg-teal-50 items-center justify-center mr-4">
-                <Pill color="#0D9488" size={24} />
+              <View style={{ width: 64, height: 64, borderRadius: 20, backgroundColor: '#E8F8F3', alignItems: 'center', justifyContent: 'center', marginRight: 18 }}>
+                <Pill color="#0D7A6A" size={32} />
               </View>
-              <View className="flex-1">
-                <Text className="text-base font-bold text-slate-900">{item.nama_obat}</Text>
-                <Text className="text-sm font-medium text-slate-500 mt-0.5" numberOfLines={1}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 22, fontWeight: '800', color: '#1A2820' }}>{item.nama_obat}</Text>
+                <Text style={{ fontSize: 16, fontWeight: '700', color: '#9DB0AA', marginTop: 6 }} numberOfLines={2}>
                   {item.indikasi || 'Tidak ada info indikasi.'}
                 </Text>
               </View>
-              <ChevronRight color="#CBD5E1" size={20} />
+              <ChevronRight color="#CBD5E1" size={28} />
             </Pressable>
           )}
         />
         ) : (
-          <View className="p-8 items-center justify-center flex-1">
-            <Text className="text-slate-400 font-medium text-center">Obat tidak ditemukan.</Text>
+          <View style={{ padding: 40, alignItems: 'center', justifyContent: 'center', flex: 1 }}>
+            <Text style={{ color: '#9DB0AA', fontSize: 18, fontWeight: '700', textAlign: 'center' }}>Obat tidak ditemukan.</Text>
           </View>
         )}
       </View>

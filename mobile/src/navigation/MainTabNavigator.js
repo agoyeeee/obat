@@ -1,56 +1,21 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { View, Text } from 'react-native';
 import { Home, Pill, Activity, ClipboardList } from 'lucide-react-native';
 
-// Tab Screens (Entry points)
+// Import Screen Asli
 import DashboardHomeScreen from '../screens/apoteker/DashboardHomeScreen';
 import MedicineListScreen from '../screens/apoteker/MedicineListScreen';
 import MonitoringListScreen from '../screens/apoteker/MonitoringListScreen';
 import QuestionnaireListScreen from '../screens/apoteker/QuestionnaireListScreen';
 
-import PatientDetailScreen from '../screens/apoteker/PatientDetailScreen';
-
 const Tab = createBottomTabNavigator();
-const DashboardStack = createNativeStackNavigator();
-const MonitoringStack = createNativeStackNavigator();
-const KuisionerStack = createNativeStackNavigator();
 
-// --- STACKS --- //
-function DashboardStackNavigator({ route }) {
-  const { user, onLogout } = route.params || {};
-  return (
-    <DashboardStack.Navigator screenOptions={{ headerShown: false }}>
-      <DashboardStack.Screen name="DashboardHome" initialParams={{ user, onLogout }}>
-        {(props) => <DashboardHomeScreen {...props} />}
-      </DashboardStack.Screen>
-    </DashboardStack.Navigator>
-  );
-}
-
-function MonitoringStackNavigator() {
-  return (
-    <MonitoringStack.Navigator screenOptions={{ headerShown: false }}>
-      <MonitoringStack.Screen name="MonitoringList" component={MonitoringListScreen} />
-      <MonitoringStack.Screen name="PatientDetail" component={PatientDetailScreen} />
-    </MonitoringStack.Navigator>
-  );
-}
-
-function KuisionerStackNavigator() {
-  return (
-    <KuisionerStack.Navigator screenOptions={{ headerShown: false }}>
-      <KuisionerStack.Screen name="QuestionnaireList" component={QuestionnaireListScreen} />
-    </KuisionerStack.Navigator>
-  );
-}
-
-// --- MAIN TAB NAVIGATOR --- //
 export default function MainTabNavigator({ route }) {
   const { user, onLogout } = route.params || {};
 
   return (
     <Tab.Navigator
+      detachInactiveScreens={false}
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: '#0D9488',
@@ -71,7 +36,7 @@ export default function MainTabNavigator({ route }) {
     >
       <Tab.Screen 
         name="DashboardTab" 
-        component={DashboardStackNavigator} 
+        component={DashboardHomeScreen} 
         initialParams={{ user, onLogout }}
         options={{ 
           tabBarLabel: 'Beranda',
@@ -88,7 +53,7 @@ export default function MainTabNavigator({ route }) {
       />
       <Tab.Screen 
         name="MonitoringTab" 
-        component={MonitoringStackNavigator} 
+        component={MonitoringListScreen} 
         options={{ 
           tabBarLabel: 'Pantau',
           tabBarIcon: ({ color, size }) => <Activity color={color} size={size} />
@@ -96,7 +61,7 @@ export default function MainTabNavigator({ route }) {
       />
       <Tab.Screen 
         name="KuisionerTab" 
-        component={KuisionerStackNavigator} 
+        component={QuestionnaireListScreen} 
         options={{ 
           tabBarLabel: 'Kuisioner',
           tabBarIcon: ({ color, size }) => <ClipboardList color={color} size={size} />
