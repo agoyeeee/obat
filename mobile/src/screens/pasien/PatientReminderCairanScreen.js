@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, Pressable, ScrollView, TextInput, Alert, RefreshControl, ActivityIndicator, Modal, Platform } from 'react-native';
+import { View, Text, Pressable, ScrollView, TextInput, Alert, RefreshControl, ActivityIndicator, Modal, Platform, SafeAreaView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { ArrowLeft, Droplets, Plus, X, CircleCheck } from 'lucide-react-native';
+import { ArrowLeft, Droplets, Plus, X } from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { addPatientReminderCairan, getPatientReminderCairanQueue, updatePatientReminderCairanAlarmIds } from '../../storage/patientReminderCairanStorage';
+import { addPatientReminderCairan, getPatientReminderCairanQueue } from '../../storage/patientReminderCairanStorage';
 import { syncPendingReminderCairan } from '../../services/patientReminderCairanSyncService';
 
 const pad = (value) => String(value).padStart(2, '0');
@@ -183,86 +183,84 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
         </View>
       </ScrollView>
 
-      <Modal visible={isAddModalOpen} animationType="slide" transparent onRequestClose={() => setIsAddModalOpen(false)}>
-        <View className="flex-1 bg-black/40 justify-end">
-          <View className="bg-white rounded-t-3xl max-h-[90%] overflow-hidden">
-            <View className="px-5 pt-5 pb-4 border-b border-slate-100 flex-row items-center justify-between">
-              <Text className="text-lg font-black text-slate-900">Tambah Reminder Cairan</Text>
-              <Pressable onPress={() => setIsAddModalOpen(false)} className="w-9 h-9 rounded-lg bg-slate-100 items-center justify-center active:bg-slate-200">
-                <X color="#334155" size={18} />
-              </Pressable>
-            </View>
-
-            <ScrollView className="flex-1" contentContainerStyle={{ padding: 20, paddingBottom: 30 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-              <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Tanggal</Text>
-              {Platform.OS === 'web' ? (
-                <input
-                  type="date"
-                  value={tanggal}
-                  onChange={(e) => setTanggal(e.target.value)}
-                  style={{ padding: 12, borderRadius: 12, border: '2px solid #E2E8F0', marginBottom: 14 }}
-                />
-              ) : (
-                <>
-                  <Pressable onPress={() => setShowDatePicker(true)} className="border-2 border-slate-200 rounded-2xl px-4 py-3.5 bg-slate-50 mb-4">
-                    <Text className="text-slate-900 font-medium">{tanggal || 'Pilih tanggal'}</Text>
-                  </Pressable>
-                  {showDatePicker ? (
-                    <DateTimePicker
-                      value={tanggal ? new Date(tanggal) : new Date()}
-                      mode="date"
-                      onChange={(event, selectedDate) => {
-                        setShowDatePicker(false);
-                        if (event.type === 'dismissed' || !selectedDate) return;
-                        setTanggal(formatDateYMD(selectedDate));
-                      }}
-                    />
-                  ) : null}
-                </>
-              )}
-
-              <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Catat Asupan Cairan</Text>
-              <TextInput className="border-2 border-slate-200 rounded-2xl px-4 py-3.5 mb-4 bg-slate-50 text-slate-900 font-medium" placeholder="Contoh: Setelah olahraga" value={catatanAsupan} onChangeText={setCatatanAsupan} />
-
-              <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Minuman</Text>
-              <TextInput className="border-2 border-slate-200 rounded-2xl px-4 py-3.5 mb-4 bg-slate-50 text-slate-900 font-medium" placeholder="Air mineral" value={minuman} onChangeText={setMinuman} />
-
-              <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Jumlah (ml)</Text>
-              <TextInput className="border-2 border-slate-200 rounded-2xl px-4 py-3.5 mb-4 bg-slate-50 text-slate-900 font-medium" placeholder="Contoh: 250" keyboardType="numeric" value={jumlahMl} onChangeText={(text) => setJumlahMl(text.replace(/[^0-9]/g, ''))} />
-
-              <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Waktu</Text>
-              {Platform.OS === 'web' ? (
-                <input
-                  type="time"
-                  value={waktu.slice(0, 5)}
-                  onChange={(e) => setWaktu(`${e.target.value}:00`)}
-                  style={{ padding: 12, borderRadius: 12, border: '2px solid #E2E8F0', marginBottom: 14 }}
-                />
-              ) : (
-                <>
-                  <Pressable onPress={() => setShowTimePicker(true)} className="border-2 border-slate-200 rounded-2xl px-4 py-3.5 bg-slate-50 mb-4">
-                    <Text className="text-slate-900 font-medium">{formatTimeHM(waktu)}</Text>
-                  </Pressable>
-                  {showTimePicker ? (
-                    <DateTimePicker
-                      value={new Date(`2026-01-01T${waktu}`)}
-                      mode="time"
-                      onChange={(event, selectedDate) => {
-                        setShowTimePicker(false);
-                        if (event.type === 'dismissed' || !selectedDate) return;
-                        setWaktu(formatTimeHMS(selectedDate));
-                      }}
-                    />
-                  ) : null}
-                </>
-              )}
-
-              <Pressable onPress={submitCairan} disabled={!canSubmit || isSubmitting} className={`mt-2 rounded-2xl py-4 items-center ${canSubmit && !isSubmitting ? 'bg-blue-600 active:bg-blue-700' : 'bg-slate-300'}`}>
-                <Text className="text-white font-bold text-base">{isSubmitting ? 'Menyimpan...' : 'Submit'}</Text>
-              </Pressable>
-            </ScrollView>
+      <Modal visible={isAddModalOpen} animationType="slide" transparent={false} onRequestClose={() => setIsAddModalOpen(false)}>
+        <SafeAreaView className="flex-1 bg-slate-50">
+          <View className="bg-white px-5 pt-5 pb-4 border-b border-slate-100 flex-row items-center justify-between z-50">
+            <Text className="text-lg font-black text-slate-900">Tambah Reminder Cairan</Text>
+            <Pressable onPress={() => setIsAddModalOpen(false)} className="w-9 h-9 rounded-lg bg-slate-100 items-center justify-center active:bg-slate-200">
+              <X color="#334155" size={18} />
+            </Pressable>
           </View>
-        </View>
+
+          <ScrollView className="flex-1 bg-slate-50" contentContainerStyle={{ padding: 20, paddingBottom: 30 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+            <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Tanggal</Text>
+            {Platform.OS === 'web' ? (
+              <input
+                type="date"
+                value={tanggal}
+                onChange={(e) => setTanggal(e.target.value)}
+                style={{ padding: 12, borderRadius: 12, border: '2px solid #E2E8F0', marginBottom: 14 }}
+              />
+            ) : (
+              <>
+                <Pressable onPress={() => setShowDatePicker(true)} className="border-2 border-slate-200 rounded-2xl px-4 py-3.5 bg-slate-50 mb-4">
+                  <Text className="text-slate-900 font-medium">{tanggal || 'Pilih tanggal'}</Text>
+                </Pressable>
+                {showDatePicker ? (
+                  <DateTimePicker
+                    value={tanggal ? new Date(tanggal) : new Date()}
+                    mode="date"
+                    onChange={(event, selectedDate) => {
+                      setShowDatePicker(false);
+                      if (event.type === 'dismissed' || !selectedDate) return;
+                      setTanggal(formatDateYMD(selectedDate));
+                    }}
+                  />
+                ) : null}
+              </>
+            )}
+
+            <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Catat Asupan Cairan</Text>
+            <TextInput className="border-2 border-slate-200 rounded-2xl px-4 py-3.5 mb-4 bg-slate-50 text-slate-900 font-medium" placeholder="Contoh: Setelah olahraga" value={catatanAsupan} onChangeText={setCatatanAsupan} />
+
+            <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Minuman</Text>
+            <TextInput className="border-2 border-slate-200 rounded-2xl px-4 py-3.5 mb-4 bg-slate-50 text-slate-900 font-medium" placeholder="Air mineral" value={minuman} onChangeText={setMinuman} />
+
+            <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Jumlah (ml)</Text>
+            <TextInput className="border-2 border-slate-200 rounded-2xl px-4 py-3.5 mb-4 bg-slate-50 text-slate-900 font-medium" placeholder="Contoh: 250" keyboardType="numeric" value={jumlahMl} onChangeText={(text) => setJumlahMl(text.replace(/[^0-9]/g, ''))} />
+
+            <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Waktu</Text>
+            {Platform.OS === 'web' ? (
+              <input
+                type="time"
+                value={waktu.slice(0, 5)}
+                onChange={(e) => setWaktu(`${e.target.value}:00`)}
+                style={{ padding: 12, borderRadius: 12, border: '2px solid #E2E8F0', marginBottom: 14 }}
+              />
+            ) : (
+              <>
+                <Pressable onPress={() => setShowTimePicker(true)} className="border-2 border-slate-200 rounded-2xl px-4 py-3.5 bg-slate-50 mb-4">
+                  <Text className="text-slate-900 font-medium">{formatTimeHM(waktu)}</Text>
+                </Pressable>
+                {showTimePicker ? (
+                  <DateTimePicker
+                    value={new Date(`2026-01-01T${waktu}`)}
+                    mode="time"
+                    onChange={(event, selectedDate) => {
+                      setShowTimePicker(false);
+                      if (event.type === 'dismissed' || !selectedDate) return;
+                      setWaktu(formatTimeHMS(selectedDate));
+                    }}
+                  />
+                ) : null}
+              </>
+            )}
+
+            <Pressable onPress={submitCairan} disabled={!canSubmit || isSubmitting} className={`mt-2 rounded-2xl py-4 items-center ${canSubmit && !isSubmitting ? 'bg-blue-600 active:bg-blue-700' : 'bg-slate-300'}`}>
+              <Text className="text-white font-bold text-base">{isSubmitting ? 'Menyimpan...' : 'Simpan Reminder Offline'}</Text>
+            </Pressable>
+          </ScrollView>
+        </SafeAreaView>
       </Modal>
     </View>
   );

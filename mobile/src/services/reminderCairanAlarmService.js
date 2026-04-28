@@ -1,7 +1,65 @@
 import * as Notifications from 'expo-notifications';
+import { Audio } from 'expo-av';
 
 const CATEGORY_ID = 'REMINDER_CAIRAN_ACTIONS';
 const STOP_ACTION_ID = 'STOP_REMINDER_CAIRAN';
+
+// Play alarm sound saat notif diterima
+const playAlarmSound = async () => {
+  try {
+    await Audio.setAudioModeAsync({
+      allowsRecordingIOS: false,
+      playsInSilentModeIOS: true,
+      staysActiveInBackground: true,
+      shouldDuckAndroid: true,
+    });
+
+    // Try to play from assets file
+    try {
+      const { sound } = await Audio.Sound.createAsync(require('../../assets/alarm-sound.wav'));
+      await sound.playAsync();
+      setTimeout(() => {
+        sound.unloadAsync().catch(console.log);
+      }, 5000);
+    } catch (fileError) {
+      // Fallback: generate simple beep alarm tone
+      await playSystemBeep();
+    }
+  } catch (error) {
+    console.log('Alarm sound setup error:', error);
+    await playSystemBeep().catch(console.log);
+  }
+};
+
+// Fallback: simple beep tone using frequency oscillation
+const playSystemBeep = async () => {
+  try {
+    const { sound } = await Audio.Sound.createAsync({
+      uri: 'data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQIAAAAAAAA=',
+    });
+    await sound.playAsync();
+  } catch (error) {
+    console.log('System beep fallback error:', error);
+  }
+};
+
+// Notification handler dengan alarm sound
+const notificationHandler = {
+  handleNotification: async () => {
+    try {
+      await playAlarmSound();
+    } catch (error) {
+      console.log('Error playing alarm sound:', error);
+    }
+    return {
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+    };
+  },
+};
+
+Notifications.setNotificationHandler(notificationHandler);
 
 const parseTime = (waktu) => {
   if (!waktu) return null;
@@ -35,6 +93,18 @@ export const initializeReminderCairanNotifications = async () => {
     },
   ]);
 
+  // Create Android notification channel with custom sound name (requires resource in android/app/src/main/res/raw)
+  try {
+    await Notifications.setNotificationChannelAsync('reminder_cairan_channel', {
+      name: 'Reminder Cairan',
+      importance: Notifications.AndroidImportance.MAX || 5,
+      sound: 'alarm_sound',
+      vibrationPattern: [0, 250, 250, 250],
+    });
+  } catch (err) {
+    console.log('Could not create notification channel (cairan):', err?.message || err);
+  }
+
   return true;
 };
 
@@ -65,6 +135,7 @@ export const scheduleReminderCairanAlarm = async (reminderItem) => {
       title: `Waktunya minum cairan`,
       body: `Minuman ${reminderItem.minuman || 'Air mineral'} | ${reminderItem.jumlah_ml} ml`,
       sound: true,
+      channelId: 'reminder_cairan_channel',
       categoryIdentifier: CATEGORY_ID,
       data: {
         reminder_cairan_id: reminderItem.id,

@@ -175,7 +175,11 @@ export default function AppNavigator() {
   };
 
   const handlePatientEdit = () => setSelectedRole('pasien');
-  const handlePatientExit = () => setSelectedRole(null);
+  const handlePatientExit = async () => {
+    await clearPatientProfile();
+    setPatientProfile(null);
+    setSelectedRole(null);
+  };
 
   const handlePatientMenu = (menuKey) => {
     if (menuKey === 'obat') return setSelectedRole('pasien-reminder-obat');

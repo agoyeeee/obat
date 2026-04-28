@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, Pressable, ScrollView, TextInput, Alert, RefreshControl, ActivityIndicator, Modal } from 'react-native';
+import { View, Text, Pressable, ScrollView, TextInput, Alert, RefreshControl, ActivityIndicator, Modal, SafeAreaView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { ArrowLeft, Pill, CloudUpload, CircleCheck, Clock3, Plus, X } from 'lucide-react-native';
 import { fetchPublicObatList } from '../../services/patientService';
@@ -457,27 +457,26 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
       <Modal
         visible={isAddModalOpen}
         animationType="slide"
-        transparent
+        transparent={false}
         onRequestClose={() => setIsAddModalOpen(false)}
       >
-        <View className="flex-1 bg-black/40 justify-end">
-          <View className="bg-white rounded-t-3xl max-h-[90%] overflow-hidden">
-            <View className="px-5 pt-5 pb-4 border-b border-slate-100 flex-row items-center justify-between">
-              <Text className="text-lg font-black text-slate-900">Tambah Reminder Obat</Text>
-              <Pressable
-                onPress={() => setIsAddModalOpen(false)}
-                className="w-9 h-9 rounded-lg bg-slate-100 items-center justify-center active:bg-slate-200"
-              >
-                <X color="#334155" size={18} />
-              </Pressable>
-            </View>
-
-            <ScrollView
-              className="flex-1"
-              contentContainerStyle={{ padding: 20, paddingBottom: 30 }}
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}
+        <SafeAreaView className="flex-1 bg-slate-50">
+          <View className="bg-white px-5 pt-5 pb-4 border-b border-slate-100 flex-row items-center justify-between z-50">
+            <Text className="text-lg font-black text-slate-900">Tambah Reminder Obat</Text>
+            <Pressable
+              onPress={() => setIsAddModalOpen(false)}
+              className="w-9 h-9 rounded-lg bg-slate-100 items-center justify-center active:bg-slate-200"
             >
+              <X color="#334155" size={18} />
+            </Pressable>
+          </View>
+
+          <ScrollView
+            className="flex-1 bg-slate-50"
+            contentContainerStyle={{ padding: 20, paddingBottom: 30 }}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
               <SelectField
                 label="Nama Obat"
                 valueLabel={selectedObat?.nama_obat || ''}
@@ -603,9 +602,8 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
               >
                 <Text className="text-white font-bold text-base">{isSaving ? 'Menyimpan...' : 'Simpan Reminder Offline'}</Text>
               </Pressable>
-            </ScrollView>
-          </View>
-        </View>
+          </ScrollView>
+        </SafeAreaView>
       </Modal>
     </View>
   );
