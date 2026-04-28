@@ -10,6 +10,11 @@ export const fetchPublicObatList = async () => {
   return response.data;
 };
 
+export const fetchPublicApotekerContacts = async () => {
+  const response = await api.get('/apoteker/public-contacts');
+  return response.data;
+};
+
 export const publicSyncReminderObat = async (payload) => {
   const response = await api.post('/pasien/public-sync-reminder-obat', payload);
   return response.data;

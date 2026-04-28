@@ -10,6 +10,18 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
+    public function publicApotekerContacts(): JsonResponse
+    {
+        $apotekers = Apoteker::query()
+            ->select(['id', 'nama', 'no_hp'])
+            ->whereNotNull('no_hp')
+            ->where('no_hp', '!=', '')
+            ->orderBy('nama')
+            ->get();
+
+        return response()->json($apotekers);
+    }
+
     public function login(Request $request): JsonResponse
     {
         $validated = $request->validate([

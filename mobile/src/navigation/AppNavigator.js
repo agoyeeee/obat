@@ -13,7 +13,7 @@ import PatientReminderCairanScreen from '../screens/pasien/PatientReminderCairan
 
 import PatientDetailScreen from '../screens/apoteker/PatientDetailScreen';
 
-import { View, ActivityIndicator, AppState } from 'react-native';
+import { View, ActivityIndicator, AppState, Alert } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 
 import MainTabNavigator from './MainTabNavigator';
@@ -49,6 +49,7 @@ import {
 
 import { enqueuePatientAlarmLog } from '../storage/patientAlarmLogStorage';
 import { syncPendingAlarmLogs } from '../services/patientAlarmLogSyncService';
+import { openRandomApotekerWhatsApp } from '../utils/helpers';
 
 const Stack = createNativeStackNavigator();
 
@@ -181,9 +182,17 @@ export default function AppNavigator() {
     setSelectedRole(null);
   };
 
-  const handlePatientMenu = (menuKey) => {
+  const handlePatientMenu = async (menuKey) => {
     if (menuKey === 'obat') return setSelectedRole('pasien-reminder-obat');
     if (menuKey === 'cairan') return setSelectedRole('pasien-reminder-cairan');
+    if (menuKey === 'tanya-apoteker') {
+      await openRandomApotekerWhatsApp(patientProfile);
+      return;
+    }
+    if (menuKey === 'kuisioner') {
+      Alert.alert('Kuisioner', 'Menu kuisioner akan dibuka di update berikutnya.');
+      return;
+    }
 
     setSelectedRole('pasien-dashboard');
   };
