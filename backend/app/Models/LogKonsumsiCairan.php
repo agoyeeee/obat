@@ -14,6 +14,9 @@ class LogKonsumsiCairan extends Model
         'pasien_id',
         'tanggal',
         'waktu',
+        'minuman',
+        'jumlah_ml',
+        'catatan_asupan',
         'status',
         'skor',
     ];

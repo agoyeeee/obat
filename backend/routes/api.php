@@ -17,6 +17,10 @@ Route::post('/auth/login', [AuthController::class, 'login']);
 Route::post('/pasien/public-register', [PasienController::class, 'publicStore']);
 Route::post('/pasien/public-sync-reminder-obat', [PasienController::class, 'publicSyncReminderObat']);
 Route::post('/pasien/public-log-konsumsi-obat', [PasienController::class, 'publicLogKonsumsiObat']);
+Route::post('/pasien/public-log-konsumsi-cairan', [PasienController::class, 'publicLogKonsumsiCairan']);
+Route::post('/pasien/public-sync-reminder-cairan', [PasienController::class, 'publicSyncReminderCairan']);
+Route::post('/pasien/public-log-konsumsi-cairan-alarm', [PasienController::class, 'publicLogKonsumsiCairanAlarm']);
+Route::post('/pasien/public-log-konsumsi-cairan/list', [PasienController::class, 'publicListLogKonsumsiCairan']);
 Route::get('/obat/public-list', [ObatController::class, 'publicList']);
 
 Route::middleware('auth:sanctum')->group(function (): void {

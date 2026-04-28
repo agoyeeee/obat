@@ -19,3 +19,23 @@ export const publicLogKonsumsiObat = async (payload) => {
   const response = await api.post('/pasien/public-log-konsumsi-obat', payload);
   return response.data;
 };
+
+export const publicLogKonsumsiCairan = async (payload) => {
+  const response = await api.post('/pasien/public-log-konsumsi-cairan', payload);
+  return response.data;
+};
+
+export const publicSyncReminderCairan = async (payload) => {
+  const response = await api.post('/pasien/public-sync-reminder-cairan', payload);
+  return response.data;
+};
+
+export const publicLogKonsumsiCairanAlarm = async (payload) => {
+  const response = await api.post('/pasien/public-log-konsumsi-cairan-alarm', payload);
+  return response.data;
+};
+
+export const publicListLogKonsumsiCairan = async (payload) => {
+  const response = await api.post('/pasien/public-log-konsumsi-cairan/list', payload);
+  return response.data;
+};

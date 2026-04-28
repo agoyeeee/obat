@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\LogKonsumsiCairan;
 use App\Models\LogKonsumsiObat;
 use App\Models\Pasien;
+use App\Models\ReminderCairan;
 use App\Models\ReminderObat;
 use App\Models\WaktuKonsumsi;
 use Carbon\Carbon;
@@ -153,6 +155,216 @@ class PasienController extends Controller
 
         return response()->json([
             'message' => 'Log konsumsi obat berhasil disimpan.',
+            'data' => $log,
+        ]);
+    }
+
+    public function publicLogKonsumsiCairan(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'patient' => ['required', 'array'],
+            'patient.nama' => ['required', 'string', 'max:100'],
+            'patient.usia' => ['required', 'integer', 'min:0'],
+            'patient.jenis_kelamin' => ['required', 'in:L,P'],
+            'patient.berat_badan' => ['required', 'numeric', 'min:0'],
+            'patient.tgl_diagnosa' => ['required', 'date'],
+            'tanggal' => ['required', 'date_format:Y-m-d'],
+            'waktu' => ['required', 'date_format:H:i:s'],
+            'catatan_asupan' => ['nullable', 'string', 'max:255'],
+            'minuman' => ['required', 'string', 'max:100'],
+            'jumlah_ml' => ['required', 'integer', 'min:1'],
+        ]);
+
+        $result = DB::transaction(function () use ($validated) {
+            $patientData = $validated['patient'];
+
+            $pasien = Pasien::query()->firstOrCreate(
+                [
+                    'nama' => $patientData['nama'],
+                    'tgl_diagnosa' => $patientData['tgl_diagnosa'],
+                ],
+                [
+                    'usia' => $patientData['usia'],
+                    'jenis_kelamin' => $patientData['jenis_kelamin'],
+                    'berat_badan' => $patientData['berat_badan'],
+                ]
+            );
+
+            $pasien->update([
+                'usia' => $patientData['usia'],
+                'jenis_kelamin' => $patientData['jenis_kelamin'],
+                'berat_badan' => $patientData['berat_badan'],
+            ]);
+
+            $reminder = ReminderCairan::query()->create([
+                'pasien_id' => $pasien->id,
+                'jumlah_ml' => (int) $validated['jumlah_ml'],
+                'waktu' => $validated['waktu'],
+                'minuman' => $validated['minuman'],
+                'catatan_asupan' => $validated['catatan_asupan'] ?? null,
+            ]);
+
+            $log = LogKonsumsiCairan::query()->create([
+                'reminder_cairan_id' => $reminder->id,
+                'pasien_id' => $pasien->id,
+                'tanggal' => $validated['tanggal'],
+                'waktu' => $validated['waktu'],
+                'status' => 'diminum',
+                'skor' => 1,
+                'minuman' => $validated['minuman'],
+                'catatan_asupan' => $validated['catatan_asupan'] ?? null,
+                'jumlah_ml' => (int) $validated['jumlah_ml'],
+            ]);
+
+            return [
+                'pasien_id' => $pasien->id,
+                'reminder' => $reminder,
+                'log' => $log,
+            ];
+        });
+
+        return response()->json([
+            'message' => 'Log konsumsi cairan berhasil disimpan.',
+            'data' => $result,
+        ], 201);
+    }
+
+    public function publicSyncReminderCairan(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'patient' => ['required', 'array'],
+            'patient.nama' => ['required', 'string', 'max:100'],
+            'patient.usia' => ['required', 'integer', 'min:0'],
+            'patient.jenis_kelamin' => ['required', 'in:L,P'],
+            'patient.berat_badan' => ['required', 'numeric', 'min:0'],
+            'patient.tgl_diagnosa' => ['required', 'date'],
+            'reminders' => ['required', 'array', 'min:1'],
+            'reminders.*.local_id' => ['required', 'string'],
+            'reminders.*.tanggal' => ['required', 'date_format:Y-m-d'],
+            'reminders.*.waktu' => ['required', 'date_format:H:i:s'],
+            'reminders.*.catatan_asupan' => ['nullable', 'string', 'max:255'],
+            'reminders.*.minuman' => ['required', 'string', 'max:100'],
+            'reminders.*.jumlah_ml' => ['required', 'integer', 'min:1'],
+        ]);
+
+        $result = DB::transaction(function () use ($validated) {
+            $patientData = $validated['patient'];
+
+            $pasien = Pasien::query()->firstOrCreate(
+                [
+                    'nama' => $patientData['nama'],
+                    'tgl_diagnosa' => $patientData['tgl_diagnosa'],
+                ],
+                [
+                    'usia' => $patientData['usia'],
+                    'jenis_kelamin' => $patientData['jenis_kelamin'],
+                    'berat_badan' => $patientData['berat_badan'],
+                ]
+            );
+
+            $pasien->update([
+                'usia' => $patientData['usia'],
+                'jenis_kelamin' => $patientData['jenis_kelamin'],
+                'berat_badan' => $patientData['berat_badan'],
+            ]);
+
+            $synced = [];
+            $serverMap = [];
+
+            foreach ($validated['reminders'] as $item) {
+                $reminder = ReminderCairan::query()->create([
+                    'pasien_id' => $pasien->id,
+                    'jumlah_ml' => (int) $item['jumlah_ml'],
+                    'waktu' => $item['waktu'],
+                    'minuman' => $item['minuman'],
+                    'catatan_asupan' => $item['catatan_asupan'] ?? null,
+                ]);
+
+                $synced[] = $item['local_id'];
+                $serverMap[$item['local_id']] = $reminder->id;
+            }
+
+            return [
+                'pasien_id' => $pasien->id,
+                'synced_local_ids' => $synced,
+                'server_map' => $serverMap,
+                'reminders' => ReminderCairan::query()->where('pasien_id', $pasien->id)->latest()->limit(count($synced))->get(),
+            ];
+        });
+
+        return response()->json([
+            'message' => 'Sinkronisasi reminder cairan berhasil.',
+            'data' => $result,
+        ]);
+    }
+
+    public function publicListLogKonsumsiCairan(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'patient' => ['required', 'array'],
+            'patient.nama' => ['required', 'string', 'max:100'],
+            'patient.tgl_diagnosa' => ['required', 'date'],
+        ]);
+
+        $patientData = $validated['patient'];
+
+        $pasien = Pasien::query()
+            ->where('nama', $patientData['nama'])
+            ->whereDate('tgl_diagnosa', $patientData['tgl_diagnosa'])
+            ->first();
+
+        if (!$pasien) {
+            return response()->json([]);
+        }
+
+        $logs = LogKonsumsiCairan::query()
+            ->with('reminderCairan')
+            ->where('pasien_id', $pasien->id)
+            ->orderByDesc('tanggal')
+            ->orderByDesc('waktu')
+            ->limit(100)
+            ->get();
+
+        return response()->json($logs);
+    }
+
+    public function publicLogKonsumsiCairanAlarm(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'reminder_cairan_id' => ['required', 'integer', 'exists:reminder_cairan,id'],
+            'status' => ['nullable', 'in:diminum,terlewat'],
+            'logged_at' => ['nullable', 'date'],
+            'tanggal' => ['nullable', 'date_format:Y-m-d'],
+            'waktu' => ['nullable', 'date_format:H:i:s'],
+        ]);
+
+        $reminder = ReminderCairan::query()->findOrFail((int) $validated['reminder_cairan_id']);
+        $status = $validated['status'] ?? 'diminum';
+        $loggedAt = isset($validated['logged_at'])
+            ? Carbon::parse($validated['logged_at'])
+            : now();
+
+        $tanggal = $validated['tanggal'] ?? $loggedAt->toDateString();
+        $waktu = $validated['waktu'] ?? $loggedAt->format('H:i:s');
+
+        $log = LogKonsumsiCairan::query()->updateOrCreate(
+            [
+                'reminder_cairan_id' => $reminder->id,
+                'tanggal' => $tanggal,
+                'waktu' => $waktu,
+            ],
+            [
+                'pasien_id' => $reminder->pasien_id,
+                'status' => $status,
+                'skor' => $status === 'diminum' ? 1 : 0,
+                'minuman' => $reminder->minuman,
+                'jumlah_ml' => $reminder->jumlah_ml,
+                'catatan_asupan' => $reminder->catatan_asupan,
+            ]
+        );
+
+        return response()->json([
+            'message' => 'Log konsumsi cairan dari alarm berhasil disimpan.',
             'data' => $log,
         ]);
     }

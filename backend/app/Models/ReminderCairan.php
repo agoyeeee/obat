@@ -13,6 +13,8 @@ class ReminderCairan extends Model
         'pasien_id',
         'jumlah_ml',
         'waktu',
+        'minuman',
+        'catatan_asupan',
         'skor_kepatuhan',
     ];
 

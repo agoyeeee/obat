@@ -1,4 +1,4 @@
-import { publicLogKonsumsiObat } from './patientService';
+import { publicLogKonsumsiCairanAlarm, publicLogKonsumsiObat } from './patientService';
 import {
   getPatientAlarmLogQueue,
   markPatientAlarmLogQueueError,
@@ -17,14 +17,24 @@ export const syncPendingAlarmLogs = async () => {
 
   for (const item of queue) {
     try {
-      await publicLogKonsumsiObat({
-        reminder_obat_id: item.reminder_obat_id,
-        status: item.status,
-        logged_at: item.logged_at,
-        tanggal: item.tanggal,
-        waktu: item.waktu,
-        alarm_waktu: item.alarm_waktu,
-      });
+      if (item.entity_type === 'cairan') {
+        await publicLogKonsumsiCairanAlarm({
+          reminder_cairan_id: item.reminder_cairan_id,
+          status: item.status,
+          logged_at: item.logged_at,
+          tanggal: item.tanggal,
+          waktu: item.waktu,
+        });
+      } else {
+        await publicLogKonsumsiObat({
+          reminder_obat_id: item.reminder_obat_id,
+          status: item.status,
+          logged_at: item.logged_at,
+          tanggal: item.tanggal,
+          waktu: item.waktu,
+          alarm_waktu: item.alarm_waktu,
+        });
+      }
       syncedIds.push(item.local_id);
     } catch (error) {
       failedIds.push(item.local_id);

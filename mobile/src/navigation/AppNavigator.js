@@ -5,9 +5,12 @@ import { useEffect, useRef, useState } from 'react';
 
 import EntryScreen from '../screens/EntryScreen';
 import LoginScreen from '../screens/LoginScreen';
+
 import PatientHomeScreen from '../screens/pasien/PatientHomeScreen';
 import PatientDashboardScreen from '../screens/pasien/PatientDashboardScreen';
 import PatientReminderObatScreen from '../screens/pasien/PatientReminderObatScreen';
+import PatientReminderCairanScreen from '../screens/pasien/PatientReminderCairanScreen';
+
 import PatientDetailScreen from '../screens/apoteker/PatientDetailScreen';
 
 import { View, ActivityIndicator, AppState } from 'react-native';
@@ -21,13 +24,28 @@ import {
   storePatientProfile,
 } from '../storage/patientStorage';
 
-import { syncPendingReminderObat } from '../services/patientSyncService';
-import { publicLogKonsumsiObat } from '../services/patientService';
+import {
+  syncPendingReminderObat,
+} from '../services/patientSyncService';
+
+import {
+  syncPendingReminderCairan,
+} from '../services/patientReminderCairanSyncService';
+
+import {
+  publicLogKonsumsiObat,
+  publicLogKonsumsiCairanAlarm,
+} from '../services/patientService';
 
 import {
   addReminderAlarmResponseListener,
   initializeReminderAlarmNotifications,
 } from '../services/reminderAlarmService';
+
+import {
+  addReminderCairanAlarmResponseListener,
+  initializeReminderCairanNotifications,
+} from '../services/reminderCairanAlarmService';
 
 import { enqueuePatientAlarmLog } from '../storage/patientAlarmLogStorage';
 import { syncPendingAlarmLogs } from '../services/patientAlarmLogSyncService';
@@ -50,6 +68,7 @@ export default function AppNavigator() {
     try {
       if (patientProfile) {
         await syncPendingReminderObat(patientProfile);
+        await syncPendingReminderCairan(patientProfile);
       }
       await syncPendingAlarmLogs();
     } finally {
@@ -67,35 +86,57 @@ export default function AppNavigator() {
     loadPatientProfile();
   }, []);
 
-  // ================= INIT NOTIFICATION + SYNC =================
+  // ================= NOTIFICATION + SYNC =================
   useEffect(() => {
-    // KOMENTAR: Dimatikan sementara untuk mencegah error push notification di Expo Go
-    // initializeReminderAlarmNotifications();
+    // AKTIFKAN kalau device support (jangan Expo Go kalau error)
+    initializeReminderAlarmNotifications();
+    initializeReminderCairanNotifications();
 
-    // const responseSubscription =
-    //   addReminderAlarmResponseListener(async (data) => {
-    //     try {
-    //       await publicLogKonsumsiObat({
-    //         reminder_obat_id: data.reminderObatId,
-    //         status: 'diminum',
-    //         logged_at: data.loggedAt,
-    //         tanggal: data.tanggal,
-    //         waktu: data.waktu,
-    //         alarm_waktu: data.alarmWaktu,
-    //       });
-    //     } catch (error) {
-    //       await enqueuePatientAlarmLog({
-    //         reminder_obat_id: data.reminderObatId,
-    //         status: 'diminum',
-    //         logged_at: data.loggedAt,
-    //         tanggal: data.tanggal,
-    //         waktu: data.waktu,
-    //         alarm_waktu: data.alarmWaktu,
-    //       });
+    const responseSubscription =
+      addReminderAlarmResponseListener(async (data) => {
+        try {
+          await publicLogKonsumsiObat({
+            reminder_obat_id: data.reminderObatId,
+            status: 'diminum',
+            logged_at: data.loggedAt,
+            tanggal: data.tanggal,
+            waktu: data.waktu,
+            alarm_waktu: data.alarmWaktu,
+          });
+        } catch (error) {
+          await enqueuePatientAlarmLog({
+            reminder_obat_id: data.reminderObatId,
+            status: 'diminum',
+            logged_at: data.loggedAt,
+            tanggal: data.tanggal,
+            waktu: data.waktu,
+            alarm_waktu: data.alarmWaktu,
+          });
+        }
+      });
 
-    //       console.error('Offline queue:', error?.message || error);
-    //     }
-    //   });
+    const cairanSubscription =
+      addReminderCairanAlarmResponseListener(async (data) => {
+        try {
+          await publicLogKonsumsiCairanAlarm({
+            reminder_cairan_id: data.reminderCairanId,
+            status: 'diminum',
+            logged_at: data.loggedAt,
+            tanggal: data.tanggal,
+            waktu: data.waktu,
+            alarm_waktu: data.alarmWaktu,
+          });
+        } catch (error) {
+          await enqueuePatientAlarmLog({
+            entity_type: 'cairan',
+            reminder_cairan_id: data.reminderCairanId,
+            status: 'diminum',
+            logged_at: data.loggedAt,
+            tanggal: data.tanggal,
+            waktu: data.waktu,
+          });
+        }
+      });
 
     const unsubscribeNetInfo = NetInfo.addEventListener((state) => {
       if (state.isConnected && state.isInternetReachable !== false) {
@@ -116,7 +157,8 @@ export default function AppNavigator() {
     return () => {
       unsubscribeNetInfo();
       appStateSub.remove();
-      // if (responseSubscription) responseSubscription.remove();
+      responseSubscription.remove();
+      cairanSubscription.remove();
     };
   }, [patientProfile]);
 
@@ -136,11 +178,10 @@ export default function AppNavigator() {
   const handlePatientExit = () => setSelectedRole(null);
 
   const handlePatientMenu = (menuKey) => {
-    if (menuKey === 'obat') {
-      setSelectedRole('pasien-reminder-obat');
-    } else {
-      setSelectedRole('pasien-dashboard');
-    }
+    if (menuKey === 'obat') return setSelectedRole('pasien-reminder-obat');
+    if (menuKey === 'cairan') return setSelectedRole('pasien-reminder-cairan');
+
+    setSelectedRole('pasien-dashboard');
   };
 
   const handleBackToDashboard = () =>
@@ -154,14 +195,7 @@ export default function AppNavigator() {
 
   // ================= LOADING =================
   const renderLoading = () => (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#F8FAFC',
-      }}
-    >
+    <View className="flex-1 justify-center items-center bg-slate-50">
       <ActivityIndicator size="large" color="#0D9488" />
     </View>
   );
@@ -197,11 +231,20 @@ export default function AppNavigator() {
                 />
               )}
             </Stack.Screen>
-          ) : selectedRole === 'pasien-reminder-obat' &&
-            patientProfile ? (
+          ) : selectedRole === 'pasien-reminder-obat' && patientProfile ? (
             <Stack.Screen name="PatientReminderObat">
               {(props) => (
                 <PatientReminderObatScreen
+                  {...props}
+                  profile={patientProfile}
+                  onBack={handleBackToDashboard}
+                />
+              )}
+            </Stack.Screen>
+          ) : selectedRole === 'pasien-reminder-cairan' && patientProfile ? (
+            <Stack.Screen name="PatientReminderCairan">
+              {(props) => (
+                <PatientReminderCairanScreen
                   {...props}
                   profile={patientProfile}
                   onBack={handleBackToDashboard}
@@ -235,12 +278,8 @@ export default function AppNavigator() {
             <Stack.Screen name="Entry">
               {() => (
                 <EntryScreen
-                  onSelectApoteker={() =>
-                    setSelectedRole('apoteker')
-                  }
-                  onSelectPasien={() =>
-                    setSelectedRole('pasien')
-                  }
+                  onSelectApoteker={() => setSelectedRole('apoteker')}
+                  onSelectPasien={() => setSelectedRole('pasien')}
                 />
               )}
             </Stack.Screen>
@@ -250,10 +289,7 @@ export default function AppNavigator() {
             <Stack.Screen
               name="Dashboard"
               component={MainTabNavigator}
-              initialParams={{
-                user,
-                onLogout: handleLogout,
-              }}
+              initialParams={{ user, onLogout: handleLogout }}
             />
             <Stack.Screen
               name="PatientDetail"
