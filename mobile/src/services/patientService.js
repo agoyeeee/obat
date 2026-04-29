@@ -79,6 +79,17 @@ export const fetchKuisionerDetail = async (rekapKuisionerId) => {
   }
 };
 
+export const fetchApotekerKuisionerRekaps = async () => {
+  try {
+    const response = await api.get('/rekap-kuisioner');
+    console.log('[API] fetchApotekerKuisionerRekaps success:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('[API] fetchApotekerKuisionerRekaps failed:', error.message);
+    throw error;
+  }
+};
+
 export const submitKuisionerAnswers = async (patientId, tanggal, jawaban) => {
   try {
     const response = await api.post('/rekap-kuisioner/public-store', {

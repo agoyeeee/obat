@@ -12,7 +12,7 @@ class RekapKuisionerController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = RekapKuisioner::query()->with('pasien');
+        $query = RekapKuisioner::query()->with(['pasien', 'jawabanKuisioner.kuisioner']);
 
         if ($request->filled('pasien_id')) {
             $query->where('pasien_id', (int) $request->query('pasien_id'));
