@@ -44,3 +44,52 @@ export const publicListLogKonsumsiCairan = async (payload) => {
   const response = await api.post('/pasien/public-log-konsumsi-cairan/list', payload);
   return response.data;
 };
+
+// Kuisioner endpoints (public)
+export const fetchAllKuisioner = async () => {
+  try {
+    const response = await api.get('/kuisioner/public-list');
+    console.log('[API] fetchAllKuisioner success:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('[API] fetchAllKuisioner failed:', error.message);
+    throw error;
+  }
+};
+
+export const fetchPastKuisionerResponses = async (patientId) => {
+  try {
+    const response = await api.get(`/rekap-kuisioner/public-by-pasien/${patientId}`);
+    console.log('[API] fetchPastKuisionerResponses success:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('[API] fetchPastKuisionerResponses failed:', error.message);
+    throw error;
+  }
+};
+
+export const fetchKuisionerDetail = async (rekapKuisionerId) => {
+  try {
+    const response = await api.get(`/rekap-kuisioner/public-show/${rekapKuisionerId}`);
+    console.log('[API] fetchKuisionerDetail success:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('[API] fetchKuisionerDetail failed:', error.message);
+    throw error;
+  }
+};
+
+export const submitKuisionerAnswers = async (patientId, tanggal, jawaban) => {
+  try {
+    const response = await api.post('/rekap-kuisioner/public-store', {
+      pasien_id: patientId,
+      tanggal: tanggal,
+      jawaban: jawaban,
+    });
+    console.log('[API] submitKuisionerAnswers success:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('[API] submitKuisionerAnswers failed:', error.message);
+    throw error;
+  }
+};

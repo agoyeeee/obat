@@ -3,6 +3,7 @@ import { View, Text, Pressable, ScrollView, TextInput, Alert, Platform, RefreshC
 import { StatusBar } from 'expo-status-bar';
 import { ArrowLeft, UserRound } from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { publicRegisterPatient } from '../../services/patientService';
 
 
 export default function PatientHomeScreen({ onBack, onSubmitSuccess, existingProfile }) {
@@ -77,8 +78,21 @@ export default function PatientHomeScreen({ onBack, onSubmitSuccess, existingPro
         tgl_diagnosa: tanggalDiagnosa,
       };
 
+      // Call backend to register patient and get ID
+      console.log('[PatientHomeScreen] Registering patient with:', profile);
+      const apiResponse = await publicRegisterPatient(profile);
+      console.log('[PatientHomeScreen] API response:', apiResponse);
+
+      // Extract patient data from API response (includes ID) and merge with local data
+      const patientData = apiResponse?.data || apiResponse;
+      const profileWithId = {
+        ...profile,
+        ...patientData,
+      };
+      console.log('[PatientHomeScreen] Profile with ID:', profileWithId);
+
       if (onSubmitSuccess) {
-        await onSubmitSuccess(profile);
+        await onSubmitSuccess(profileWithId);
       }
 
       Alert.alert('Berhasil', 'Biodata pasien berhasil disimpan di device.');

@@ -23,6 +23,10 @@ Route::post('/pasien/public-sync-reminder-cairan', [PasienController::class, 'pu
 Route::post('/pasien/public-log-konsumsi-cairan-alarm', [PasienController::class, 'publicLogKonsumsiCairanAlarm']);
 Route::post('/pasien/public-log-konsumsi-cairan/list', [PasienController::class, 'publicListLogKonsumsiCairan']);
 Route::get('/obat/public-list', [ObatController::class, 'publicList']);
+Route::get('/kuisioner/public-list', [KuisionerController::class, 'publicIndex']);
+Route::post('/rekap-kuisioner/public-store', [RekapKuisionerController::class, 'publicStore']);
+Route::get('/rekap-kuisioner/public-show/{id}', [RekapKuisionerController::class, 'publicShow'])->where('id', '[0-9]+');
+Route::get('/rekap-kuisioner/public-by-pasien/{pasienId}', [RekapKuisionerController::class, 'publicByPasien'])->where('pasienId', '[0-9]+');
 
 Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('/auth/logout', [AuthController::class, 'logout']);

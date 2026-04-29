@@ -17,6 +17,7 @@ import { View, ActivityIndicator, AppState, Alert } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 
 import MainTabNavigator from './MainTabNavigator';
+import KuisionerNavigator from './KuisionerNavigator';
 
 import {
   clearPatientProfile,
@@ -35,6 +36,7 @@ import {
 import {
   publicLogKonsumsiObat,
   publicLogKonsumsiCairanAlarm,
+  publicRegisterPatient,
 } from '../services/patientService';
 
 import {
@@ -81,7 +83,26 @@ export default function AppNavigator() {
   useEffect(() => {
     const loadPatientProfile = async () => {
       const saved = await getPatientProfile();
-      if (saved) setPatientProfile(saved);
+      if (!saved) return;
+
+      if (saved.id) {
+        setPatientProfile(saved);
+        return;
+      }
+
+      try {
+        const registrationResponse = await publicRegisterPatient(saved);
+        const migratedProfile = {
+          ...saved,
+          ...(registrationResponse?.data || registrationResponse),
+        };
+
+        await storePatientProfile(migratedProfile);
+        setPatientProfile(migratedProfile);
+      } catch (error) {
+        console.error('[AppNavigator] Failed to migrate patient profile:', error);
+        setPatientProfile(saved);
+      }
     };
 
     loadPatientProfile();
@@ -190,8 +211,7 @@ export default function AppNavigator() {
       return;
     }
     if (menuKey === 'kuisioner') {
-      Alert.alert('Kuisioner', 'Menu kuisioner akan dibuka di update berikutnya.');
-      return;
+      return setSelectedRole('pasien-kuisioner');
     }
 
     setSelectedRole('pasien-dashboard');
@@ -260,6 +280,15 @@ export default function AppNavigator() {
                 <PatientReminderCairanScreen
                   {...props}
                   profile={patientProfile}
+                  onBack={handleBackToDashboard}
+                />
+              )}
+            </Stack.Screen>
+          ) : selectedRole === 'pasien-kuisioner' && patientProfile ? (
+            <Stack.Screen name="KuisionerStack">
+              {() => (
+                <KuisionerNavigator
+                  patientProfile={patientProfile}
                   onBack={handleBackToDashboard}
                 />
               )}

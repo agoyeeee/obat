@@ -14,4 +14,14 @@ class KuisionerController extends Controller
 
         return response()->json($kuisioners);
     }
+
+    /**
+     * Public endpoint untuk fetch all kuisioner (tanpa auth)
+     */
+    public function publicIndex(): JsonResponse
+    {
+        $kuisioners = Kuisioner::query()->orderBy('id')->get();
+
+        return response()->json($kuisioners);
+    }
 }
