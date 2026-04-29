@@ -41,6 +41,9 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('/merk', [MerkController::class, 'store']);
     Route::get('/waktu-konsumsi', [WaktuKonsumsiController::class, 'index']);
     Route::get('/kuisioner', [KuisionerController::class, 'index']);
+    Route::post('/kuisioner', [KuisionerController::class, 'store']);
+    Route::put('/kuisioner/{id}', [KuisionerController::class, 'update']);
+    Route::delete('/kuisioner/{id}', [KuisionerController::class, 'destroy']);
 
     // Monitoring (Dynamic Adherence)
     Route::get('/monitoring/today-summary', [\App\Http\Controllers\Api\MonitoringController::class, 'todaySummary']);

@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { View, Text, ScrollView, Pressable, ActivityIndicator, Modal } from 'react-native';
+import { View, Text, ScrollView, Pressable, ActivityIndicator, Modal, TextInput, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { ClipboardList, MessageSquareText, FileText, Clock3, UserRound } from 'lucide-react-native';
-import { fetchAllKuisioner, fetchApotekerKuisionerRekaps } from '../../services/patientService';
+import { fetchAllKuisioner, fetchApotekerKuisionerRekaps, createKuisioner, updateKuisioner, deleteKuisioner } from '../../services/patientService';
 
 const TABS = [
   { key: 'soal', label: 'Soal', icon: FileText },
@@ -49,25 +49,34 @@ export default function QuestionnaireListScreen() {
   const [kuisioners, setKuisioners] = useState([]);
   const [rekaps, setRekaps] = useState([]);
   const [selectedRekap, setSelectedRekap] = useState(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newPertanyaan, setNewPertanyaan] = useState('');
+  const [newTipe, setNewTipe] = useState('ya_tidak');
+  const [newOpsiText, setNewOpsiText] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [editingKuisionerId, setEditingKuisionerId] = useState(null);
+  const [editPertanyaan, setEditPertanyaan] = useState('');
+  const [editTipe, setEditTipe] = useState('ya_tidak');
+  const [editOpsiText, setEditOpsiText] = useState('');
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [soalData, jawabanData] = await Promise.all([
+        fetchAllKuisioner(),
+        fetchApotekerKuisionerRekaps(),
+      ]);
+
+      setKuisioners(Array.isArray(soalData) ? soalData : []);
+      setRekaps(Array.isArray(jawabanData) ? jawabanData : []);
+    } catch (error) {
+      console.error('[QuestionnaireListScreen] loadData failed:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        const [soalData, jawabanData] = await Promise.all([
-          fetchAllKuisioner(),
-          fetchApotekerKuisionerRekaps(),
-        ]);
-
-        setKuisioners(Array.isArray(soalData) ? soalData : []);
-        setRekaps(Array.isArray(jawabanData) ? jawabanData : []);
-      } catch (error) {
-        console.error('[QuestionnaireListScreen] loadData failed:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadData();
   }, []);
 
@@ -124,7 +133,214 @@ export default function QuestionnaireListScreen() {
             );
           })}
         </View>
+        {activeTab === 'soal' ? (
+          <View style={{ marginTop: 14, alignItems: 'flex-end' }}>
+            <Pressable onPress={() => setShowAddModal(true)} style={{ backgroundColor: '#0D7A6A', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12 }}>
+              <Text style={{ color: '#FFFFFF', fontWeight: '900' }}>Tambah Soal</Text>
+            </Pressable>
+          </View>
+        ) : null}
       </View>
+    );
+  };
+
+  const openEditForm = (kuisioner) => {
+    setEditingKuisionerId(kuisioner.id);
+    setEditPertanyaan(kuisioner.pertanyaan);
+    setEditTipe(kuisioner.tipe);
+    setEditOpsiText(kuisioner.opsi ? kuisioner.opsi.join(', ') : '');
+  };
+
+  const resetEditForm = () => {
+    setEditingKuisionerId(null);
+    setEditPertanyaan('');
+    setEditTipe('ya_tidak');
+    setEditOpsiText('');
+  };
+
+  const handleCreate = async () => {
+    if (!newPertanyaan.trim()) {
+      Alert.alert('Validasi', 'Pertanyaan harus diisi');
+      return;
+    }
+
+    let opsi = null;
+    if (newTipe === 'pilihan') {
+      opsi = newOpsiText.split(',').map((s) => s.trim()).filter(Boolean);
+      if (!opsi.length) {
+        Alert.alert('Validasi', 'Opsi harus diisi untuk tipe pilihan');
+        return;
+      }
+    }
+
+    try {
+      setSubmitting(true);
+      await createKuisioner({ pertanyaan: newPertanyaan.trim(), tipe: newTipe, opsi });
+      setShowAddModal(false);
+      setNewPertanyaan('');
+      setNewTipe('ya_tidak');
+      setNewOpsiText('');
+      await loadData();
+      Alert.alert('Sukses', 'Soal kuisioner berhasil ditambahkan');
+    } catch (error) {
+      console.error('[QuestionnaireListScreen] create failed:', error);
+      Alert.alert('Error', 'Gagal menambah soal. Coba lagi.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleEdit = async () => {
+    if (!editPertanyaan.trim()) {
+      Alert.alert('Validasi', 'Pertanyaan harus diisi');
+      return;
+    }
+
+    let opsi = null;
+    if (editTipe === 'pilihan') {
+      opsi = editOpsiText.split(',').map((s) => s.trim()).filter(Boolean);
+      if (!opsi.length) {
+        Alert.alert('Validasi', 'Opsi harus diisi untuk tipe pilihan');
+        return;
+      }
+    }
+
+    try {
+      setSubmitting(true);
+      await updateKuisioner(editingKuisionerId, { pertanyaan: editPertanyaan.trim(), tipe: editTipe, opsi });
+      resetEditForm();
+      await loadData();
+      Alert.alert('Sukses', 'Soal kuisioner berhasil diperbarui');
+    } catch (error) {
+      console.error('[QuestionnaireListScreen] edit failed:', error);
+      Alert.alert('Error', 'Gagal memperbarui soal. Coba lagi.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (kuisionerId) => {
+    Alert.alert(
+      'Hapus Soal',
+      'Apakah Anda yakin ingin menghapus soal ini? Tindakan ini tidak dapat dibatalkan.',
+      [
+        { text: 'Batal', onPress: () => {}, style: 'cancel' },
+        {
+          text: 'Hapus',
+          onPress: async () => {
+            try {
+              setSubmitting(true);
+              await deleteKuisioner(kuisionerId);
+              await loadData();
+              Alert.alert('Sukses', 'Soal kuisioner berhasil dihapus');
+            } catch (error) {
+              console.error('[QuestionnaireListScreen] delete failed:', error);
+              Alert.alert('Error', 'Gagal menghapus soal. Coba lagi.');
+            } finally {
+              setSubmitting(false);
+            }
+          },
+          style: 'destructive',
+        },
+      ]
+    );
+  };
+
+  const renderAddModal = () => {
+    return (
+      <Modal visible={showAddModal} transparent animationType="slide" onRequestClose={() => setShowAddModal(false)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(26,40,32,0.75)', justifyContent: 'flex-end' }}>
+          <View style={{ backgroundColor: '#FFFFFF', borderTopLeftRadius: 32, borderTopRightRadius: 32, maxHeight: '90%' }}>
+            <View style={{ padding: 20, borderBottomWidth: 1.5, borderBottomColor: '#EEF0EF', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Text style={{ color: '#1A2820', fontSize: 20, fontWeight: '900' }}>Tambah Soal Kuisioner</Text>
+              <Pressable onPress={() => setShowAddModal(false)} style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#F4F6F5', alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ color: '#64748B', fontSize: 18, fontWeight: '900' }}>×</Text>
+              </Pressable>
+            </View>
+
+            <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 36 }} showsVerticalScrollIndicator={false}>
+              <Text style={{ fontSize: 13, fontWeight: '800', color: '#64748B', marginBottom: 8 }}>Pertanyaan</Text>
+              <TextInput value={newPertanyaan} onChangeText={setNewPertanyaan} placeholder="Tulis pertanyaan" style={{ backgroundColor: '#F8FAFA', borderRadius: 14, padding: 12, borderWidth: 1, borderColor: '#EEF0EF', marginBottom: 12 }} />
+
+              <Text style={{ fontSize: 13, fontWeight: '800', color: '#64748B', marginBottom: 8 }}>Tipe</Text>
+              <View style={{ flexDirection: 'row', marginBottom: 12 }}>
+                {['ya_tidak', 'pilihan', 'skala'].map((t) => (
+                  <Pressable key={t} onPress={() => setNewTipe(t)} style={{ marginRight: 8 }}>
+                    <View style={{ backgroundColor: newTipe === t ? '#0D7A6A' : '#F4F6F5', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12 }}>
+                      <Text style={{ color: newTipe === t ? '#FFFFFF' : '#64748B', fontWeight: '800' }}>{typeLabel(t)}</Text>
+                    </View>
+                  </Pressable>
+                ))}
+              </View>
+
+              {newTipe === 'pilihan' ? (
+                <>
+                  <Text style={{ fontSize: 13, fontWeight: '800', color: '#64748B', marginBottom: 8 }}>Opsi (pisahkan dengan koma)</Text>
+                  <TextInput value={newOpsiText} onChangeText={setNewOpsiText} placeholder="Contoh: A, B, C" style={{ backgroundColor: '#F8FAFA', borderRadius: 14, padding: 12, borderWidth: 1, borderColor: '#EEF0EF', marginBottom: 12 }} />
+                </>
+              ) : null}
+
+              <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
+                <Pressable onPress={() => setShowAddModal(false)} style={{ paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, marginRight: 8 }}>
+                  <Text style={{ color: '#64748B', fontWeight: '800' }}>Batal</Text>
+                </Pressable>
+                <Pressable onPress={handleCreate} style={{ backgroundColor: '#0D7A6A', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12 }}>
+                  {submitting ? <ActivityIndicator color="#FFF" /> : <Text style={{ color: '#FFF', fontWeight: '900' }}>Simpan</Text>}
+                </Pressable>
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+    );
+  };
+
+  const renderEditModal = () => {
+    return (
+      <Modal visible={editingKuisionerId !== null} transparent animationType="slide" onRequestClose={() => resetEditForm()}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(26,40,32,0.75)', justifyContent: 'flex-end' }}>
+          <View style={{ backgroundColor: '#FFFFFF', borderTopLeftRadius: 32, borderTopRightRadius: 32, maxHeight: '90%' }}>
+            <View style={{ padding: 20, borderBottomWidth: 1.5, borderBottomColor: '#EEF0EF', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Text style={{ color: '#1A2820', fontSize: 20, fontWeight: '900' }}>Edit Soal Kuisioner</Text>
+              <Pressable onPress={() => resetEditForm()} style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#F4F6F5', alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ color: '#64748B', fontSize: 18, fontWeight: '900' }}>×</Text>
+              </Pressable>
+            </View>
+
+            <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 36 }} showsVerticalScrollIndicator={false}>
+              <Text style={{ fontSize: 13, fontWeight: '800', color: '#64748B', marginBottom: 8 }}>Pertanyaan</Text>
+              <TextInput value={editPertanyaan} onChangeText={setEditPertanyaan} placeholder="Tulis pertanyaan" style={{ backgroundColor: '#F8FAFA', borderRadius: 14, padding: 12, borderWidth: 1, borderColor: '#EEF0EF', marginBottom: 12 }} />
+
+              <Text style={{ fontSize: 13, fontWeight: '800', color: '#64748B', marginBottom: 8 }}>Tipe</Text>
+              <View style={{ flexDirection: 'row', marginBottom: 12 }}>
+                {['ya_tidak', 'pilihan', 'skala'].map((t) => (
+                  <Pressable key={t} onPress={() => setEditTipe(t)} style={{ marginRight: 8 }}>
+                    <View style={{ backgroundColor: editTipe === t ? '#0D7A6A' : '#F4F6F5', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12 }}>
+                      <Text style={{ color: editTipe === t ? '#FFFFFF' : '#64748B', fontWeight: '800' }}>{typeLabel(t)}</Text>
+                    </View>
+                  </Pressable>
+                ))}
+              </View>
+
+              {editTipe === 'pilihan' ? (
+                <>
+                  <Text style={{ fontSize: 13, fontWeight: '800', color: '#64748B', marginBottom: 8 }}>Opsi (pisahkan dengan koma)</Text>
+                  <TextInput value={editOpsiText} onChangeText={setEditOpsiText} placeholder="Contoh: A, B, C" style={{ backgroundColor: '#F8FAFA', borderRadius: 14, padding: 12, borderWidth: 1, borderColor: '#EEF0EF', marginBottom: 12 }} />
+                </>
+              ) : null}
+
+              <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
+                <Pressable onPress={() => resetEditForm()} style={{ paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, marginRight: 8 }}>
+                  <Text style={{ color: '#64748B', fontWeight: '800' }}>Batal</Text>
+                </Pressable>
+                <Pressable onPress={handleEdit} style={{ backgroundColor: '#4F46E5', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12 }}>
+                  {submitting ? <ActivityIndicator color="#FFF" /> : <Text style={{ color: '#FFF', fontWeight: '900' }}>Perbarui</Text>}
+                </Pressable>
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     );
   };
 
@@ -188,6 +404,15 @@ export default function QuestionnaireListScreen() {
                 </View>
               </View>
             ) : null}
+
+            <View style={{ flexDirection: 'row', marginTop: 16, justifyContent: 'flex-end' }}>
+              <Pressable onPress={() => openEditForm(item)} style={{ backgroundColor: '#4F46E5', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, marginRight: 8 }}>
+                <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 12 }}>Edit</Text>
+              </Pressable>
+              <Pressable onPress={() => handleDelete(item.id)} style={{ backgroundColor: '#DC2626', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10 }}>
+                <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 12 }}>Hapus</Text>
+              </Pressable>
+            </View>
           </View>
         ))
       ) : (
@@ -329,6 +554,8 @@ export default function QuestionnaireListScreen() {
       {renderHeader()}
       {activeTab === 'soal' ? renderSoalTab() : renderJawabanTab()}
       {renderDetailModal()}
+      {renderAddModal()}
+      {renderEditModal()}
     </View>
   );
 }

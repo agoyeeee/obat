@@ -90,6 +90,39 @@ export const fetchApotekerKuisionerRekaps = async () => {
   }
 };
 
+export const createKuisioner = async (payload) => {
+  try {
+    const response = await api.post('/kuisioner', payload);
+    console.log('[API] createKuisioner success:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('[API] createKuisioner failed:', error.message);
+    throw error;
+  }
+};
+
+export const updateKuisioner = async (kuisionerId, payload) => {
+  try {
+    const response = await api.put(`/kuisioner/${kuisionerId}`, payload);
+    console.log('[API] updateKuisioner success:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('[API] updateKuisioner failed:', error.message);
+    throw error;
+  }
+};
+
+export const deleteKuisioner = async (kuisionerId) => {
+  try {
+    const response = await api.delete(`/kuisioner/${kuisionerId}`);
+    console.log('[API] deleteKuisioner success:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('[API] deleteKuisioner failed:', error.message);
+    throw error;
+  }
+};
+
 export const submitKuisionerAnswers = async (patientId, tanggal, jawaban) => {
   try {
     const response = await api.post('/rekap-kuisioner/public-store', {
