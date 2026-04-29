@@ -1,7 +1,7 @@
 import { Modal, View, Text, ScrollView, Pressable } from 'react-native';
 import { X } from 'lucide-react-native';
 
-export default function MedicineModal({ medicine, onClose, onManageMerk }) {
+export default function MedicineModal({ medicine, onClose, onManageMerk, onEditMedicine, onDeleteMedicine }) {
   if (!medicine) return null;
 
   return (
@@ -61,11 +61,26 @@ export default function MedicineModal({ medicine, onClose, onManageMerk }) {
               <Text className="text-slate-700 text-sm font-medium leading-relaxed">{medicine.monitoring || '-'}</Text>
             </View>
 
+            <View className="mb-3 flex-row">
+              <Pressable
+                onPress={onEditMedicine}
+                className="flex-1 mr-2 bg-[#F59E0B] rounded-2xl py-4 items-center active:opacity-90"
+              >
+                <Text className="text-white font-bold text-base">Edit Obat</Text>
+              </Pressable>
+              <Pressable
+                onPress={onManageMerk}
+                className="flex-1 ml-2 bg-[#0D7A6A] rounded-2xl py-4 items-center active:opacity-90"
+              >
+                <Text className="text-white font-bold text-base">Kelola Merek</Text>
+              </Pressable>
+            </View>
+
             <Pressable
-              onPress={onManageMerk}
-              className="mb-6 bg-[#0D7A6A] rounded-2xl py-4 items-center active:opacity-90"
+              onPress={onDeleteMedicine}
+              className="mb-6 bg-[#EF4444] rounded-2xl py-4 items-center active:opacity-90"
             >
-              <Text className="text-white font-bold text-base">Kelola Merek</Text>
+              <Text className="text-white font-bold text-base">Hapus Obat</Text>
             </Pressable>
           </ScrollView>
         </View>

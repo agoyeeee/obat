@@ -35,6 +35,8 @@ Route::middleware('auth:sanctum')->group(function (): void {
     // Master data
     Route::get('/obat', [ObatController::class, 'index']);
     Route::post('/obat', [ObatController::class, 'store']);
+    Route::put('/obat/{id}', [ObatController::class, 'update']);
+    Route::delete('/obat/{id}', [ObatController::class, 'destroy']);
     Route::get('/obat/{id}', [ObatController::class, 'show']);
     Route::post('/merk', [MerkController::class, 'store']);
     Route::get('/waktu-konsumsi', [WaktuKonsumsiController::class, 'index']);

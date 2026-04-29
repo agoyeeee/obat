@@ -16,6 +16,16 @@ export const createMedicine = async (data) => {
   return response.data;
 };
 
+export const updateMedicine = async (medicineId, data) => {
+  const response = await api.put(`/obat/${medicineId}`, data);
+  return response.data;
+};
+
+export const deleteMedicine = async (medicineId) => {
+  const response = await api.delete(`/obat/${medicineId}`);
+  return response.data;
+};
+
 export const fetchMerksByObat = async (obatId) => {
   const response = await api.get(`/obat/${obatId}`);
   return response.data?.merks || [];
