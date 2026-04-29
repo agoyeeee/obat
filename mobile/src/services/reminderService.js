@@ -51,3 +51,13 @@ export const updateIntakeStatus = async (scheduleId, status) => {
   const response = await api.put(`/reminder-obat/${scheduleId}`, { skor_kepatuhan: status });
   return response.data;
 };
+
+export const updateReminderObat = async (reminderId, data) => {
+  const response = await api.put(`/reminder-obat/${reminderId}`, data);
+  return response.data;
+};
+
+export const deleteReminderObat = async (reminderId) => {
+  const response = await api.delete(`/reminder-obat/${reminderId}`);
+  return response.data;
+};

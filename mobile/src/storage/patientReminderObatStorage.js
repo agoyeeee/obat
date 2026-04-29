@@ -88,3 +88,24 @@ export const updatePatientReminderObatAlarmIds = async (localId, notificationIds
   await storePatientReminderObatQueue(updated);
   return updated;
 };
+
+export const updatePatientReminderObatItem = async (localId, patch = {}) => {
+  const queue = await getPatientReminderObatQueue();
+  const updated = queue.map((item) => {
+    if (item.local_id !== localId) return item;
+    return {
+      ...item,
+      ...patch,
+    };
+  });
+
+  await storePatientReminderObatQueue(updated);
+  return updated;
+};
+
+export const deletePatientReminderObatItem = async (localId) => {
+  const queue = await getPatientReminderObatQueue();
+  const updated = queue.filter((item) => item.local_id !== localId);
+  await storePatientReminderObatQueue(updated);
+  return updated;
+};

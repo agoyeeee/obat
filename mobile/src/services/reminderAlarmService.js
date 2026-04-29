@@ -158,6 +158,16 @@ export const scheduleReminderObatAlarms = async (reminderItem) => {
   return scheduledIds;
 };
 
+export const cancelReminderObatAlarms = async (notificationIds = []) => {
+  if (!Array.isArray(notificationIds) || notificationIds.length === 0) {
+    return;
+  }
+
+  await Promise.all(
+    notificationIds.map((id) => Notifications.cancelScheduledNotificationAsync(id))
+  );
+};
+
 export const addReminderAlarmResponseListener = (onStopAlarm) => {
   return Notifications.addNotificationResponseReceivedListener((response) => {
     const actionId = response.actionIdentifier;

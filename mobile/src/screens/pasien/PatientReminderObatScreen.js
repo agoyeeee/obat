@@ -4,12 +4,15 @@ import { StatusBar } from 'expo-status-bar';
 import { ArrowLeft, Pill, CloudUpload, CircleCheck, Clock3, Plus, X } from 'lucide-react-native';
 import { fetchPublicObatList } from '../../services/patientService';
 import { syncPendingReminderObat } from '../../services/patientSyncService';
-import { scheduleReminderObatAlarms } from '../../services/reminderAlarmService';
+import { scheduleReminderObatAlarms, cancelReminderObatAlarms } from '../../services/reminderAlarmService';
 import {
   addPatientReminderObat,
   getPatientReminderObatQueue,
   updatePatientReminderObatAlarmIds,
+  updatePatientReminderObatItem,
+  deletePatientReminderObatItem,
 } from '../../storage/patientReminderObatStorage';
+import { deleteReminderObat } from '../../services/reminderService';
 
 const SEDIAAN_OPTIONS = [
   { label: 'Tablet', value: 'tablet' },
@@ -114,6 +117,7 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
   const [jumlahObat, setJumlahObat] = useState('');
   const [aturanMinum, setAturanMinum] = useState('');
   const [aturanCustom, setAturanCustom] = useState('');
+  const [editingReminder, setEditingReminder] = useState(null);
 
   const loadQueueStats = useCallback(async () => {
     const queue = await getPatientReminderObatQueue();
@@ -239,10 +243,26 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
     setAturanMinum('');
     setAturanCustom('');
     setActiveSelect(null);
+    setEditingReminder(null);
   };
 
   const handleOpenAddModal = () => {
     resetForm();
+    setIsAddModalOpen(true);
+  };
+
+  const openEditModal = (item) => {
+    setEditingReminder(item);
+    setSelectedObatId(String(item.obat_id || ''));
+    setDosis(item.dosis || '');
+    setFrekuensi(String(item.frekuensi || ''));
+    setSediaan(item.sediaan || '');
+    setWaktuKonsumsi(item.waktu_konsumsi || '');
+    setJamCustom(item.frekuensi === 1 ? (item.waktu_konsumsi || '') : '');
+    setJumlahObat(String(item.jumlah_obat || ''));
+    setAturanMinum(item.aturan_minum || '');
+    setAturanCustom('');
+    setActiveSelect(null);
     setIsAddModalOpen(true);
   };
 
@@ -291,6 +311,51 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
 
     try {
       setIsSaving(true);
+      if (editingReminder) {
+        const isSyncedReminder = editingReminder.sync_status === 'synced' && editingReminder.server_id;
+
+        if (isSyncedReminder) {
+          await deleteReminderObat(editingReminder.server_id);
+          await cancelReminderObatAlarms(editingReminder.alarm_notification_ids || []);
+        }
+
+        const updatedLocalItem = await updatePatientReminderObatItem(editingReminder.local_id, {
+          ...payload,
+          sync_status: isSyncedReminder ? 'pending' : editingReminder.sync_status,
+          synced_at: isSyncedReminder ? null : editingReminder.synced_at,
+          server_id: isSyncedReminder ? null : editingReminder.server_id,
+          alarm_notification_ids: isSyncedReminder ? [] : (editingReminder.alarm_notification_ids || []),
+          last_error: null,
+        });
+
+        if (isSyncedReminder) {
+          await syncPendingReminderObat(profile);
+          await loadQueueStats();
+
+          const latestQueue = await getPatientReminderObatQueue();
+          const updatedAfterSync = latestQueue.find((item) => item.local_id === editingReminder.local_id);
+          if (updatedAfterSync?.sync_status === 'synced' && updatedAfterSync.server_id) {
+            try {
+              const notificationIds = await scheduleReminderObatAlarms(updatedAfterSync);
+              await updatePatientReminderObatAlarmIds(updatedAfterSync.local_id, notificationIds);
+              await loadQueueStats();
+            } catch (alarmError) {
+              console.error('Failed to schedule alarm after edit:', alarmError?.message || alarmError);
+            }
+          }
+        } else {
+          await loadQueueStats();
+        }
+
+        setIsAddModalOpen(false);
+        resetForm();
+        Alert.alert('Reminder diperbarui', isSyncedReminder
+          ? 'Data diperbarui dan akan tersinkron ulang ke server.'
+          : 'Data reminder berhasil diperbarui.'
+        );
+        return updatedLocalItem;
+      }
+
       const createdItem = await addPatientReminderObat(payload);
       await syncPendingReminderObat(profile);
       await loadQueueStats();
@@ -315,6 +380,38 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleDeleteReminder = async (item) => {
+    Alert.alert(
+      'Hapus Reminder Obat',
+      `Hapus reminder untuk ${item.nama_obat}? Tindakan ini tidak dapat dibatalkan.`,
+      [
+        { text: 'Batal', style: 'cancel' },
+        {
+          text: 'Hapus',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setIsSaving(true);
+              if (item.sync_status === 'synced' && item.server_id) {
+                await deleteReminderObat(item.server_id);
+              }
+
+              await cancelReminderObatAlarms(item.alarm_notification_ids || []);
+
+              await deletePatientReminderObatItem(item.local_id);
+              await loadQueueStats();
+              Alert.alert('Reminder dihapus', 'Reminder obat berhasil dihapus.');
+            } catch (error) {
+              Alert.alert('Gagal menghapus', error?.message || 'Terjadi kesalahan saat menghapus reminder.');
+            } finally {
+              setIsSaving(false);
+            }
+          },
+        },
+      ]
+    );
   };
 
   useEffect(() => {
@@ -444,6 +541,20 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
                       {isAlarmActive ? 'Alarm Aktif Otomatis' : (isSynced ? 'Menyiapkan Alarm...' : 'Alarm Menunggu Sync')}
                     </Text>
                   </View>
+                  <View className="flex-row items-center justify-end mt-3">
+                    <Pressable
+                      onPress={() => openEditModal(item)}
+                      className="bg-blue-600 rounded-xl px-3 py-2 mr-2 active:bg-blue-700"
+                    >
+                      <Text className="text-white text-xs font-bold">Edit</Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => handleDeleteReminder(item)}
+                      className="bg-rose-600 rounded-xl px-3 py-2 active:bg-rose-700"
+                    >
+                      <Text className="text-white text-xs font-bold">Hapus</Text>
+                    </Pressable>
+                  </View>
                   {item.last_error ? (
                     <Text className="text-xs font-semibold text-rose-500 mt-2">Error sync: {item.last_error}</Text>
                   ) : null}
@@ -458,13 +569,19 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
         visible={isAddModalOpen}
         animationType="slide"
         transparent={false}
-        onRequestClose={() => setIsAddModalOpen(false)}
+        onRequestClose={() => {
+          setIsAddModalOpen(false);
+          resetForm();
+        }}
       >
         <SafeAreaView className="flex-1 bg-slate-50">
           <View className="bg-white px-5 pt-5 pb-4 border-b border-slate-100 flex-row items-center justify-between z-50">
-            <Text className="text-lg font-black text-slate-900">Tambah Reminder Obat</Text>
+            <Text className="text-lg font-black text-slate-900">{editingReminder ? 'Edit Reminder Obat' : 'Tambah Reminder Obat'}</Text>
             <Pressable
-              onPress={() => setIsAddModalOpen(false)}
+              onPress={() => {
+                setIsAddModalOpen(false);
+                resetForm();
+              }}
               className="w-9 h-9 rounded-lg bg-slate-100 items-center justify-center active:bg-slate-200"
             >
               <X color="#334155" size={18} />
@@ -600,7 +717,7 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
                 className={`mt-4 rounded-2xl py-4 items-center ${canSubmit && !isSaving ? 'bg-blue-600 active:bg-blue-700' : 'bg-slate-300'}`}
                 disabled={!canSubmit || isSaving}
               >
-                <Text className="text-white font-bold text-base">{isSaving ? 'Menyimpan...' : 'Simpan Reminder Offline'}</Text>
+                <Text className="text-white font-bold text-base">{isSaving ? 'Menyimpan...' : (editingReminder ? 'Simpan Perubahan' : 'Simpan Reminder Offline')}</Text>
               </Pressable>
           </ScrollView>
         </SafeAreaView>
