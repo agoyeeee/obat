@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\RekapKuisionerController;
 use App\Http\Controllers\Api\ReminderCairanController;
 use App\Http\Controllers\Api\ReminderObatController;
 use App\Http\Controllers\Api\WaktuKonsumsiController;
+use App\Http\Controllers\Api\MerkController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/auth/login', [AuthController::class, 'login']);
@@ -33,7 +34,9 @@ Route::middleware('auth:sanctum')->group(function (): void {
 
     // Master data
     Route::get('/obat', [ObatController::class, 'index']);
+    Route::post('/obat', [ObatController::class, 'store']);
     Route::get('/obat/{id}', [ObatController::class, 'show']);
+    Route::post('/merk', [MerkController::class, 'store']);
     Route::get('/waktu-konsumsi', [WaktuKonsumsiController::class, 'index']);
     Route::get('/kuisioner', [KuisionerController::class, 'index']);
 

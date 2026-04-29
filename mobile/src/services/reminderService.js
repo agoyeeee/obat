@@ -11,6 +11,21 @@ export const fetchMedicines = async () => {
   return response.data;
 };
 
+export const createMedicine = async (data) => {
+  const response = await api.post('/obat', data);
+  return response.data;
+};
+
+export const fetchMerksByObat = async (obatId) => {
+  const response = await api.get(`/obat/${obatId}`);
+  return response.data?.merks || [];
+};
+
+export const createMerk = async (data) => {
+  const response = await api.post('/merk', data);
+  return response.data;
+};
+
 export const fetchWeeklyAdherence = async (pasien_id) => {
   if (!pasien_id) return null;
   const response = await api.get('/rekapan-obat', { params: { pasien_id: Number(pasien_id) } });

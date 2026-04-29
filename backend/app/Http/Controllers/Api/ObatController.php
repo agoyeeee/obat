@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Obat;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class ObatController extends Controller
 {
@@ -26,6 +27,25 @@ class ObatController extends Controller
             ->get();
 
         return response()->json($obats);
+    }
+
+    public function store(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'nama_obat' => ['required', 'string', 'max:255', 'unique:obat,nama_obat'],
+            'indikasi' => ['required', 'string'],
+            'dosis_inisiasi' => ['required', 'array', 'min:1'],
+            'dosis_inisiasi.*' => ['required', 'string', 'max:100'],
+            'dosis_target' => ['required', 'string', 'max:100'],
+            'frekuensi_default' => ['required', 'integer', 'min:1', 'max:24'],
+            'kontraindikasi' => ['nullable', 'string'],
+            'efek_samping' => ['nullable', 'string'],
+            'monitoring' => ['nullable', 'string'],
+        ]);
+
+        $obat = Obat::query()->create($validated);
+
+        return response()->json($obat->load('merks'), 201);
     }
 
     public function show(int $id): JsonResponse

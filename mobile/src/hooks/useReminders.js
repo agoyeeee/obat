@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { fetchReminders, fetchMedicines, fetchWeeklyAdherence, updateIntakeStatus, createReminder } from '../services/reminderService';
+import { fetchReminders, fetchMedicines, fetchWeeklyAdherence, updateIntakeStatus, createReminder, createMedicine } from '../services/reminderService';
 
 export const useReminders = () => {
   const [schedules, setSchedules] = useState([]);
@@ -43,5 +43,39 @@ export const useReminders = () => {
     }
   };
 
-  return { schedules, medicines, adherence, isLoading, loadData, markIntake, addReminder };
+  const addMedicine = async (data) => {
+    try {
+      const created = await createMedicine(data);
+      return { success: true, data: created };
+    } catch (error) {
+      const responseData = error?.response?.data;
+      const validationErrors = responseData?.errors;
+
+      const fieldLabels = {
+        nama_obat: 'Nama Obat',
+        indikasi: 'Indikasi',
+        dosis_inisiasi: 'Dosis Inisiasi',
+        dosis_target: 'Dosis Target',
+        frekuensi_default: 'Frekuensi Default',
+        kontraindikasi: 'Kontraindikasi',
+        efek_samping: 'Efek Samping',
+        monitoring: 'Monitoring',
+      };
+
+      if (validationErrors && typeof validationErrors === 'object') {
+        const detailedMessage = Object.entries(validationErrors)
+          .map(([field, messages]) => {
+            const text = Array.isArray(messages) ? messages.join(', ') : String(messages);
+            return `${fieldLabels[field] || field}: ${text}`;
+          })
+          .join('\n');
+
+        return { success: false, message: detailedMessage };
+      }
+
+      return { success: false, message: responseData?.message || 'Create medicine failed' };
+    }
+  };
+
+  return { schedules, medicines, adherence, isLoading, loadData, markIntake, addReminder, addMedicine };
 };

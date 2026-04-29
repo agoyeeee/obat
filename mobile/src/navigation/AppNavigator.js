@@ -12,6 +12,7 @@ import PatientReminderObatScreen from '../screens/pasien/PatientReminderObatScre
 import PatientReminderCairanScreen from '../screens/pasien/PatientReminderCairanScreen';
 
 import PatientDetailScreen from '../screens/apoteker/PatientDetailScreen';
+import SelectBrandScreen from '../screens/apoteker/SelectBrandScreen';
 
 import { View, ActivityIndicator, AppState, Alert } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
@@ -333,6 +334,7 @@ export default function AppNavigator() {
               component={MainTabNavigator}
               initialParams={{ user, onLogout: handleLogout }}
             />
+            <Stack.Screen name="SelectBrand" component={SelectBrandScreen} />
             <Stack.Screen
               name="PatientDetail"
               component={PatientDetailScreen}

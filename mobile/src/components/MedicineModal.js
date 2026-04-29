@@ -1,7 +1,7 @@
 import { Modal, View, Text, ScrollView, Pressable } from 'react-native';
 import { X } from 'lucide-react-native';
 
-export default function MedicineModal({ medicine, onClose }) {
+export default function MedicineModal({ medicine, onClose, onManageMerk }) {
   if (!medicine) return null;
 
   return (
@@ -60,6 +60,13 @@ export default function MedicineModal({ medicine, onClose }) {
               <Text className="text-xs font-bold text-slate-400 uppercase tracking-[1.5px] mb-1.5">Monitoring</Text>
               <Text className="text-slate-700 text-sm font-medium leading-relaxed">{medicine.monitoring || '-'}</Text>
             </View>
+
+            <Pressable
+              onPress={onManageMerk}
+              className="mb-6 bg-[#0D7A6A] rounded-2xl py-4 items-center active:opacity-90"
+            >
+              <Text className="text-white font-bold text-base">Kelola Merek</Text>
+            </Pressable>
           </ScrollView>
         </View>
       </View>
