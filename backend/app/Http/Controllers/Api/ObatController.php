@@ -14,6 +14,7 @@ class ObatController extends Controller
     {
         $obats = Obat::query()
             ->select(['id', 'nama_obat', 'dosis_target', 'dosis_inisiasi', 'frekuensi_default'])
+            ->with('merks:id,obat_id,nama_merk')
             ->orderBy('nama_obat')
             ->get();
 

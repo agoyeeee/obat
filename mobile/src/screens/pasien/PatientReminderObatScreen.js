@@ -109,6 +109,7 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
   const [isAutoSchedulingAlarm, setIsAutoSchedulingAlarm] = useState(false);
 
   const [selectedObatId, setSelectedObatId] = useState('');
+  const [selectedMerkId, setSelectedMerkId] = useState('');
   const [dosis, setDosis] = useState('');
   const [frekuensi, setFrekuensi] = useState('');
   const [sediaan, setSediaan] = useState('');
@@ -193,6 +194,11 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
 
   const doseOptions = useMemo(() => resolveDoseOptions(selectedObat), [selectedObat]);
 
+  const merkOptions = useMemo(() => {
+    if (!selectedObat?.merks || selectedObat.merks.length === 0) return [];
+    return selectedObat.merks.map((merk) => ({ label: merk.nama_merk, value: String(merk.id) }));
+  }, [selectedObat]);
+
   const frekuensiNumber = Number(frekuensi);
   const presetOptions = useMemo(() => {
     const presets = TIME_PRESETS[frekuensiNumber] || [];
@@ -212,6 +218,7 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
 
   const handleSelectObat = (obatId) => {
     setSelectedObatId(obatId);
+    setSelectedMerkId('');
     setActiveSelect(null);
 
     const obat = obatList.find((item) => String(item.id) === String(obatId));
@@ -234,6 +241,7 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
 
   const resetForm = () => {
     setSelectedObatId('');
+    setSelectedMerkId('');
     setDosis('');
     setFrekuensi('');
     setSediaan('');
@@ -254,6 +262,7 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
   const openEditModal = (item) => {
     setEditingReminder(item);
     setSelectedObatId(String(item.obat_id || ''));
+    setSelectedMerkId(String(item.merk_id || ''));
     setDosis(item.dosis || '');
     setFrekuensi(String(item.frekuensi || ''));
     setSediaan(item.sediaan || '');
@@ -300,7 +309,9 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
 
     const payload = {
       obat_id: Number(selectedObatId),
+      merk_id: selectedMerkId ? Number(selectedMerkId) : null,
       nama_obat: selectedObat?.nama_obat || '-',
+      nama_merk: selectedMerkId ? (merkOptions.find((m) => m.value === selectedMerkId)?.label || null) : null,
       dosis,
       sediaan,
       frekuensi: Number(frekuensi),
@@ -533,6 +544,7 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
                       </Text>
                     </View>
                   </View>
+                  {item.nama_merk && <Text className="text-xs font-semibold text-slate-500">Merk: {item.nama_merk}</Text>}
                   <Text className="text-xs font-semibold text-slate-500">Dosis {item.dosis} | {item.frekuensi}x/hari</Text>
                   <Text className="text-xs font-semibold text-slate-500 mt-1">Waktu {item.waktu_konsumsi}</Text>
                   <Text className="text-xs font-semibold text-slate-500 mt-1">Aturan {item.aturan_minum}</Text>
@@ -594,7 +606,7 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-              <SelectField
+n              <SelectField
                 label="Nama Obat"
                 valueLabel={selectedObat?.nama_obat || ''}
                 placeholder="Pilih nama obat"
@@ -603,6 +615,21 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
                 onToggle={() => setActiveSelect(activeSelect === 'obat' ? null : 'obat')}
                 onSelect={handleSelectObat}
               />
+
+              {merkOptions.length > 0 && (
+                <SelectField
+                  label="Merk Obat"
+                  valueLabel={selectedMerkId ? (merkOptions.find((m) => m.value === selectedMerkId)?.label || '') : ''}
+                  placeholder={merkOptions.length > 1 ? 'Pilih merk' : merkOptions[0]?.label}
+                  options={merkOptions}
+                  isOpen={activeSelect === 'merk'}
+                  onToggle={() => setActiveSelect(activeSelect === 'merk' ? null : 'merk')}
+                  onSelect={(value) => {
+                    setSelectedMerkId(value);
+                    setActiveSelect(null);
+                  }}
+                />
+              )}
 
               <SelectField
                 label="Dosis"

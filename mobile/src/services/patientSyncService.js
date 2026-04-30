@@ -27,6 +27,7 @@ export const syncPendingReminderObat = async (profile) => {
       reminders: pendingItems.map((item) => ({
         local_id: item.local_id,
         obat_id: item.obat_id,
+        merk_id: item.merk_id || null,
         dosis: item.dosis,
         sediaan: item.sediaan,
         jumlah_obat: item.jumlah_obat,

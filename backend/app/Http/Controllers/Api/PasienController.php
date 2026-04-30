@@ -46,6 +46,7 @@ class PasienController extends Controller
             'reminders' => ['required', 'array', 'min:1'],
             'reminders.*.local_id' => ['required', 'string'],
             'reminders.*.obat_id' => ['required', 'integer', 'exists:obat,id'],
+            'reminders.*.merk_id' => ['nullable', 'integer', 'exists:merk,id'],
             'reminders.*.dosis' => ['required', 'string', 'max:100'],
             'reminders.*.sediaan' => ['required', 'string', 'max:100'],
             'reminders.*.jumlah_obat' => ['required', 'integer', 'min:1'],
@@ -94,7 +95,7 @@ class PasienController extends Controller
                 $reminder = ReminderObat::query()->create([
                     'pasien_id' => $pasien->id,
                     'obat_id' => (int) $item['obat_id'],
-                    'merk_id' => null,
+                    'merk_id' => isset($item['merk_id']) ? (int) $item['merk_id'] : null,
                     'dosis' => $item['dosis'],
                     'sediaan' => $item['sediaan'],
                     'jumlah_obat' => (int) $item['jumlah_obat'],
