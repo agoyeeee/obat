@@ -3,8 +3,15 @@ import { View, Text, Pressable, ScrollView, TextInput, Alert, RefreshControl, Ac
 import { StatusBar } from 'expo-status-bar';
 import { ArrowLeft, Droplets, Plus, X } from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { addPatientReminderCairan, getPatientReminderCairanQueue } from '../../storage/patientReminderCairanStorage';
+import {
+  addPatientReminderCairan,
+  getPatientReminderCairanQueue,
+  updatePatientReminderCairanItem,
+  deletePatientReminderCairanItem,
+} from '../../storage/patientReminderCairanStorage';
 import { syncPendingReminderCairan } from '../../services/patientReminderCairanSyncService';
+import { cancelReminderCairanAlarms } from '../../services/reminderCairanAlarmService';
+import { deleteReminderCairan } from '../../services/reminderService';
 
 const pad = (value) => String(value).padStart(2, '0');
 const formatDateYMD = (date) => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
@@ -26,6 +33,7 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
   const [waktu, setWaktu] = useState(formatTimeHMS(new Date()));
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [editingReminder, setEditingReminder] = useState(null);
 
   const loadQueue = useCallback(async () => {
     const data = await getPatientReminderCairanQueue();
@@ -71,10 +79,23 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
     setMinuman('Air mineral');
     setJumlahMl('');
     setWaktu(formatTimeHMS(new Date()));
+    setEditingReminder(null);
   };
 
   const openAddModal = () => {
     resetForm();
+    setIsAddModalOpen(true);
+  };
+
+  const openEditModal = (item) => {
+    setEditingReminder(item);
+    setTanggal(item.tanggal || formatDateYMD(new Date()));
+    setCatatanAsupan(item.catatan_asupan || '');
+    setMinuman(item.minuman || 'Air mineral');
+    setJumlahMl(String(item.jumlah_ml || ''));
+    setWaktu(item.waktu || formatTimeHMS(new Date()));
+    setShowDatePicker(false);
+    setShowTimePicker(false);
     setIsAddModalOpen(true);
   };
 
@@ -92,14 +113,42 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
 
     try {
       setIsSubmitting(true);
-      await addPatientReminderCairan({
+      const payload = {
         tanggal,
         catatan_asupan: catatanAsupan.trim(),
         minuman: minuman.trim(),
         jumlah_ml: jumlahValue,
         waktu,
-      });
+      };
+
+      if (editingReminder) {
+        const isSyncedReminder = editingReminder.sync_status === 'synced' && editingReminder.server_id;
+
+        if (isSyncedReminder) {
+          await deleteReminderCairan(editingReminder.server_id);
+          await cancelReminderCairanAlarms(editingReminder.alarm_notification_ids || []);
+        }
+
+        await updatePatientReminderCairanItem(editingReminder.local_id, {
+          ...payload,
+          sync_status: isSyncedReminder ? 'pending' : editingReminder.sync_status,
+          synced_at: isSyncedReminder ? null : editingReminder.synced_at,
+          server_id: isSyncedReminder ? null : editingReminder.server_id,
+          alarm_notification_ids: isSyncedReminder ? [] : (editingReminder.alarm_notification_ids || []),
+          last_error: null,
+        });
+
+        setIsAddModalOpen(false);
+        resetForm();
+        await loadQueue();
+        await autoSync();
+        Alert.alert('Reminder cairan diperbarui', isSyncedReminder ? 'Data diperbarui dan akan tersinkron ulang.' : 'Data reminder berhasil diperbarui.');
+        return;
+      }
+
+      await addPatientReminderCairan(payload);
       setIsAddModalOpen(false);
+      resetForm();
       await loadQueue();
       await autoSync();
       Alert.alert('Tersimpan', 'Reminder cairan tersimpan di device dan akan auto sync saat online.');
@@ -108,6 +157,39 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleDeleteReminder = async (item) => {
+    Alert.alert(
+      'Hapus Reminder Cairan',
+      `Hapus reminder cairan untuk ${item.minuman}? Tindakan ini tidak dapat dibatalkan.`,
+      [
+        { text: 'Batal', style: 'cancel' },
+        {
+          text: 'Hapus',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setIsSubmitting(true);
+
+              if (item.sync_status === 'synced' && item.server_id) {
+                await deleteReminderCairan(item.server_id);
+              }
+
+              await cancelReminderCairanAlarms(item.alarm_notification_ids || []);
+              await deletePatientReminderCairanItem(item.local_id);
+              await loadQueue();
+
+              Alert.alert('Reminder dihapus', 'Reminder cairan berhasil dihapus.');
+            } catch (error) {
+              Alert.alert('Gagal menghapus', error?.message || 'Terjadi kesalahan saat menghapus reminder cairan.');
+            } finally {
+              setIsSubmitting(false);
+            }
+          },
+        },
+      ]
+    );
   };
 
   if (isLoading) {
@@ -175,6 +257,14 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
                   <Text className="text-xs font-semibold text-slate-500 mt-1">Waktu {formatTimeHM(item.waktu)}</Text>
                   {item.catatan_asupan ? <Text className="text-xs font-semibold text-slate-500 mt-1">Catatan {item.catatan_asupan}</Text> : null}
                   <Text className={`text-xs font-bold mt-3 ${isAlarmActive ? 'text-emerald-600' : 'text-slate-400'}`}>{isAlarmActive ? 'Alarm Aktif Otomatis' : 'Menyiapkan Alarm...'}</Text>
+                  <View className="flex-row items-center justify-end mt-3">
+                    <Pressable onPress={() => openEditModal(item)} className="bg-blue-600 rounded-xl px-3 py-2 mr-2 active:bg-blue-700">
+                      <Text className="text-white text-xs font-bold">Edit</Text>
+                    </Pressable>
+                    <Pressable onPress={() => handleDeleteReminder(item)} className="bg-rose-600 rounded-xl px-3 py-2 active:bg-rose-700">
+                      <Text className="text-white text-xs font-bold">Hapus</Text>
+                    </Pressable>
+                  </View>
                   {item.last_error ? <Text className="text-xs font-semibold text-rose-500 mt-2">Error sync: {item.last_error}</Text> : null}
                 </View>
               );
@@ -183,11 +273,25 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
         </View>
       </ScrollView>
 
-      <Modal visible={isAddModalOpen} animationType="slide" transparent={false} onRequestClose={() => setIsAddModalOpen(false)}>
+      <Modal
+        visible={isAddModalOpen}
+        animationType="slide"
+        transparent={false}
+        onRequestClose={() => {
+          setIsAddModalOpen(false);
+          resetForm();
+        }}
+      >
         <SafeAreaView className="flex-1 bg-slate-50">
           <View className="bg-white px-5 pt-5 pb-4 border-b border-slate-100 flex-row items-center justify-between z-50">
-            <Text className="text-lg font-black text-slate-900">Tambah Reminder Cairan</Text>
-            <Pressable onPress={() => setIsAddModalOpen(false)} className="w-9 h-9 rounded-lg bg-slate-100 items-center justify-center active:bg-slate-200">
+            <Text className="text-lg font-black text-slate-900">{editingReminder ? 'Edit Reminder Cairan' : 'Tambah Reminder Cairan'}</Text>
+            <Pressable
+              onPress={() => {
+                setIsAddModalOpen(false);
+                resetForm();
+              }}
+              className="w-9 h-9 rounded-lg bg-slate-100 items-center justify-center active:bg-slate-200"
+            >
               <X color="#334155" size={18} />
             </Pressable>
           </View>
@@ -257,7 +361,7 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
             )}
 
             <Pressable onPress={submitCairan} disabled={!canSubmit || isSubmitting} className={`mt-2 rounded-2xl py-4 items-center ${canSubmit && !isSubmitting ? 'bg-blue-600 active:bg-blue-700' : 'bg-slate-300'}`}>
-              <Text className="text-white font-bold text-base">{isSubmitting ? 'Menyimpan...' : 'Simpan Reminder Offline'}</Text>
+              <Text className="text-white font-bold text-base">{isSubmitting ? 'Menyimpan...' : (editingReminder ? 'Simpan Perubahan' : 'Simpan Reminder Offline')}</Text>
             </Pressable>
           </ScrollView>
         </SafeAreaView>

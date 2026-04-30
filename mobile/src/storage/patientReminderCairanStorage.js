@@ -87,3 +87,24 @@ export const updatePatientReminderCairanAlarmIds = async (localId, notificationI
   await storePatientReminderCairanQueue(updated);
   return updated;
 };
+
+export const updatePatientReminderCairanItem = async (localId, patch = {}) => {
+  const queue = await getPatientReminderCairanQueue();
+  const updated = queue.map((item) => {
+    if (item.local_id !== localId) return item;
+    return {
+      ...item,
+      ...patch,
+    };
+  });
+
+  await storePatientReminderCairanQueue(updated);
+  return updated;
+};
+
+export const deletePatientReminderCairanItem = async (localId) => {
+  const queue = await getPatientReminderCairanQueue();
+  const updated = queue.filter((item) => item.local_id !== localId);
+  await storePatientReminderCairanQueue(updated);
+  return updated;
+};

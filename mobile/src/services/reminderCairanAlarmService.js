@@ -152,6 +152,14 @@ export const scheduleReminderCairanAlarm = async (reminderItem) => {
   return [notificationId];
 };
 
+export const cancelReminderCairanAlarms = async (notificationIds = []) => {
+  if (!Array.isArray(notificationIds) || notificationIds.length === 0) {
+    return;
+  }
+
+  await Promise.all(notificationIds.map((id) => Notifications.cancelScheduledNotificationAsync(id)));
+};
+
 export const addReminderCairanAlarmResponseListener = (onStopAlarm) => {
   return Notifications.addNotificationResponseReceivedListener((response) => {
     if (response.actionIdentifier !== STOP_ACTION_ID) {

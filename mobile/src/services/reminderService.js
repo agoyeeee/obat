@@ -61,3 +61,13 @@ export const deleteReminderObat = async (reminderId) => {
   const response = await api.delete(`/reminder-obat/${reminderId}`);
   return response.data;
 };
+
+export const updateReminderCairan = async (reminderId, data) => {
+  const response = await api.put(`/reminder-cairan/${reminderId}`, data);
+  return response.data;
+};
+
+export const deleteReminderCairan = async (reminderId) => {
+  const response = await api.delete(`/reminder-cairan/${reminderId}`);
+  return response.data;
+};

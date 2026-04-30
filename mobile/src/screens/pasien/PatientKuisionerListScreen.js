@@ -40,7 +40,7 @@ const PatientKuisionerListScreen = ({ route, navigation, onBack }) => {
       }
     } catch (error) {
       console.error('Error loading kuisioner:', error);
-      Alert.alert('Error', 'Tidak dapat memuat kuisioner. Silakan coba lagi.');
+      setKuisioners([]);
     } finally {
       setLoading(false);
     }

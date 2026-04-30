@@ -28,8 +28,7 @@ const PatientRekapKuisionerScreen = ({ route, navigation }) => {
       setRekap(data);
     } catch (error) {
       console.error('Error loading rekap:', error);
-      Alert.alert('Error', 'Tidak dapat memuat detail kuesioner.');
-      navigation.goBack();
+      setRekap(null);
     } finally {
       setLoading(false);
     }

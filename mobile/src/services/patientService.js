@@ -1,4 +1,26 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from './api';
+
+const CACHED_PUBLIC_OBAT_KEY = '@cached_public_obat_list';
+const CACHED_PUBLIC_KUISIONER_KEY = '@cached_public_kuisioner_list';
+
+const readCachedJson = async (key) => {
+  try {
+    const raw = await AsyncStorage.getItem(key);
+    return raw ? JSON.parse(raw) : null;
+  } catch (error) {
+    console.warn('[API] readCachedJson failed:', key, error?.message || error);
+    return null;
+  }
+};
+
+const writeCachedJson = async (key, value) => {
+  try {
+    await AsyncStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.warn('[API] writeCachedJson failed:', key, error?.message || error);
+  }
+};
 
 export const publicRegisterPatient = async (payload) => {
   const response = await api.post('/pasien/public-register', payload);
@@ -6,8 +28,15 @@ export const publicRegisterPatient = async (payload) => {
 };
 
 export const fetchPublicObatList = async () => {
-  const response = await api.get('/obat/public-list');
-  return response.data;
+  try {
+    const response = await api.get('/obat/public-list');
+    await writeCachedJson(CACHED_PUBLIC_OBAT_KEY, response.data);
+    return response.data;
+  } catch (error) {
+    const cached = await readCachedJson(CACHED_PUBLIC_OBAT_KEY);
+    console.warn('[API] fetchPublicObatList failed, using cache:', error?.message || error);
+    return Array.isArray(cached) ? cached : [];
+  }
 };
 
 export const fetchPublicApotekerContacts = async () => {
@@ -50,10 +79,12 @@ export const fetchAllKuisioner = async () => {
   try {
     const response = await api.get('/kuisioner/public-list');
     console.log('[API] fetchAllKuisioner success:', response.data);
+    await writeCachedJson(CACHED_PUBLIC_KUISIONER_KEY, response.data);
     return response.data;
   } catch (error) {
-    console.error('[API] fetchAllKuisioner failed:', error.message);
-    throw error;
+    const cached = await readCachedJson(CACHED_PUBLIC_KUISIONER_KEY);
+    console.warn('[API] fetchAllKuisioner failed, using cache:', error?.message || error);
+    return Array.isArray(cached) ? cached : [];
   }
 };
 
@@ -69,13 +100,17 @@ export const fetchPastKuisionerResponses = async (patientId) => {
 };
 
 export const fetchKuisionerDetail = async (rekapKuisionerId) => {
+  const cacheKey = `@cached_kuisioner_detail_${rekapKuisionerId}`;
+
   try {
     const response = await api.get(`/rekap-kuisioner/public-show/${rekapKuisionerId}`);
     console.log('[API] fetchKuisionerDetail success:', response.data);
+    await writeCachedJson(cacheKey, response.data);
     return response.data;
   } catch (error) {
-    console.error('[API] fetchKuisionerDetail failed:', error.message);
-    throw error;
+    const cached = await readCachedJson(cacheKey);
+    console.warn('[API] fetchKuisionerDetail failed, using cache:', error?.message || error);
+    return cached || null;
   }
 };
 
