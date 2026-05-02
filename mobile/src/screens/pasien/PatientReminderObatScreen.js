@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, Pressable, ScrollView, TextInput, Alert, RefreshControl, ActivityIndicator, Modal, SafeAreaView } from 'react-native';
+import { View, Text, Pressable, ScrollView, TextInput, Alert, RefreshControl, ActivityIndicator, Modal, Platform, SafeAreaView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { ArrowLeft, Pill, CloudUpload, CircleCheck, Clock3, Plus, X } from 'lucide-react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { fetchPublicObatList } from '../../services/patientService';
 import { syncPendingReminderObat } from '../../services/patientSyncService';
 import { scheduleReminderObatAlarms, cancelReminderObatAlarms } from '../../services/reminderAlarmService';
@@ -47,6 +48,10 @@ const formatDoseOption = (item) => {
 
   return String(item);
 };
+
+const pad = (value) => String(value).padStart(2, '0');
+const formatTimeHMS = (date) => `${pad(date.getHours())}:${pad(date.getMinutes())}:00`;
+const formatTimeHM = (time) => (time ? time.slice(0, 5) : '-');
 
 const resolveDoseOptions = (obat) => {
   if (!obat) return [];
@@ -115,6 +120,7 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
   const [sediaan, setSediaan] = useState('');
   const [waktuKonsumsi, setWaktuKonsumsi] = useState('');
   const [jamCustom, setJamCustom] = useState('');
+  const [showTimePicker, setShowTimePicker] = useState(false);
   const [jumlahObat, setJumlahObat] = useState('');
   const [aturanMinum, setAturanMinum] = useState('');
   const [aturanCustom, setAturanCustom] = useState('');
@@ -672,12 +678,31 @@ n              <SelectField
               {!frekuensi ? null : isFrekuensiOne ? (
                 <View className="mb-4">
                   <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Waktu Konsumsi Obat</Text>
-                  <TextInput
-                    className="border-2 border-slate-200 rounded-2xl px-4 py-3.5 bg-slate-50 text-slate-900 font-medium"
-                    placeholder="Contoh: 21:00"
-                    value={jamCustom}
-                    onChangeText={setJamCustom}
-                  />
+                  {Platform.OS === 'web' ? (
+                    <input
+                      type="time"
+                      value={jamCustom ? jamCustom.slice(0, 5) : ''}
+                      onChange={(e) => setJamCustom(`${e.target.value}:00`)}
+                      style={{ padding: 12, borderRadius: 12, border: '2px solid #E2E8F0', marginBottom: 14 }}
+                    />
+                  ) : (
+                    <>
+                      <Pressable onPress={() => setShowTimePicker(true)} className="border-2 border-slate-200 rounded-2xl px-4 py-3.5 bg-slate-50 mb-4">
+                        <Text className="text-slate-900 font-medium">{formatTimeHM(jamCustom)}</Text>
+                      </Pressable>
+                      {showTimePicker ? (
+                        <DateTimePicker
+                          value={new Date(`2026-01-01T${jamCustom || '21:00:00'}`)}
+                          mode="time"
+                          onChange={(event, selectedDate) => {
+                            setShowTimePicker(false);
+                            if (event.type === 'dismissed' || !selectedDate) return;
+                            setJamCustom(formatTimeHMS(selectedDate));
+                          }}
+                        />
+                      ) : null}
+                    </>
+                  )}
                   <Text className="text-xs text-slate-400 mt-2">Frekuensi 1x/hari bebas selama 24 jam, isi jam sesuai kebutuhan.</Text>
                 </View>
               ) : (
