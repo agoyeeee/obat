@@ -1,6 +1,7 @@
 import { View, Text, Pressable, ScrollView, Alert, RefreshControl } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
   LogOut,
   UserRound,
@@ -8,191 +9,414 @@ import {
   Droplets,
   MessageCircle,
   ClipboardList,
-  ChevronRight,
   AlertTriangle,
   Activity,
   CalendarDays,
+  ChevronRight,
+  Pencil,
+  HeartPulse,
+  Pill,
 } from 'lucide-react-native';
 
 export default function PatientDashboardScreen({ profile, onEditProfile, onBack, onOpenMenu }) {
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const isMounted = useRef(false);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   const onRefresh = useCallback(() => {
     setIsRefreshing(true);
     setTimeout(() => {
-      setIsRefreshing(false);
-    }, 500);
+      if (isMounted.current) setIsRefreshing(false);
+    }, 600);
   }, []);
 
-  const pad = (v) => String(v).padStart(2, '0');
+  const getGreeting = () => {
+    const h = new Date().getHours();
+    if (h < 12) return 'Selamat Pagi';
+    if (h < 18) return 'Selamat Siang';
+    return 'Selamat Malam';
+  };
+
   const formatDisplayDate = (iso) => {
-    if (!iso) return '';
-    // support full ISO datetime strings like 2026-05-02T00:00:00.000000Z
+    if (!iso) return '-';
     const datePart = String(iso).split('T')[0];
     const m = datePart.match(/^(\d{4})-(\d{2})-(\d{2})$/);
     if (!m) return iso;
-    return `${m[3]}-${m[2]}-${m[1]}`;
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    return `${m[3]} ${months[parseInt(m[2]) - 1]} ${m[1]}`;
   };
 
   const openMenu = (menuKey, menuName) => {
-    if (onOpenMenu) {
-      onOpenMenu(menuKey);
-      return;
-    }
-
+    if (onOpenMenu) return onOpenMenu(menuKey);
     Alert.alert('Menu', `${menuName} akan dibuka di update berikutnya.`);
   };
 
   const menuItems = [
     {
       key: 'obat',
-      title: 'Reminder Minum Obat',
-      subtitle: 'Lihat jadwal dan status minum obat',
-      icon: <Bell color="#0D9488" size={20} />,
-      bgClass: 'bg-teal-50 border-teal-100',
-      onPress: () => openMenu('obat', 'Reminder Minum Obat'),
+      title: 'Reminder Obat',
+      subtitle: 'Jadwal & tracking',
+      icon: <Pill color="#fff" size={20} />,
+      gradientColors: ['#6366F1', '#818CF8'],
     },
     {
       key: 'cairan',
-      title: 'Reminder Minum Cairan',
-      subtitle: 'Pantau target cairan harian',
-      icon: <Droplets color="#3B82F6" size={20} />,
-      bgClass: 'bg-blue-50 border-blue-100',
-      onPress: () => openMenu('cairan', 'Reminder Minum Cairan'),
+      title: 'Cairan Harian',
+      subtitle: 'Pantau target minum',
+      icon: <Droplets color="#fff" size={20} />,
+      gradientColors: ['#0EA5E9', '#38BDF8'],
     },
     {
-      key: 'tanya-apoteker',
+      key: 'tanya',
       title: 'Tanya Apoteker',
-      subtitle: 'Konsultasi cepat seputar terapi',
-      icon: <MessageCircle color="#8B5CF6" size={20} />,
-      bgClass: 'bg-violet-50 border-violet-100',
-      onPress: () => openMenu('tanya-apoteker', 'Tanya Apoteker'),
+      subtitle: 'Konsultasi cepat',
+      icon: <MessageCircle color="#fff" size={20} />,
+      gradientColors: ['#10B981', '#34D399'],
     },
     {
       key: 'kuisioner',
       title: 'Kuisioner',
-      subtitle: 'Isi evaluasi berkala kondisi',
-      icon: <ClipboardList color="#F59E0B" size={20} />,
-      bgClass: 'bg-amber-50 border-amber-100',
-      onPress: () => openMenu('kuisioner', 'Kuisioner'),
+      subtitle: 'Evaluasi kondisi',
+      icon: <ClipboardList color="#fff" size={20} />,
+      gradientColors: ['#F59E0B', '#FCD34D'],
     },
   ];
 
+  const firstName = profile?.nama?.split(' ')[0] || 'Pasien';
+
   return (
-    <View className="flex-1 bg-slate-50">
+    <View style={{ flex: 1, backgroundColor: '#F0F4FF' }}>
       <StatusBar style="dark" />
 
-      <View className="bg-white pt-14 pb-6 px-6 border-b border-slate-100 shadow-sm z-10">
-        <View className="flex-row items-center justify-between">
+      {/* ── HEADER ── */}
+      <LinearGradient
+        colors={['#0D9488', '#14B8A6', '#3B82F6']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{
+          paddingTop: 60,
+          paddingBottom: 30,
+          paddingHorizontal: 24,
+          borderBottomLeftRadius: 36,
+          borderBottomRightRadius: 36,
+        }}
+      >
+        {/* Decorative circles */}
+        <View style={{
+          position: 'absolute', top: -40, right: -40,
+          width: 180, height: 180, borderRadius: 90,
+          backgroundColor: '#ffffff18',
+        }} />
+        <View style={{
+          position: 'absolute', top: 30, right: 60,
+          width: 80, height: 80, borderRadius: 40,
+          backgroundColor: '#ffffff10',
+        }} />
+
+        {/* Top row */}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <View>
-            <Text className="text-sm font-bold text-slate-400 uppercase tracking-widest">
-              {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
+            <Text style={{
+              color: '#C7D2FE', fontSize: 11, letterSpacing: 1.5,
+              textTransform: 'uppercase', fontWeight: '600',
+            }}>
+              {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short' })}
             </Text>
-            <Text className="text-3xl font-black text-slate-900 tracking-tight mt-1">
-              Halo, {profile?.nama?.split(' ')[0] || 'Pasien'}
+            <Text style={{ color: '#fff', fontSize: 22, fontWeight: '900', marginTop: 3 }}>
+              {getGreeting()}, {firstName} 👋
             </Text>
           </View>
+
           <Pressable
             onPress={onBack}
-            className="w-12 h-12 rounded-2xl bg-rose-50 items-center justify-center border border-rose-100 active:bg-rose-100"
+            style={({ pressed }) => ({
+              width: 44, height: 44, borderRadius: 14,
+              backgroundColor: '#ffffff25',
+              alignItems: 'center', justifyContent: 'center',
+              opacity: pressed ? 0.6 : 1,
+              borderWidth: 1, borderColor: '#ffffff40',
+            })}
           >
-            <LogOut color="#F43F5E" size={20} />
+            <LogOut color="#fff" size={18} />
           </Pressable>
         </View>
-      </View>
+
+        {/* Health status pill */}
+        <View style={{
+          marginTop: 20, flexDirection: 'row', alignItems: 'center',
+          gap: 8, alignSelf: 'flex-start',
+          backgroundColor: '#ffffff25', paddingHorizontal: 14, paddingVertical: 8,
+          borderRadius: 50, borderWidth: 1, borderColor: '#ffffff40',
+        }}>
+          <HeartPulse color="#fff" size={14} />
+          <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>
+            Status: Terpantau Aktif
+          </Text>
+        </View>
+      </LinearGradient>
 
       <ScrollView
-        className="flex-1"
-        contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: 48 }}
+        refreshControl={
+          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#6366F1" />
+        }
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
       >
-        <View className="bg-teal-600 rounded-[32px] p-6 shadow-xl shadow-teal-900/20 mb-6 overflow-hidden">
-          <View className="flex-row justify-between items-start mb-6">
-            <View>
-              <Text className="text-teal-100 font-bold text-sm uppercase tracking-wider">Portal Pasien</Text>
-              <Text className="text-white text-4xl font-black mt-1">4</Text>
-              <Text className="text-teal-100 font-semibold">Menu Utama Tersedia</Text>
-            </View>
-            <View className="w-12 h-12 rounded-2xl bg-white/20 items-center justify-center">
-              <UserRound color="#FFFFFF" size={24} />
-            </View>
-          </View>
 
-          <View className="flex-row bg-black/10 rounded-2xl p-4 justify-between items-center">
-            <View className="items-center flex-1 border-r border-white/10">
-              <Text className="text-white text-xl font-black">{profile?.usia || 0}</Text>
-              <Text className="text-teal-100 text-[10px] font-bold uppercase">Usia</Text>
+        {/* ── FLOATING PROFILE CARD ── */}
+        <View style={{
+          marginHorizontal: 20,
+          marginTop: 20,
+          backgroundColor: '#fff',
+          borderRadius: 24,
+          padding: 20,
+          shadowColor: '#0D9488',
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.15,
+          shadowRadius: 20,
+          elevation: 10,
+        }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <LinearGradient
+                colors={['#0D9488', '#14b8a6']}
+                style={{
+                  width: 46, height: 46, borderRadius: 15,
+                  alignItems: 'center', justifyContent: 'center',
+                }}
+              >
+                <UserRound color="#fff" size={20} />
+              </LinearGradient>
+              <View>
+                <Text style={{ color: '#1E293B', fontWeight: '800', fontSize: 15 }}>
+                  {profile?.nama || 'Pasien'}
+                </Text>
+                <Text style={{ color: '#94A3B8', fontSize: 12 }}>Data Pribadi</Text>
+              </View>
             </View>
-            <View className="items-center flex-1 border-r border-white/10">
-              <Text className="text-white text-xl font-black">{profile?.berat_badan || 0}</Text>
-              <Text className="text-teal-100 text-[10px] font-bold uppercase">Berat (kg)</Text>
-            </View>
-            <View className="items-center flex-1">
-              <Text className="text-white text-xl font-black">{profile?.jenis_kelamin || '-'}</Text>
-              <Text className="text-teal-100 text-[10px] font-bold uppercase">Kelamin</Text>
-            </View>
-          </View>
-        </View>
 
-        <View className="flex-row gap-4 mb-6">
-          <View className="flex-1 bg-white rounded-3xl p-5 shadow-sm border border-slate-100 border-l-4 border-l-rose-500">
-            <View className="w-10 h-10 rounded-xl bg-rose-50 items-center justify-center mb-3">
-              <AlertTriangle color="#F43F5E" size={20} />
-            </View>
-            <Text className="text-3xl font-black text-slate-900">{profile?.tgl_diagnosa ? '1' : '0'}</Text>
-            <Text className="text-xs font-bold text-slate-500 uppercase mt-1">Data Diagnosa</Text>
-          </View>
-
-          <View className="flex-1 bg-white rounded-3xl p-5 shadow-sm border border-slate-100 border-l-4 border-l-blue-500">
-            <View className="w-10 h-10 rounded-xl bg-blue-50 items-center justify-center mb-3">
-              <Activity color="#3B82F6" size={20} />
-            </View>
-            <Text className="text-3xl font-black text-slate-900">4</Text>
-            <Text className="text-xs font-bold text-slate-500 uppercase mt-1">Menu Aktif</Text>
-          </View>
-        </View>
-
-        <View className="mb-6">
-          <View className="flex-row items-center justify-between mb-4">
-            <Text className="text-xl font-black text-slate-900 tracking-tight">Menu Pasien</Text>
-            <Pressable onPress={onEditProfile}>
-              <Text className="text-sm font-bold text-teal-600">Ubah Biodata</Text>
-            </Pressable>
-          </View>
-
-          {menuItems.map((item) => (
             <Pressable
-              key={item.key}
-              onPress={item.onPress}
-              className="bg-white rounded-2xl p-4 mb-3 shadow-sm border border-slate-100 flex-row items-center active:bg-slate-50"
+              onPress={onEditProfile}
+              style={{
+                flexDirection: 'row', alignItems: 'center', gap: 6,
+                backgroundColor: '#F1F5F9',
+                paddingHorizontal: 12, paddingVertical: 7,
+                borderRadius: 10,
+              }}
             >
-              <View className={`w-12 h-12 rounded-full items-center justify-center mr-4 border ${item.bgClass}`}>
-                {item.icon}
-              </View>
-              <View className="flex-1">
-                <Text className="text-base font-black text-slate-900">{item.title}</Text>
-                <Text className="text-xs font-semibold text-slate-500 mt-0.5">{item.subtitle}</Text>
-              </View>
-              <View className="w-8 h-8 rounded-full bg-slate-50 items-center justify-center">
-                <ChevronRight color="#CBD5E1" size={18} />
-              </View>
+              <Pencil color="#0D9488" size={12} />
+              <Text style={{ color: '#0D9488', fontSize: 12, fontWeight: '700' }}>Edit</Text>
             </Pressable>
+          </View>
+
+          {/* Divider */}
+          <View style={{ height: 1, backgroundColor: '#F1F5F9', marginBottom: 16 }} />
+
+          <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
+            {[
+              { label: 'Usia', value: profile?.usia || '—', unit: 'thn' },
+              { label: 'Berat', value: profile?.berat_badan || '—', unit: 'kg' },
+              { label: 'Gender', value: profile?.jenis_kelamin || '—', unit: '' },
+            ].map((item, i) => (
+              <View key={i} style={{ alignItems: 'center' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 2 }}>
+                  <Text style={{ color: '#1E293B', fontSize: 22, fontWeight: '900' }}>{item.value}</Text>
+                  {item.unit ? (
+                    <Text style={{ color: '#94A3B8', fontSize: 12, marginBottom: 3 }}>{item.unit}</Text>
+                  ) : null}
+                </View>
+                <Text style={{
+                  color: '#94A3B8', fontSize: 10,
+                  textTransform: 'uppercase', letterSpacing: 1, marginTop: 2,
+                }}>
+                  {item.label}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* ── QUICK STATS ── */}
+        <View style={{ flexDirection: 'row', gap: 12, marginHorizontal: 20, marginTop: 16 }}>
+          {[
+            {
+              icon: <AlertTriangle color="#F43F5E" size={16} />,
+              value: profile?.tgl_diagnosa ? '1' : '0',
+              label: 'Diagnosa',
+              iconBg: '#FFF1F2',
+            },
+            {
+              icon: <Activity color="#6366F1" size={16} />,
+              value: '4',
+              label: 'Fitur Aktif',
+              iconBg: '#EEF2FF',
+            },
+          ].map((s, i) => (
+            <View key={i} style={{
+              flex: 1, backgroundColor: '#fff', borderRadius: 18, padding: 18,
+              shadowColor: '#64748B',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.07,
+              shadowRadius: 10,
+              elevation: 3,
+            }}>
+              <View style={{
+                width: 36, height: 36, borderRadius: 11,
+                backgroundColor: s.iconBg,
+                alignItems: 'center', justifyContent: 'center',
+                marginBottom: 12,
+              }}>
+                {s.icon}
+              </View>
+              <Text style={{ color: '#1E293B', fontSize: 26, fontWeight: '900' }}>{s.value}</Text>
+              <Text style={{
+                color: '#94A3B8', fontSize: 11,
+                textTransform: 'uppercase', letterSpacing: 1, marginTop: 2,
+              }}>
+                {s.label}
+              </Text>
+            </View>
           ))}
         </View>
 
-        <View className="bg-white rounded-3xl p-5 border border-slate-100">
-          <View className="flex-row items-center mb-2">
-            <CalendarDays color="#64748B" size={18} />
-            <Text className="ml-2 text-sm font-bold text-slate-500 uppercase">Tanggal Diagnosa</Text>
+        {/* ── MENU UTAMA ── */}
+        <View style={{ marginTop: 28, paddingHorizontal: 20 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 16 }}>
+            <Text style={{ color: '#1E293B', fontWeight: '900', fontSize: 18 }}>Menu Utama</Text>
+            <Text style={{ color: '#94A3B8', fontSize: 12 }}>4 fitur tersedia</Text>
           </View>
-          <Text className="text-base font-black text-slate-900">Tanggal: {profile?.tgl_diagnosa ? formatDisplayDate(profile.tgl_diagnosa) : '-'}</Text>
-          <Text className="text-xs text-slate-400 mt-2">Data ini diambil dari biodata pasien yang tersimpan di device.</Text>
+
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -6 }}>
+            {menuItems.map((item) => (
+              <View key={item.key} style={{ width: '50%', padding: 6 }}>
+                <Pressable
+                  onPress={() => openMenu(item.key, item.title)}
+                  style={({ pressed }) => ({
+                    transform: [{ scale: pressed ? 0.95 : 1 }],
+                    opacity: pressed ? 0.85 : 1,
+                  })}
+                >
+                  <LinearGradient
+                    colors={item.gradientColors}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={{
+                      borderRadius: 22, padding: 18, minHeight: 136,
+                      justifyContent: 'space-between',
+                      shadowColor: item.gradientColors[0],
+                      shadowOffset: { width: 0, height: 6 },
+                      shadowOpacity: 0.35,
+                      shadowRadius: 12,
+                      elevation: 8,
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {/* Decorative circle inside card */}
+                    <View style={{
+                      position: 'absolute', top: -20, right: -20,
+                      width: 90, height: 90, borderRadius: 45,
+                      backgroundColor: '#ffffff18',
+                    }} />
+
+                    <View style={{
+                      width: 44, height: 44, borderRadius: 14,
+                      backgroundColor: '#ffffff30',
+                      alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      {item.icon}
+                    </View>
+
+                    <View>
+                      <Text style={{ color: '#fff', fontWeight: '800', fontSize: 13 }}>
+                        {item.title}
+                      </Text>
+                      <Text style={{ color: '#ffffffBB', fontSize: 11, marginTop: 3 }}>
+                        {item.subtitle}
+                      </Text>
+                    </View>
+                  </LinearGradient>
+                </Pressable>
+              </View>
+            ))}
+          </View>
         </View>
 
-        <Pressable onPress={onEditProfile} className="mt-5 bg-blue-600 rounded-2xl py-4 items-center active:bg-blue-700">
-          <Text className="text-white font-bold text-base">Ubah Biodata</Text>
-        </Pressable>
+        {/* ── DIAGNOSA ── */}
+        <View style={{ marginHorizontal: 20, marginTop: 16 }}>
+          <Pressable style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}>
+            <View style={{
+              backgroundColor: '#fff', borderRadius: 18, padding: 18,
+              flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+              shadowColor: '#64748B',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.07,
+              shadowRadius: 10,
+              elevation: 3,
+            }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+                <View style={{
+                  width: 44, height: 44, borderRadius: 14,
+                  backgroundColor: '#EEF2FF',
+                  alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <CalendarDays size={18} color="#6366F1" />
+                </View>
+                <View>
+                  <Text style={{
+                    color: '#94A3B8', fontSize: 10,
+                    textTransform: 'uppercase', letterSpacing: 1,
+                  }}>
+                    Tanggal Diagnosa
+                  </Text>
+                  <Text style={{ color: '#1E293B', fontWeight: '800', fontSize: 15, marginTop: 2 }}>
+                    {formatDisplayDate(profile?.tgl_diagnosa)}
+                  </Text>
+                </View>
+              </View>
+              <ChevronRight color="#CBD5E1" size={18} />
+            </View>
+          </Pressable>
+        </View>
+
+        {/* ── EDIT BIODATA BUTTON ── */}
+        <View style={{ marginHorizontal: 20, marginTop: 20 }}>
+          <Pressable
+            onPress={onEditProfile}
+            style={({ pressed }) => ({
+              opacity: pressed ? 0.85 : 1,
+              transform: [{ scale: pressed ? 0.98 : 1 }],
+            })}
+          >
+            <LinearGradient
+              colors={['#0D9488', '#14B8A6']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={{
+                paddingVertical: 16, borderRadius: 18,
+                alignItems: 'center', justifyContent: 'center',
+                flexDirection: 'row', gap: 10,
+                shadowColor: '#0D9488',
+                shadowOffset: { width: 0, height: 8 },
+                shadowOpacity: 0.4,
+                shadowRadius: 16,
+                elevation: 10,
+              }}
+            >
+              <Pencil color="#fff" size={16} />
+              <Text style={{ color: '#fff', fontWeight: '800', fontSize: 15, letterSpacing: 0.3 }}>
+                Ubah Biodata
+              </Text>
+            </LinearGradient>
+          </Pressable>
+        </View>
+
       </ScrollView>
     </View>
   );

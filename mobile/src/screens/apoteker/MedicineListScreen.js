@@ -1,14 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigation } from '@react-navigation/native';
 import { View, Text, FlatList, Pressable, TextInput, Modal, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { useReminders } from '../../hooks/useReminders';
 import { Pill, ChevronRight, Search, Plus, X } from 'lucide-react-native';
 import MedicineModal from '../../components/MedicineModal';
 import { fetchMerksByObat, createMerk } from '../../services/reminderService';
 
-export default function MedicineListScreen() {
+export default function MedicineListScreen({ navigation }) {
   const { medicines, loadData, addMedicine, editMedicine, removeMedicine } = useReminders();
-  const navigation = useNavigation();
   const [selectedMedicine, setSelectedMedicine] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -195,6 +193,15 @@ export default function MedicineListScreen() {
     }
   };
 
+  const goToSelectBrand = (obatId, namaObat) => {
+    if (!navigation || typeof navigation.navigate !== 'function') {
+      Alert.alert('Navigasi belum siap', 'Coba buka halaman ini dari menu utama aplikasi.');
+      return;
+    }
+
+    navigation.navigate('SelectBrand', { obatId, namaObat });
+  };
+
 
   return (
     <View className="flex-1 bg-[#F0F4F3] pt-16 px-6">
@@ -252,7 +259,7 @@ export default function MedicineListScreen() {
                 <View className="flex-row gap-3 mt-4">
                   <Pressable
                     className="flex-1 rounded-2xl border-2 border-[#0D7A6A] py-3 items-center bg-white active:bg-[#F0FDF9]"
-                    onPress={() => navigation.navigate('SelectBrand', { obatId: item.id, namaObat: item.nama_obat })}
+                    onPress={() => goToSelectBrand(item.id, item.nama_obat)}
                   >
                     <Text className="text-[#0D7A6A] font-bold">Kelola Merek</Text>
                   </Pressable>
@@ -279,10 +286,7 @@ export default function MedicineListScreen() {
         onManageMerk={() => {
           if (!selectedMedicine?.id) return;
           setSelectedMedicine(null);
-          navigation.navigate('SelectBrand', {
-            obatId: selectedMedicine.id,
-            namaObat: selectedMedicine.nama_obat,
-          });
+          goToSelectBrand(selectedMedicine.id, selectedMedicine.nama_obat);
         }}
         onDeleteMedicine={() => {
           if (!selectedMedicine) return;
