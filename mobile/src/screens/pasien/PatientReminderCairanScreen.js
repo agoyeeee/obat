@@ -1,7 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, Pressable, ScrollView, TextInput, Alert, RefreshControl, ActivityIndicator, Modal, Platform, SafeAreaView } from 'react-native';
+import {
+  View, Text, Pressable, ScrollView, TextInput, Alert,
+  RefreshControl, ActivityIndicator, Modal, Platform, SafeAreaView,
+} from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { ArrowLeft, Droplets, Plus, X } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import {
+  ArrowLeft, Droplets, Plus, X, Pencil, Trash2,
+  Bell, AlertCircle, CalendarDays, Clock,
+} from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {
   addPatientReminderCairan,
@@ -18,6 +25,62 @@ const formatDateYMD = (date) => `${date.getFullYear()}-${pad(date.getMonth() + 1
 const formatTimeHMS = (date) => `${pad(date.getHours())}:${pad(date.getMinutes())}:00`;
 const formatTimeHM = (time) => (time ? time.slice(0, 5) : '-');
 
+const formatDateDisplay = (ymd) => {
+  if (!ymd) return '-';
+  const m = ymd.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return ymd;
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+  return `${m[3]} ${months[parseInt(m[2]) - 1]} ${m[1]}`;
+};
+
+// ── FIELD LABEL ───────────────────────────────────────────────
+const FieldLabel = ({ children }) => (
+  <Text style={{
+    fontSize: 10, fontWeight: '700', color: '#94A3B8',
+    textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 6,
+  }}>
+    {children}
+  </Text>
+);
+
+// ── TEXT INPUT FIELD ──────────────────────────────────────────
+const InputField = ({ label, ...props }) => (
+  <View style={{ marginBottom: 16 }}>
+    <FieldLabel>{label}</FieldLabel>
+    <TextInput
+      style={{
+        borderWidth: 1.5, borderColor: '#E2E8F0', borderRadius: 14,
+        paddingHorizontal: 16, paddingVertical: 14,
+        backgroundColor: '#fff', color: '#1E293B',
+        fontWeight: '500', fontSize: 14,
+      }}
+      placeholderTextColor="#94A3B8"
+      {...props}
+    />
+  </View>
+);
+
+// ── PICKER TRIGGER ────────────────────────────────────────────
+const PickerTrigger = ({ label, value, icon, onPress }) => (
+  <View style={{ marginBottom: 16 }}>
+    <FieldLabel>{label}</FieldLabel>
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => ({
+        borderWidth: 1.5, borderColor: '#E2E8F0', borderRadius: 14,
+        paddingHorizontal: 16, paddingVertical: 14,
+        backgroundColor: '#fff',
+        flexDirection: 'row', alignItems: 'center', gap: 10,
+        opacity: pressed ? 0.8 : 1,
+      })}
+    >
+      {icon}
+      <Text style={{ color: '#1E293B', fontWeight: '500', fontSize: 14, flex: 1 }}>{value}</Text>
+    </Pressable>
+  </View>
+);
+
+// ── MAIN SCREEN ───────────────────────────────────────────────
 export default function PatientReminderCairanScreen({ onBack, profile }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -44,13 +107,10 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
 
   const autoSync = useCallback(async () => {
     if (!profile || isSyncing) return;
-
     setIsSyncing(true);
     try {
       const result = await syncPendingReminderCairan(profile);
-      if (result && !result.skipped) {
-        await loadQueue();
-      }
+      if (result && !result.skipped) await loadQueue();
     } finally {
       setIsSyncing(false);
     }
@@ -61,7 +121,6 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
       await loadQueue();
       await autoSync();
     };
-
     bootstrap();
   }, [loadQueue, autoSync]);
 
@@ -71,7 +130,10 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
     await autoSync();
   }, [loadQueue, autoSync]);
 
-  const canSubmit = useMemo(() => Boolean(tanggal && minuman.trim() && jumlahMl.trim() && waktu), [tanggal, minuman, jumlahMl, waktu]);
+  const canSubmit = useMemo(
+    () => Boolean(tanggal && minuman.trim() && jumlahMl.trim() && waktu),
+    [tanggal, minuman, jumlahMl, waktu]
+  );
 
   const resetForm = () => {
     setTanggal(formatDateYMD(new Date()));
@@ -82,10 +144,7 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
     setEditingReminder(null);
   };
 
-  const openAddModal = () => {
-    resetForm();
-    setIsAddModalOpen(true);
-  };
+  const openAddModal = () => { resetForm(); setIsAddModalOpen(true); };
 
   const openEditModal = (item) => {
     setEditingReminder(item);
@@ -104,13 +163,11 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
       Alert.alert('Data belum lengkap', 'Mohon isi semua field wajib terlebih dahulu.');
       return;
     }
-
     const jumlahValue = Number(jumlahMl);
     if (!Number.isFinite(jumlahValue) || jumlahValue <= 0) {
       Alert.alert('Jumlah tidak valid', 'Jumlah (ml) harus berupa angka lebih dari 0.');
       return;
     }
-
     try {
       setIsSubmitting(true);
       const payload = {
@@ -120,15 +177,12 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
         jumlah_ml: jumlahValue,
         waktu,
       };
-
       if (editingReminder) {
         const isSyncedReminder = editingReminder.sync_status === 'synced' && editingReminder.server_id;
-
         if (isSyncedReminder) {
           await deleteReminderCairan(editingReminder.server_id);
           await cancelReminderCairanAlarms(editingReminder.alarm_notification_ids || []);
         }
-
         await updatePatientReminderCairanItem(editingReminder.local_id, {
           ...payload,
           sync_status: isSyncedReminder ? 'pending' : editingReminder.sync_status,
@@ -137,7 +191,6 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
           alarm_notification_ids: isSyncedReminder ? [] : (editingReminder.alarm_notification_ids || []),
           last_error: null,
         });
-
         setIsAddModalOpen(false);
         resetForm();
         await loadQueue();
@@ -145,7 +198,6 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
         Alert.alert('Reminder cairan diperbarui', isSyncedReminder ? 'Data diperbarui dan akan tersinkron ulang.' : 'Data reminder berhasil diperbarui.');
         return;
       }
-
       await addPatientReminderCairan(payload);
       setIsAddModalOpen(false);
       resetForm();
@@ -171,15 +223,12 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
           onPress: async () => {
             try {
               setIsSubmitting(true);
-
               if (item.sync_status === 'synced' && item.server_id) {
                 await deleteReminderCairan(item.server_id);
               }
-
               await cancelReminderCairanAlarms(item.alarm_notification_ids || []);
               await deletePatientReminderCairanItem(item.local_id);
               await loadQueue();
-
               Alert.alert('Reminder dihapus', 'Reminder cairan berhasil dihapus.');
             } catch (error) {
               Alert.alert('Gagal menghapus', error?.message || 'Terjadi kesalahan saat menghapus reminder cairan.');
@@ -192,80 +241,275 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
     );
   };
 
+  // ── LOADING STATE ─────────────────────────────────────────
   if (isLoading) {
     return (
-      <View className="flex-1 bg-slate-50 justify-center items-center">
-        <ActivityIndicator size="large" color="#2563EB" />
+      <View style={{ flex: 1, backgroundColor: '#F0F4FF', justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#6366F1" />
+        <Text style={{ color: '#94A3B8', marginTop: 12, fontWeight: '600' }}>Memuat data cairan...</Text>
       </View>
     );
   }
 
-  return (
-    <View className="flex-1 bg-slate-50">
-      <StatusBar style="dark" />
+  const pendingCount = queue.filter((i) => i.sync_status !== 'synced').length;
+  const syncedCount = queue.filter((i) => i.sync_status === 'synced').length;
+  const totalMl = queue.reduce((acc, i) => acc + (Number(i.jumlah_ml) || 0), 0);
 
-      <View className="bg-white pt-14 pb-6 px-6 border-b border-slate-100 shadow-sm z-10">
-        <View className="flex-row items-center justify-between">
-          <View className="flex-row items-center">
-            <Pressable onPress={onBack} className="w-10 h-10 rounded-xl bg-slate-100 items-center justify-center mr-3 active:bg-slate-200">
-              <ArrowLeft color="#334155" size={18} />
+  return (
+    <View style={{ flex: 1, backgroundColor: '#F0F4FF' }}>
+      <StatusBar style="light" />
+
+      {/* ── HEADER ── */}
+      <LinearGradient
+        colors={['#0EA5E9', '#38BDF8', '#7DD3FC']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{
+          paddingTop: 60,
+          paddingBottom: 30,
+          paddingHorizontal: 24,
+          borderBottomLeftRadius: 36,
+          borderBottomRightRadius: 36,
+        }}
+      >
+        {/* Decorative circles */}
+        <View style={{
+          position: 'absolute', top: -40, right: -40,
+          width: 180, height: 180, borderRadius: 90,
+          backgroundColor: '#ffffff18',
+        }} />
+        <View style={{
+          position: 'absolute', top: 30, right: 60,
+          width: 80, height: 80, borderRadius: 40,
+          backgroundColor: '#ffffff10',
+        }} />
+
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+            <Pressable
+              onPress={onBack}
+              style={({ pressed }) => ({
+                width: 42, height: 42, borderRadius: 13,
+                backgroundColor: '#ffffff25',
+                alignItems: 'center', justifyContent: 'center',
+                borderWidth: 1, borderColor: '#ffffff40',
+                opacity: pressed ? 0.6 : 1,
+              })}
+            >
+              <ArrowLeft color="#fff" size={18} />
             </Pressable>
             <View>
-              <Text className="text-xs font-bold text-slate-400 uppercase tracking-widest">Form Pasien</Text>
-              <Text className="text-2xl font-black text-slate-900 tracking-tight mt-1">Reminder Minum Cairan</Text>
+              <Text style={{
+                color: '#BAE6FD', fontSize: 10, letterSpacing: 1.5,
+                textTransform: 'uppercase', fontWeight: '700',
+              }}>
+                Menu Pasien
+              </Text>
+              <Text style={{ color: '#fff', fontSize: 20, fontWeight: '900', marginTop: 2 }}>
+                Cairan Harian
+              </Text>
             </View>
           </View>
-          <View className="w-11 h-11 rounded-2xl bg-blue-50 border border-blue-100 items-center justify-center">
-            <Droplets color="#2563EB" size={20} />
+
+          <View style={{
+            width: 44, height: 44, borderRadius: 14,
+            backgroundColor: '#ffffff25',
+            alignItems: 'center', justifyContent: 'center',
+            borderWidth: 1, borderColor: '#ffffff40',
+          }}>
+            <Droplets color="#fff" size={20} />
           </View>
         </View>
-      </View>
+      </LinearGradient>
 
       <ScrollView
-        className="flex-1"
-        contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
-        refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: 48 }}
+        refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#0EA5E9" />}
         showsVerticalScrollIndicator={false}
       >
-        <View className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm mb-4">
-          <View className="flex-row items-center justify-between mb-4">
-            <Text className="text-lg font-black text-slate-900">Daftar Reminder Cairan</Text>
-            <Pressable onPress={openAddModal} className="bg-blue-600 rounded-xl px-3 py-2 flex-row items-center active:bg-blue-700">
-              <Plus color="#FFFFFF" size={16} />
-              <Text className="text-white font-bold text-sm ml-1.5">Tambah</Text>
+
+        {/* ── DAFTAR REMINDER ── */}
+        <View style={{ marginHorizontal: 20, marginTop: 20 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+            <View>
+              <Text style={{ color: '#1E293B', fontWeight: '900', fontSize: 18 }}>Daftar Cairan</Text>
+              <Text style={{ color: '#94A3B8', fontSize: 12, marginTop: 1 }}>
+                {queue.length} catatan terdaftar
+              </Text>
+            </View>
+
+            <Pressable
+              onPress={openAddModal}
+              style={({ pressed }) => ({
+                flexDirection: 'row', alignItems: 'center', gap: 6,
+                backgroundColor: '#0EA5E9',
+                paddingHorizontal: 14, paddingVertical: 10,
+                borderRadius: 12,
+                opacity: pressed ? 0.8 : 1,
+                shadowColor: '#0EA5E9',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.35,
+                shadowRadius: 8,
+                elevation: 5,
+              })}
+            >
+              
+              <Text style={{ color: '#0EA5E9', fontWeight: '800', fontSize: 13 }}><Plus color="#0EA5E9" size={10} /> Tambah</Text>
             </Pressable>
           </View>
 
+          {/* Empty state */}
           {queue.length === 0 ? (
-            <View className="bg-slate-50 border border-slate-200 rounded-2xl px-4 py-5">
-              <Text className="text-slate-500 text-sm text-center">Belum ada reminder cairan. Tekan Tambah untuk membuat reminder baru.</Text>
+            <View style={{
+              backgroundColor: '#fff', borderRadius: 20, padding: 32,
+              alignItems: 'center',
+              borderWidth: 1.5, borderColor: '#E2E8F0', borderStyle: 'dashed',
+            }}>
+              <View style={{
+                width: 56, height: 56, borderRadius: 18,
+                backgroundColor: '#F0F9FF',
+                alignItems: 'center', justifyContent: 'center',
+                marginBottom: 12,
+              }}>
+                <Droplets color="#0EA5E9" size={24} />
+              </View>
+              <Text style={{ color: '#1E293B', fontWeight: '800', fontSize: 15, marginBottom: 4 }}>
+                Belum Ada Catatan
+              </Text>
+              <Text style={{ color: '#94A3B8', fontSize: 13, textAlign: 'center', lineHeight: 20 }}>
+                Tekan tombol Tambah untuk mencatat asupan cairan harian kamu.
+              </Text>
             </View>
           ) : (
             queue.map((item) => {
               const isSynced = item.sync_status === 'synced';
               const isAlarmActive = Array.isArray(item.alarm_notification_ids) && item.alarm_notification_ids.length > 0;
+
               return (
-                <View key={item.local_id} className="rounded-2xl border border-slate-200 p-4 mb-3 bg-white">
-                  <View className="flex-row items-start justify-between mb-1">
-                    <Text className="text-base font-black text-slate-900 flex-1 mr-2">{item.minuman}</Text>
-                    <View className={`px-2.5 py-1 rounded-full ${isSynced ? 'bg-emerald-100' : 'bg-amber-100'}`}>
-                      <Text className={`text-[10px] font-bold uppercase ${isSynced ? 'text-emerald-700' : 'text-amber-700'}`}>{isSynced ? 'Synced' : 'Pending'}</Text>
+                <View key={item.local_id} style={{
+                  backgroundColor: '#fff',
+                  borderRadius: 20,
+                  padding: 18,
+                  marginBottom: 12,
+                  shadowColor: '#64748B',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.06,
+                  shadowRadius: 10,
+                  elevation: 3,
+                }}>
+                  {/* Top row */}
+                  <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+                      <View style={{
+                        width: 40, height: 40, borderRadius: 13,
+                        backgroundColor: '#F0F9FF',
+                        alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        <Droplets color="#0EA5E9" size={18} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ color: '#1E293B', fontWeight: '800', fontSize: 15 }} numberOfLines={1}>
+                          {item.minuman}
+                        </Text>
+                        <Text style={{ color: '#0EA5E9', fontSize: 13, fontWeight: '700', marginTop: 1 }}>
+                          {item.jumlah_ml} ml
+                        </Text>
+                      </View>
+                    </View>
+
+                    <View style={{
+                      paddingHorizontal: 10, paddingVertical: 4, borderRadius: 50,
+                      backgroundColor: isSynced ? '#DCFCE7' : '#FEF3C7',
+                    }}>
+                      <Text style={{
+                        fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8,
+                        color: isSynced ? '#059669' : '#D97706',
+                      }}>
+                        {isSynced ? 'Synced' : 'Pending'}
+                      </Text>
                     </View>
                   </View>
-                  <Text className="text-xs font-semibold text-slate-500">Jumlah {item.jumlah_ml} ml</Text>
-                  <Text className="text-xs font-semibold text-slate-500 mt-1">Tanggal {item.tanggal}</Text>
-                  <Text className="text-xs font-semibold text-slate-500 mt-1">Waktu {formatTimeHM(item.waktu)}</Text>
-                  {item.catatan_asupan ? <Text className="text-xs font-semibold text-slate-500 mt-1">Catatan {item.catatan_asupan}</Text> : null}
-                  <Text className={`text-xs font-bold mt-3 ${isAlarmActive ? 'text-emerald-600' : 'text-slate-400'}`}>{isAlarmActive ? 'Alarm Aktif Otomatis' : 'Menyiapkan Alarm...'}</Text>
-                  <View className="flex-row items-center justify-end mt-3">
-                    <Pressable onPress={() => openEditModal(item)} className="bg-blue-600 rounded-xl px-3 py-2 mr-2 active:bg-blue-700">
-                      <Text className="text-white text-xs font-bold">Edit</Text>
+
+                  {/* Divider */}
+                  <View style={{ height: 1, backgroundColor: '#F1F5F9', marginBottom: 10 }} />
+
+                  {/* Info rows */}
+                  <View style={{ flexDirection: 'row', gap: 16 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <CalendarDays size={12} color="#94A3B8" />
+                      <Text style={{ color: '#475569', fontSize: 12, fontWeight: '600' }}>
+                        {formatDateDisplay(item.tanggal)}
+                      </Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Clock size={12} color="#94A3B8" />
+                      <Text style={{ color: '#475569', fontSize: 12, fontWeight: '600' }}>
+                        {formatTimeHM(item.waktu)}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {item.catatan_asupan ? (
+                    <Text style={{ color: '#64748B', fontSize: 12, marginTop: 6, fontStyle: 'italic' }}>
+                      "{item.catatan_asupan}"
+                    </Text>
+                  ) : null}
+
+                  {/* Alarm status */}
+                  <View style={{
+                    marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 6,
+                    backgroundColor: isAlarmActive ? '#F0FDF4' : '#F8FAFC',
+                    paddingHorizontal: 10, paddingVertical: 7, borderRadius: 10,
+                  }}>
+                    <Bell size={12} color={isAlarmActive ? '#059669' : '#CBD5E1'} />
+                    <Text style={{
+                      fontSize: 11, fontWeight: '700',
+                      color: isAlarmActive ? '#059669' : '#94A3B8',
+                    }}>
+                      {isAlarmActive ? 'Alarm Aktif Otomatis' : 'Menyiapkan Alarm...'}
+                    </Text>
+                  </View>
+
+                  {/* Error */}
+                  {item.last_error && (
+                    <View style={{
+                      marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: 6,
+                      backgroundColor: '#FFF1F2', paddingHorizontal: 10, paddingVertical: 7, borderRadius: 10,
+                    }}>
+                      <AlertCircle size={12} color="#F43F5E" />
+                      <Text style={{ color: '#F43F5E', fontSize: 11, fontWeight: '600', flex: 1 }}>
+                        {item.last_error}
+                      </Text>
+                    </View>
+                  )}
+
+                  {/* Actions */}
+                  <View style={{ flexDirection: 'row', gap: 8, marginTop: 14 }}>
+                    <Pressable
+                      onPress={() => openEditModal(item)}
+                      style={({ pressed }) => ({
+                        flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+                        backgroundColor: '#F0F9FF',
+                        paddingVertical: 10, borderRadius: 12,
+                        opacity: pressed ? 0.7 : 1,
+                      })}
+                    >
+                      <Text style={{ color: '#0EA5E9', fontWeight: '800', fontSize: 13 }}><Pencil color="#0EA5E9" size={13} /> Edit</Text>
                     </Pressable>
-                    <Pressable onPress={() => handleDeleteReminder(item)} className="bg-rose-600 rounded-xl px-3 py-2 active:bg-rose-700">
-                      <Text className="text-white text-xs font-bold">Hapus</Text>
+
+                    <Pressable
+                      onPress={() => handleDeleteReminder(item)}
+                      style={({ pressed }) => ({
+                        flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+                        backgroundColor: '#FFF1F2',
+                        paddingVertical: 10, borderRadius: 12,
+                        opacity: pressed ? 0.7 : 1,
+                      })}
+                    >
+                      <Text style={{ color: '#F43F5E', fontWeight: '800', fontSize: 13 }}><Trash2 color="#F43F5E" size={13} /> Hapus</Text>
                     </Pressable>
                   </View>
-                  {item.last_error ? <Text className="text-xs font-semibold text-rose-500 mt-2">Error sync: {item.last_error}</Text> : null}
                 </View>
               );
             })
@@ -273,95 +517,185 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
         </View>
       </ScrollView>
 
+      {/* ── MODAL TAMBAH / EDIT ── */}
       <Modal
         visible={isAddModalOpen}
         animationType="slide"
         transparent={false}
-        onRequestClose={() => {
-          setIsAddModalOpen(false);
-          resetForm();
-        }}
+        onRequestClose={() => { setIsAddModalOpen(false); resetForm(); }}
       >
-        <SafeAreaView className="flex-1 bg-slate-50">
-          <View className="bg-white px-5 pt-5 pb-4 border-b border-slate-100 flex-row items-center justify-between z-50">
-            <Text className="text-lg font-black text-slate-900">{editingReminder ? 'Edit Reminder Cairan' : 'Tambah Reminder Cairan'}</Text>
+        <SafeAreaView style={{ flex: 1, backgroundColor: '#F0F4FF' }}>
+          {/* Modal header */}
+          <LinearGradient
+            colors={['#0EA5E9', '#38BDF8']}
+            start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+            style={{
+              paddingTop: 20, paddingBottom: 20,
+              paddingHorizontal: 20,
+              flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+            }}
+          >
+            <View>
+              <Text style={{ color: '#BAE6FD', fontSize: 10, fontWeight: '700', letterSpacing: 1.2, textTransform: 'uppercase' }}>
+                Form Cairan
+              </Text>
+              <Text style={{ color: '#fff', fontSize: 18, fontWeight: '900', marginTop: 2 }}>
+                {editingReminder ? 'Edit Catatan Cairan' : 'Tambah Catatan Cairan'}
+              </Text>
+            </View>
             <Pressable
-              onPress={() => {
-                setIsAddModalOpen(false);
-                resetForm();
-              }}
-              className="w-9 h-9 rounded-lg bg-slate-100 items-center justify-center active:bg-slate-200"
+              onPress={() => { setIsAddModalOpen(false); resetForm(); }}
+              style={({ pressed }) => ({
+                width: 40, height: 40, borderRadius: 12,
+                backgroundColor: '#ffffff25',
+                alignItems: 'center', justifyContent: 'center',
+                borderWidth: 1, borderColor: '#ffffff40',
+                opacity: pressed ? 0.6 : 1,
+              })}
             >
-              <X color="#334155" size={18} />
+              <X color="#fff" size={18} />
             </Pressable>
-          </View>
+          </LinearGradient>
 
-          <ScrollView className="flex-1 bg-slate-50" contentContainerStyle={{ padding: 20, paddingBottom: 30 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-            <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Tanggal</Text>
-            {Platform.OS === 'web' ? (
-              <input
-                type="date"
-                value={tanggal}
-                onChange={(e) => setTanggal(e.target.value)}
-                style={{ padding: 12, borderRadius: 12, border: '2px solid #E2E8F0', marginBottom: 14 }}
-              />
-            ) : (
-              <>
-                <Pressable onPress={() => setShowDatePicker(true)} className="border-2 border-slate-200 rounded-2xl px-4 py-3.5 bg-slate-50 mb-4">
-                  <Text className="text-slate-900 font-medium">{tanggal || 'Pilih tanggal'}</Text>
-                </Pressable>
-                {showDatePicker ? (
-                  <DateTimePicker
-                    value={tanggal ? new Date(tanggal) : new Date()}
-                    mode="date"
-                    onChange={(event, selectedDate) => {
-                      setShowDatePicker(false);
-                      if (event.type === 'dismissed' || !selectedDate) return;
-                      setTanggal(formatDateYMD(selectedDate));
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Form card */}
+            <View style={{
+              backgroundColor: '#fff', borderRadius: 24, padding: 20,
+              shadowColor: '#0EA5E9',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.08,
+              shadowRadius: 16,
+              elevation: 6,
+            }}>
+              {/* Tanggal */}
+              {Platform.OS === 'web' ? (
+                <View style={{ marginBottom: 16 }}>
+                  <FieldLabel>Tanggal</FieldLabel>
+                  <input
+                    type="date"
+                    value={tanggal}
+                    onChange={(e) => setTanggal(e.target.value)}
+                    style={{
+                      padding: '14px 16px', borderRadius: 14,
+                      border: '1.5px solid #E2E8F0', fontSize: 14,
+                      width: '100%', boxSizing: 'border-box',
                     }}
                   />
-                ) : null}
-              </>
-            )}
+                </View>
+              ) : (
+                <>
+                  <PickerTrigger
+                    label="Tanggal"
+                    value={formatDateDisplay(tanggal) || 'Pilih tanggal'}
+                    icon={<CalendarDays size={16} color="#94A3B8" />}
+                    onPress={() => setShowDatePicker(true)}
+                  />
+                  {showDatePicker && (
+                    <DateTimePicker
+                      value={tanggal ? new Date(tanggal) : new Date()}
+                      mode="date"
+                      onChange={(event, selectedDate) => {
+                        setShowDatePicker(false);
+                        if (event.type === 'dismissed' || !selectedDate) return;
+                        setTanggal(formatDateYMD(selectedDate));
+                      }}
+                    />
+                  )}
+                </>
+              )}
 
-            <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Catat Asupan Cairan</Text>
-            <TextInput className="border-2 border-slate-200 rounded-2xl px-4 py-3.5 mb-4 bg-slate-50 text-slate-900 font-medium" placeholder="Contoh: Setelah olahraga" value={catatanAsupan} onChangeText={setCatatanAsupan} />
-
-            <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Minuman</Text>
-            <TextInput className="border-2 border-slate-200 rounded-2xl px-4 py-3.5 mb-4 bg-slate-50 text-slate-900 font-medium" placeholder="Air mineral" value={minuman} onChangeText={setMinuman} />
-
-            <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Jumlah (ml)</Text>
-            <TextInput className="border-2 border-slate-200 rounded-2xl px-4 py-3.5 mb-4 bg-slate-50 text-slate-900 font-medium" placeholder="Contoh: 250" keyboardType="numeric" value={jumlahMl} onChangeText={(text) => setJumlahMl(text.replace(/[^0-9]/g, ''))} />
-
-            <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Waktu</Text>
-            {Platform.OS === 'web' ? (
-              <input
-                type="time"
-                value={waktu.slice(0, 5)}
-                onChange={(e) => setWaktu(`${e.target.value}:00`)}
-                style={{ padding: 12, borderRadius: 12, border: '2px solid #E2E8F0', marginBottom: 14 }}
+              <InputField
+                label="Catat Asupan Cairan"
+                placeholder="Contoh: Setelah olahraga"
+                value={catatanAsupan}
+                onChangeText={setCatatanAsupan}
               />
-            ) : (
-              <>
-                <Pressable onPress={() => setShowTimePicker(true)} className="border-2 border-slate-200 rounded-2xl px-4 py-3.5 bg-slate-50 mb-4">
-                  <Text className="text-slate-900 font-medium">{formatTimeHM(waktu)}</Text>
-                </Pressable>
-                {showTimePicker ? (
-                  <DateTimePicker
-                    value={new Date(`2026-01-01T${waktu}`)}
-                    mode="time"
-                    onChange={(event, selectedDate) => {
-                      setShowTimePicker(false);
-                      if (event.type === 'dismissed' || !selectedDate) return;
-                      setWaktu(formatTimeHMS(selectedDate));
+
+              <InputField
+                label="Minuman"
+                placeholder="Air mineral"
+                value={minuman}
+                onChangeText={setMinuman}
+              />
+
+              <InputField
+                label="Jumlah (ml)"
+                placeholder="Contoh: 250"
+                keyboardType="numeric"
+                value={jumlahMl}
+                onChangeText={(text) => setJumlahMl(text.replace(/[^0-9]/g, ''))}
+              />
+
+              {/* Waktu */}
+              {Platform.OS === 'web' ? (
+                <View style={{ marginBottom: 16 }}>
+                  <FieldLabel>Waktu</FieldLabel>
+                  <input
+                    type="time"
+                    value={waktu.slice(0, 5)}
+                    onChange={(e) => setWaktu(`${e.target.value}:00`)}
+                    style={{
+                      padding: '14px 16px', borderRadius: 14,
+                      border: '1.5px solid #E2E8F0', fontSize: 14,
+                      width: '100%', boxSizing: 'border-box',
                     }}
                   />
-                ) : null}
-              </>
-            )}
+                </View>
+              ) : (
+                <>
+                  <PickerTrigger
+                    label="Waktu"
+                    value={formatTimeHM(waktu)}
+                    icon={<Clock size={16} color="#94A3B8" />}
+                    onPress={() => setShowTimePicker(true)}
+                  />
+                  {showTimePicker && (
+                    <DateTimePicker
+                      value={new Date(`2026-01-01T${waktu}`)}
+                      mode="time"
+                      onChange={(event, selectedDate) => {
+                        setShowTimePicker(false);
+                        if (event.type === 'dismissed' || !selectedDate) return;
+                        setWaktu(formatTimeHMS(selectedDate));
+                      }}
+                    />
+                  )}
+                </>
+              )}
+            </View>
 
-            <Pressable onPress={submitCairan} disabled={!canSubmit || isSubmitting} className={`mt-2 rounded-2xl py-4 items-center ${canSubmit && !isSubmitting ? 'bg-blue-600 active:bg-blue-700' : 'bg-slate-300'}`}>
-              <Text className="text-white font-bold text-base">{isSubmitting ? 'Menyimpan...' : (editingReminder ? 'Simpan Perubahan' : 'Simpan Reminder Offline')}</Text>
+            {/* Submit button */}
+            <Pressable
+              onPress={submitCairan}
+              disabled={!canSubmit || isSubmitting}
+              style={({ pressed }) => ({
+                marginTop: 16,
+                borderRadius: 18,
+                paddingVertical: 16,
+                alignItems: 'center',
+                flexDirection: 'row',
+                justifyContent: 'center',
+                gap: 8,
+                backgroundColor: canSubmit && !isSubmitting ? '#0EA5E9' : '#E2E8F0',
+                opacity: pressed ? 0.85 : 1,
+                shadowColor: '#0EA5E9',
+                shadowOffset: { width: 0, height: 8 },
+                shadowOpacity: canSubmit && !isSubmitting ? 0.4 : 0,
+                shadowRadius: 16,
+                elevation: canSubmit && !isSubmitting ? 8 : 0,
+              })}
+            >
+              <Text style={{
+                color: canSubmit && !isSubmitting ? '#fff' : '#94A3B8',
+                fontWeight: '800', fontSize: 15, letterSpacing: 0.3,
+              }}>
+                {isSubmitting ? 'Menyimpan...' : editingReminder ? 'Simpan Perubahan' : 'Simpan Catatan'}
+              </Text>
             </Pressable>
           </ScrollView>
         </SafeAreaView>
