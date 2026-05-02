@@ -1,7 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, Pressable, ScrollView, TextInput, Alert, RefreshControl, ActivityIndicator, Modal, Platform, SafeAreaView } from 'react-native';
+import {
+  View, Text, Pressable, ScrollView, TextInput, Alert,
+  RefreshControl, ActivityIndicator, Modal, Platform, SafeAreaView,
+} from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { ArrowLeft, Pill, CloudUpload, CircleCheck, Clock3, Plus, X } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import {
+  ArrowLeft, Pill, CloudUpload, CircleCheck, Clock3,
+  Plus, X, Bell, ChevronDown, Pencil, Trash2, AlertCircle,
+} from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { fetchPublicObatList } from '../../services/patientService';
 import { syncPendingReminderObat } from '../../services/patientSyncService';
@@ -41,11 +48,7 @@ const formatDoseOption = (item) => {
     const satuan = item.satuan ? ` ${item.satuan}` : '';
     return `${item.dosis}${satuan}`;
   }
-
-  if (item === null || item === undefined) {
-    return '';
-  }
-
+  if (item === null || item === undefined) return '';
   return String(item);
 };
 
@@ -55,51 +58,93 @@ const formatTimeHM = (time) => (time ? time.slice(0, 5) : '-');
 
 const resolveDoseOptions = (obat) => {
   if (!obat) return [];
-
   const options = [];
-
   if (Array.isArray(obat.dosis_inisiasi) && obat.dosis_inisiasi.length > 0) {
     for (const doseItem of obat.dosis_inisiasi) {
       const label = formatDoseOption(doseItem);
-      if (label) {
-        options.push({ label, value: label });
-      }
+      if (label) options.push({ label, value: label });
     }
   }
-
   if (options.length === 0 && obat.dosis_target) {
     const label = String(obat.dosis_target);
     options.push({ label, value: label });
   }
-
   return options;
 };
 
+// ── SELECT FIELD ──────────────────────────────────────────────
 const SelectField = ({ label, valueLabel, placeholder, options, isOpen, onToggle, onSelect }) => (
-  <View className="mb-4">
-    <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">{label}</Text>
+  <View style={{ marginBottom: 16 }}>
+    <Text style={{
+      fontSize: 10, fontWeight: '700', color: '#94A3B8',
+      textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 3,
+    }}>
+      {label}
+    </Text>
     <Pressable
       onPress={onToggle}
-      className="border-2 border-slate-200 rounded-2xl px-4 py-3.5 bg-slate-50"
+      style={({ pressed }) => ({
+        borderWidth: 1.5,
+        borderColor: isOpen ? '#14B8A6' : '#E2E8F0',
+        borderRadius: 14,
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        backgroundColor: isOpen ? '#F5F3FF' : '#fff',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        opacity: pressed ? 0.8 : 1,
+      })}
     >
-      <Text className={valueLabel ? 'text-slate-900 font-medium' : 'text-slate-400'}>{valueLabel || placeholder}</Text>
+      <Text style={{
+        color: valueLabel ? '#1E293B' : '#94A3B8',
+        fontWeight: valueLabel ? '600' : '400',
+        fontSize: 14,
+        flex: 1,
+      }}>
+        {valueLabel || placeholder}
+      </Text>
+      <ChevronDown
+        color={isOpen ? '#6366F1' : '#14B8A6'}
+        size={16}
+        style={{ transform: [{ rotate: isOpen ? '180deg' : '0deg' }] }}
+      />
     </Pressable>
-    {isOpen ? (
-      <View className="mt-2 bg-white rounded-2xl border border-slate-200 overflow-hidden">
-        {options.map((item) => (
+    {isOpen && (
+      <View style={{
+        marginTop: 4,
+        backgroundColor: '#fff',
+        borderRadius: 14,
+        borderWidth: 1.5,
+        borderColor: '#14B8A6',
+        overflow: 'hidden',
+        shadowColor: '#14B8A6',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+        elevation: 6,
+      }}>
+        {options.map((item, i) => (
           <Pressable
             key={item.value}
             onPress={() => onSelect(item.value)}
-            className="px-4 py-3 border-b border-slate-100 active:bg-slate-50"
+            style={({ pressed }) => ({
+              paddingHorizontal: 16,
+              paddingVertical: 13,
+              borderBottomWidth: i < options.length - 1 ? 1 : 0,
+              borderBottomColor: '#F1F5F9',
+              backgroundColor: pressed ? '#EEF2FF' : '#fff',
+            })}
           >
-            <Text className="text-slate-700 font-medium">{item.label}</Text>
+            <Text style={{ color: '#1E293B', fontWeight: '500', fontSize: 14 }}>{item.label}</Text>
           </Pressable>
         ))}
       </View>
-    ) : null}
+    )}
   </View>
 );
 
+// ── MAIN SCREEN ───────────────────────────────────────────────
 export default function PatientReminderObatScreen({ onBack, profile }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -149,18 +194,13 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
 
   const attemptSyncPending = useCallback(async (showSuccessAlert = false) => {
     if (!profile) return;
-
     setIsSyncing(true);
-
     try {
       const result = await syncPendingReminderObat(profile);
-
       if (result.skipped && showSuccessAlert) {
         Alert.alert('Sinkronisasi', 'Tidak ada data pending untuk disinkronkan.');
       }
-
       await loadQueueStats();
-
       if (showSuccessAlert && !result.skipped) {
         Alert.alert('Sinkronisasi berhasil', `${result.syncedCount} reminder berhasil dikirim ke server.`);
       }
@@ -178,7 +218,6 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
       await Promise.all([loadObat(), loadQueueStats()]);
       await attemptSyncPending(false);
     };
-
     bootstrap();
   }, [loadObat, loadQueueStats, attemptSyncPending]);
 
@@ -226,22 +265,18 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
     setSelectedObatId(obatId);
     setSelectedMerkId('');
     setActiveSelect(null);
-
     const obat = obatList.find((item) => String(item.id) === String(obatId));
     if (!obat) return;
-
     const freq = Number(obat.frekuensi_default || 0);
     const obatDoseOptions = resolveDoseOptions(obat);
     setDosis(obatDoseOptions[0]?.value || '');
     setFrekuensi(String(freq || ''));
-
     if (freq === 1) {
       setWaktuKonsumsi('');
     } else {
       const defaults = TIME_PRESETS[freq] || [];
       setWaktuKonsumsi(defaults[0] || '');
     }
-
     setJamCustom('');
   };
 
@@ -283,13 +318,11 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
 
   const autoScheduleAlarms = useCallback(async (items) => {
     if (isAutoSchedulingAlarm) return;
-
     const candidates = (items || []).filter(
-      (item) => item.sync_status === 'synced' && item.server_id && (!Array.isArray(item.alarm_notification_ids) || item.alarm_notification_ids.length === 0)
+      (item) => item.sync_status === 'synced' && item.server_id &&
+        (!Array.isArray(item.alarm_notification_ids) || item.alarm_notification_ids.length === 0)
     );
-
     if (candidates.length === 0) return;
-
     setIsAutoSchedulingAlarm(true);
     try {
       for (const item of candidates) {
@@ -297,7 +330,6 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
           const notificationIds = await scheduleReminderObatAlarms(item);
           await updatePatientReminderObatAlarmIds(item.local_id, notificationIds);
         } catch (error) {
-          // Keep UI usable even if one alarm schedule fails.
           console.error('Auto schedule alarm failed:', error?.message || error);
         }
       }
@@ -312,7 +344,6 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
       Alert.alert('Data belum lengkap', 'Mohon lengkapi semua field reminder obat terlebih dahulu.');
       return;
     }
-
     const payload = {
       obat_id: Number(selectedObatId),
       merk_id: selectedMerkId ? Number(selectedMerkId) : null,
@@ -325,17 +356,14 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
       jumlah_obat: Number(jumlahObat),
       aturan_minum: isCustomAturan ? aturanCustom.trim() : aturanMinum,
     };
-
     try {
       setIsSaving(true);
       if (editingReminder) {
         const isSyncedReminder = editingReminder.sync_status === 'synced' && editingReminder.server_id;
-
         if (isSyncedReminder) {
           await deleteReminderObat(editingReminder.server_id);
           await cancelReminderObatAlarms(editingReminder.alarm_notification_ids || []);
         }
-
         const updatedLocalItem = await updatePatientReminderObatItem(editingReminder.local_id, {
           ...payload,
           sync_status: isSyncedReminder ? 'pending' : editingReminder.sync_status,
@@ -344,11 +372,9 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
           alarm_notification_ids: isSyncedReminder ? [] : (editingReminder.alarm_notification_ids || []),
           last_error: null,
         });
-
         if (isSyncedReminder) {
           await syncPendingReminderObat(profile);
           await loadQueueStats();
-
           const latestQueue = await getPatientReminderObatQueue();
           const updatedAfterSync = latestQueue.find((item) => item.local_id === editingReminder.local_id);
           if (updatedAfterSync?.sync_status === 'synced' && updatedAfterSync.server_id) {
@@ -363,7 +389,6 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
         } else {
           await loadQueueStats();
         }
-
         setIsAddModalOpen(false);
         resetForm();
         Alert.alert('Reminder diperbarui', isSyncedReminder
@@ -372,11 +397,9 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
         );
         return updatedLocalItem;
       }
-
       const createdItem = await addPatientReminderObat(payload);
       await syncPendingReminderObat(profile);
       await loadQueueStats();
-
       const latestQueue = await getPatientReminderObatQueue();
       const createdAfterSync = latestQueue.find((item) => item.local_id === createdItem.local_id);
       if (createdAfterSync?.sync_status === 'synced' && createdAfterSync.server_id) {
@@ -388,7 +411,6 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
           console.error('Failed to auto activate alarm after submit:', alarmError?.message || alarmError);
         }
       }
-
       setIsAddModalOpen(false);
       resetForm();
       Alert.alert('Reminder ditambahkan', 'Data tersimpan, dan alarm otomatis diaktifkan jika sinkronisasi berhasil.');
@@ -414,9 +436,7 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
               if (item.sync_status === 'synced' && item.server_id) {
                 await deleteReminderObat(item.server_id);
               }
-
               await cancelReminderObatAlarms(item.alarm_notification_ids || []);
-
               await deletePatientReminderObatItem(item.local_id);
               await loadQueueStats();
               Alert.alert('Reminder dihapus', 'Reminder obat berhasil dihapus.');
@@ -440,142 +460,273 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
       Alert.alert('Belum bisa aktifkan alarm', 'Reminder masih pending sync. Sinkronkan dulu agar bisa dipantau apoteker.');
       return;
     }
-
     try {
       const notificationIds = await scheduleReminderObatAlarms(item);
       await updatePatientReminderObatAlarmIds(item.local_id, notificationIds);
       await loadQueueStats();
-
       Alert.alert('Alarm aktif', `Alarm untuk ${item.nama_obat} berhasil dijadwalkan.`);
     } catch (error) {
       Alert.alert('Gagal aktifkan alarm', error?.message || 'Terjadi kesalahan saat membuat alarm.');
     }
   };
 
+  // ── LOADING STATE ─────────────────────────────────────────
   if (isLoading) {
     return (
-      <View className="flex-1 bg-slate-50 justify-center items-center">
-        <ActivityIndicator size="large" color="#0D9488" />
+      <View style={{ flex: 1, backgroundColor: '#F0F4FF', justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#6366F1" />
+        <Text style={{ color: '#94A3B8', marginTop: 12, fontWeight: '600' }}>Memuat data obat...</Text>
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-slate-50">
-      <StatusBar style="dark" />
+    <View style={{ flex: 1, backgroundColor: '#F0F4FF' }}>
+      <StatusBar style="light" />
 
-      <View className="bg-white pt-14 pb-6 px-6 border-b border-slate-100 shadow-sm z-10">
-        <View className="flex-row items-center justify-between">
-          <View className="flex-row items-center">
+      {/* ── HEADER ── */}
+      <LinearGradient
+        colors={['#6366F1', '#818CF8', '#A5B4FC']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{
+          paddingTop: 60,
+          paddingBottom: 30,
+          paddingHorizontal: 24,
+          borderBottomLeftRadius: 36,
+          borderBottomRightRadius: 36,
+        }}
+      >
+        {/* Decorative circles */}
+        <View style={{
+          position: 'absolute', top: -40, right: -40,
+          width: 180, height: 180, borderRadius: 90,
+          backgroundColor: '#ffffff18',
+        }} />
+        <View style={{
+          position: 'absolute', top: 30, right: 60,
+          width: 80, height: 80, borderRadius: 40,
+          backgroundColor: '#ffffff10',
+        }} />
+
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
             <Pressable
               onPress={onBack}
-              className="w-10 h-10 rounded-xl bg-slate-100 items-center justify-center mr-3 active:bg-slate-200"
+              style={({ pressed }) => ({
+                width: 42, height: 42, borderRadius: 13,
+                backgroundColor: '#ffffff25',
+                alignItems: 'center', justifyContent: 'center',
+                borderWidth: 1, borderColor: '#ffffff40',
+                opacity: pressed ? 0.6 : 1,
+              })}
             >
-              <ArrowLeft color="#334155" size={18} />
+              <ArrowLeft color="#fff" size={18} />
             </Pressable>
             <View>
-              <Text className="text-xs font-bold text-slate-400 uppercase tracking-widest">Form Pasien</Text>
-              <Text className="text-2xl font-black text-slate-900 tracking-tight mt-1">Reminder Minum Obat</Text>
+              <Text style={{ color: '#C7D2FE', fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', fontWeight: '700' }}>
+                Menu Pasien
+              </Text>
+              <Text style={{ color: '#fff', fontSize: 20, fontWeight: '900', marginTop: 2 }}>
+                Reminder Obat
+              </Text>
             </View>
           </View>
-          <View className="w-11 h-11 rounded-2xl bg-teal-50 border border-teal-100 items-center justify-center">
-            <Pill color="#0D9488" size={20} />
+
+          <View style={{
+            width: 44, height: 44, borderRadius: 14,
+            backgroundColor: '#ffffff25',
+            alignItems: 'center', justifyContent: 'center',
+            borderWidth: 1, borderColor: '#ffffff40',
+          }}>
+            <Pill color="#fff" size={20} />
           </View>
         </View>
-      </View>
+      </LinearGradient>
 
       <ScrollView
-        className="flex-1"
-        contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: 48 }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
+        refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#6366F1" />}
       >
-        <View className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm mb-4">
-          <View className="flex-row gap-3 mb-4">
-            <View className="flex-1 bg-amber-50 border border-amber-100 rounded-2xl p-3">
-              <View className="flex-row items-center mb-1">
-                <Clock3 size={16} color="#B45309" />
-                <Text className="ml-1.5 text-xs font-bold text-amber-700 uppercase">Pending</Text>
-              </View>
-              <Text className="text-2xl font-black text-amber-900">{pendingCount}</Text>
-            </View>
-            <View className="flex-1 bg-emerald-50 border border-emerald-100 rounded-2xl p-3">
-              <View className="flex-row items-center mb-1">
-                <CircleCheck size={16} color="#047857" />
-                <Text className="ml-1.5 text-xs font-bold text-emerald-700 uppercase">Tersinkron</Text>
-              </View>
-              <Text className="text-2xl font-black text-emerald-900">{syncedCount}</Text>
-            </View>
-          </View>
 
-          <Pressable
-            onPress={() => attemptSyncPending(true)}
-            disabled={isSyncing}
-            className={`rounded-2xl py-3.5 items-center flex-row justify-center ${isSyncing ? 'bg-slate-300' : 'bg-teal-600 active:bg-teal-700'}`}
-          >
-            {isSyncing ? <ActivityIndicator color="#FFFFFF" size="small" /> : <CloudUpload color="#FFFFFF" size={18} />}
-            <Text className="text-white font-bold text-sm ml-2">{isSyncing ? 'Sinkronisasi...' : 'Sync Sekarang'}</Text>
-          </Pressable>
-          <Text className="text-xs text-slate-400 mt-2">Data tetap aman di device meskipun sedang offline.</Text>
-        </View>
+        {/* ── DAFTAR REMINDER ── */}
+        <View style={{ marginHorizontal: 20, marginTop: 20 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+            <View>
+              <Text style={{ color: '#1E293B', fontWeight: '900', fontSize: 18 }}>Daftar Reminder</Text>
+              <Text style={{ color: '#94A3B8', fontSize: 12, marginTop: 1 }}>
+                {reminderItems.length} reminder terdaftar
+              </Text>
+            </View>
 
-        <View className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm mb-4">
-          <View className="flex-row items-center justify-between mb-4">
-            <Text className="text-lg font-black text-slate-900">Daftar Reminder Obat</Text>
             <Pressable
               onPress={handleOpenAddModal}
-              className="bg-blue-600 rounded-xl px-3 py-2 flex-row items-center active:bg-blue-700"
+              style={({ pressed }) => ({
+                flexDirection: 'row', alignItems: 'center', gap: 6,
+                backgroundColor: '#6366F1',
+                paddingHorizontal: 14, paddingVertical: 10,
+                borderRadius: 12,
+                opacity: pressed ? 0.8 : 1,
+                shadowColor: '#6366F1',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.35,
+                shadowRadius: 8,
+                elevation: 5,
+              })}
             >
-              <Plus color="#FFFFFF" size={16} />
-              <Text className="text-white font-bold text-sm ml-1.5">Tambah</Text>
+              
+              <Text style={{ color: '#6366F1', fontWeight: '800', fontSize: 13 }}><Plus color="#6366F1" size={10} /> Tambah</Text>
             </Pressable>
           </View>
 
+          {/* Empty state */}
           {reminderItems.length === 0 ? (
-            <View className="bg-slate-50 border border-slate-200 rounded-2xl px-4 py-5">
-              <Text className="text-slate-500 text-sm text-center">Belum ada reminder. Tekan tombol Tambah untuk membuat reminder baru.</Text>
+            <View style={{
+              backgroundColor: '#fff', borderRadius: 20, padding: 32,
+              alignItems: 'center',
+              borderWidth: 1.5, borderColor: '#E2E8F0', borderStyle: 'dashed',
+            }}>
+              <View style={{
+                width: 56, height: 56, borderRadius: 18,
+                backgroundColor: '#EEF2FF',
+                alignItems: 'center', justifyContent: 'center',
+                marginBottom: 12,
+              }}>
+                <Bell color="#6366F1" size={24} />
+              </View>
+              <Text style={{ color: '#1E293B', fontWeight: '800', fontSize: 15, marginBottom: 4 }}>
+                Belum Ada Reminder
+              </Text>
+              <Text style={{ color: '#94A3B8', fontSize: 13, textAlign: 'center', lineHeight: 20 }}>
+                Tekan tombol Tambah untuk membuat reminder minum obat baru.
+              </Text>
             </View>
           ) : (
             reminderItems.map((item) => {
               const isSynced = item.sync_status === 'synced';
               const isAlarmActive = Array.isArray(item.alarm_notification_ids) && item.alarm_notification_ids.length > 0;
+
               return (
-                <View key={item.local_id} className="rounded-2xl border border-slate-200 p-4 mb-3 bg-white">
-                  <View className="flex-row items-start justify-between mb-1">
-                    <Text className="text-base font-black text-slate-900 flex-1 mr-2">{item.nama_obat}</Text>
-                    <View className={`px-2.5 py-1 rounded-full ${isSynced ? 'bg-emerald-100' : 'bg-amber-100'}`}>
-                      <Text className={`text-[10px] font-bold uppercase ${isSynced ? 'text-emerald-700' : 'text-amber-700'}`}>
+                <View key={item.local_id} style={{
+                  backgroundColor: '#fff',
+                  borderRadius: 20,
+                  padding: 18,
+                  marginBottom: 12,
+                  shadowColor: '#64748B',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.06,
+                  shadowRadius: 10,
+                  elevation: 3,
+                }}>
+                  {/* Top row */}
+                  <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+                      <View style={{
+                        width: 40, height: 40, borderRadius: 13,
+                        backgroundColor: '#EEF2FF',
+                        alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        <Pill color="#6366F1" size={18} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ color: '#1E293B', fontWeight: '800', fontSize: 15 }} numberOfLines={1}>
+                          {item.nama_obat}
+                        </Text>
+                        {item.nama_merk && (
+                          <Text style={{ color: '#94A3B8', fontSize: 11, marginTop: 1 }}>Merk: {item.nama_merk}</Text>
+                        )}
+                      </View>
+                    </View>
+
+                    <View style={{
+                      paddingHorizontal: 10, paddingVertical: 4, borderRadius: 50,
+                      backgroundColor: isSynced ? '#DCFCE7' : '#FEF3C7',
+                    }}>
+                      <Text style={{
+                        fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8,
+                        color: isSynced ? '#059669' : '#D97706',
+                      }}>
                         {isSynced ? 'Synced' : 'Pending'}
                       </Text>
                     </View>
                   </View>
-                  {item.nama_merk && <Text className="text-xs font-semibold text-slate-500">Merk: {item.nama_merk}</Text>}
-                  <Text className="text-xs font-semibold text-slate-500">Dosis {item.dosis} | {item.frekuensi}x/hari</Text>
-                  <Text className="text-xs font-semibold text-slate-500 mt-1">Waktu {item.waktu_konsumsi}</Text>
-                  <Text className="text-xs font-semibold text-slate-500 mt-1">Aturan {item.aturan_minum}</Text>
-                  <View className="flex-row items-center justify-between mt-3">
-                    <Text className={`text-xs font-bold ${isAlarmActive ? 'text-emerald-600' : 'text-slate-400'}`}>
-                      {isAlarmActive ? 'Alarm Aktif Otomatis' : (isSynced ? 'Menyiapkan Alarm...' : 'Alarm Menunggu Sync')}
+
+                  {/* Divider */}
+                  <View style={{ height: 1, backgroundColor: '#F1F5F9', marginBottom: 10 }} />
+
+                  {/* Info rows */}
+                  {[
+                    { label: 'Dosis', value: `${item.dosis} · ${item.frekuensi}x per hari` },
+                    { label: 'Waktu', value: item.waktu_konsumsi },
+                    { label: 'Aturan', value: item.aturan_minum },
+                  ].map((row, i) => (
+                    <View key={i} style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '600', width: 52 }}>{row.label}</Text>
+                      <Text style={{ color: '#475569', fontSize: 12, fontWeight: '600', flex: 1 }}>{row.value}</Text>
+                    </View>
+                  ))}
+
+                  {/* Alarm status */}
+                  <View style={{
+                    marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 6,
+                    backgroundColor: isAlarmActive ? '#F0FDF4' : '#F8FAFC',
+                    paddingHorizontal: 10, paddingVertical: 7, borderRadius: 10,
+                  }}>
+                    <Bell size={12} color={isAlarmActive ? '#059669' : '#CBD5E1'} />
+                    <Text style={{
+                      fontSize: 11, fontWeight: '700',
+                      color: isAlarmActive ? '#059669' : '#94A3B8',
+                    }}>
+                      {isAlarmActive
+                        ? 'Alarm Aktif Otomatis'
+                        : isSynced ? 'Menyiapkan Alarm...' : 'Alarm Menunggu Sync'}
                     </Text>
                   </View>
-                  <View className="flex-row items-center justify-end mt-3">
+
+                  {/* Error */}
+                  {item.last_error && (
+                    <View style={{
+                      marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: 6,
+                      backgroundColor: '#FFF1F2', paddingHorizontal: 10, paddingVertical: 7, borderRadius: 10,
+                    }}>
+                      <AlertCircle size={12} color="#F43F5E" />
+                      <Text style={{ color: '#F43F5E', fontSize: 11, fontWeight: '600', flex: 1 }}>
+                        {item.last_error}
+                      </Text>
+                    </View>
+                  )}
+
+                  {/* Actions */}
+                  <View style={{ flexDirection: 'row', gap: 8, marginTop: 14 }}>
                     <Pressable
                       onPress={() => openEditModal(item)}
-                      className="bg-blue-600 rounded-xl px-3 py-2 mr-2 active:bg-blue-700"
+                      style={({ pressed }) => ({
+                        flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+                        backgroundColor: '#EEF2FF',
+                        paddingVertical: 10, borderRadius: 12,
+                        opacity: pressed ? 0.7 : 1,
+                      })}
                     >
-                      <Text className="text-white text-xs font-bold">Edit</Text>
+                      
+                      <Text style={{ color: '#6366F1', fontWeight: '800', fontSize: 13 }}><Pencil color="#6366F1" size={13} /> Edit</Text>
                     </Pressable>
+
                     <Pressable
                       onPress={() => handleDeleteReminder(item)}
-                      className="bg-rose-600 rounded-xl px-3 py-2 active:bg-rose-700"
+                      style={({ pressed }) => ({
+                        flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+                        backgroundColor: '#FFF1F2',
+                        paddingVertical: 10, borderRadius: 12,
+                        opacity: pressed ? 0.7 : 1,
+                      })}
                     >
-                      <Text className="text-white text-xs font-bold">Hapus</Text>
+                      
+                      <Text style={{ color: '#F43F5E', fontWeight: '800', fontSize: 13 }}><Trash2 color="#F43F5E" size={13} /> Hapus</Text>
                     </Pressable>
                   </View>
-                  {item.last_error ? (
-                    <Text className="text-xs font-semibold text-rose-500 mt-2">Error sync: {item.last_error}</Text>
-                  ) : null}
                 </View>
               );
             })
@@ -583,36 +734,62 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
         </View>
       </ScrollView>
 
+      {/* ── MODAL TAMBAH / EDIT ── */}
       <Modal
         visible={isAddModalOpen}
         animationType="slide"
         transparent={false}
-        onRequestClose={() => {
-          setIsAddModalOpen(false);
-          resetForm();
-        }}
+        onRequestClose={() => { setIsAddModalOpen(false); resetForm(); }}
       >
-        <SafeAreaView className="flex-1 bg-slate-50">
-          <View className="bg-white px-5 pt-5 pb-4 border-b border-slate-100 flex-row items-center justify-between z-50">
-            <Text className="text-lg font-black text-slate-900">{editingReminder ? 'Edit Reminder Obat' : 'Tambah Reminder Obat'}</Text>
+        <SafeAreaView style={{ flex: 1, backgroundColor: '#F0F4FF' }}>
+          {/* Modal header */}
+          <LinearGradient
+            colors={['#6366F1', '#818CF8']}
+            start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+            style={{
+              paddingTop: 20, paddingBottom: 20,
+              paddingHorizontal: 20,
+              flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+            }}
+          >
+            <View>
+              <Text style={{ color: '#C7D2FE', fontSize: 10, fontWeight: '700', letterSpacing: 1.2, textTransform: 'uppercase' }}>
+                Form Reminder
+              </Text>
+              <Text style={{ color: '#fff', fontSize: 18, fontWeight: '900', marginTop: 2 }}>
+                {editingReminder ? 'Edit Reminder Obat' : 'Tambah Reminder Obat'}
+              </Text>
+            </View>
             <Pressable
-              onPress={() => {
-                setIsAddModalOpen(false);
-                resetForm();
-              }}
-              className="w-9 h-9 rounded-lg bg-slate-100 items-center justify-center active:bg-slate-200"
+              onPress={() => { setIsAddModalOpen(false); resetForm(); }}
+              style={({ pressed }) => ({
+                width: 40, height: 40, borderRadius: 12,
+                backgroundColor: '#ffffff25',
+                alignItems: 'center', justifyContent: 'center',
+                borderWidth: 1, borderColor: '#ffffff40',
+                opacity: pressed ? 0.6 : 1,
+              })}
             >
-              <X color="#334155" size={18} />
+              <X color="#fff" size={18} />
             </Pressable>
-          </View>
+          </LinearGradient>
 
           <ScrollView
-            className="flex-1 bg-slate-50"
-            contentContainerStyle={{ padding: 20, paddingBottom: 30 }}
+            style={{ flex: 1 }}
+            contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-n              <SelectField
+            {/* Form card */}
+            <View style={{
+              backgroundColor: '#fff', borderRadius: 24, padding: 20,
+              shadowColor: '#6366F1',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.08,
+              shadowRadius: 16,
+              elevation: 6,
+            }}>
+              <SelectField
                 label="Nama Obat"
                 valueLabel={selectedObat?.nama_obat || ''}
                 placeholder="Pilih nama obat"
@@ -630,10 +807,7 @@ n              <SelectField
                   options={merkOptions}
                   isOpen={activeSelect === 'merk'}
                   onToggle={() => setActiveSelect(activeSelect === 'merk' ? null : 'merk')}
-                  onSelect={(value) => {
-                    setSelectedMerkId(value);
-                    setActiveSelect(null);
-                  }}
+                  onSelect={(value) => { setSelectedMerkId(value); setActiveSelect(null); }}
                 />
               )}
 
@@ -647,10 +821,7 @@ n              <SelectField
                   if (!selectedObat || doseOptions.length === 0) return;
                   setActiveSelect(activeSelect === 'dosis' ? null : 'dosis');
                 }}
-                onSelect={(value) => {
-                  setDosis(value);
-                  setActiveSelect(null);
-                }}
+                onSelect={(value) => { setDosis(value); setActiveSelect(null); }}
               />
 
               <SelectField
@@ -660,37 +831,57 @@ n              <SelectField
                 options={SEDIAAN_OPTIONS}
                 isOpen={activeSelect === 'sediaan'}
                 onToggle={() => setActiveSelect(activeSelect === 'sediaan' ? null : 'sediaan')}
-                onSelect={(value) => {
-                  setSediaan(value);
-                  setActiveSelect(null);
-                }}
+                onSelect={(value) => { setSediaan(value); setActiveSelect(null); }}
               />
 
-              <View className="mb-4">
-                <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Frekuensi</Text>
-                <View className="border-2 border-slate-200 rounded-2xl px-4 py-3.5 bg-slate-100">
-                  <Text className="text-slate-700 font-medium">
+              {/* Frekuensi (read-only) */}
+              <View style={{ marginBottom: 16 }}>
+                <Text style={{ fontSize: 10, fontWeight: '700', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 6 }}>
+                  Frekuensi
+                </Text>
+                <View style={{
+                  borderWidth: 1.5, borderColor: '#E2E8F0', borderRadius: 14,
+                  paddingHorizontal: 16, paddingVertical: 14,
+                  backgroundColor: '#F8FAFC',
+                }}>
+                  <Text style={{ color: frekuensi ? '#1E293B' : '#94A3B8', fontWeight: '500', fontSize: 14 }}>
                     {frekuensi ? `${frekuensi} kali sehari` : 'Akan terisi otomatis dari nama obat'}
                   </Text>
                 </View>
               </View>
 
+              {/* Waktu konsumsi */}
               {!frekuensi ? null : isFrekuensiOne ? (
-                <View className="mb-4">
-                  <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Waktu Konsumsi Obat</Text>
+                <View style={{ marginBottom: 16 }}>
+                  <Text style={{ fontSize: 10, fontWeight: '700', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 6 }}>
+                    Waktu Konsumsi Obat
+                  </Text>
                   {Platform.OS === 'web' ? (
                     <input
                       type="time"
                       value={jamCustom ? jamCustom.slice(0, 5) : ''}
                       onChange={(e) => setJamCustom(`${e.target.value}:00`)}
-                      style={{ padding: 12, borderRadius: 12, border: '2px solid #E2E8F0', marginBottom: 14 }}
+                      style={{
+                        padding: '14px 16px', borderRadius: 14,
+                        border: '1.5px solid #E2E8F0', marginBottom: 14,
+                        fontSize: 14, width: '100%', boxSizing: 'border-box',
+                      }}
                     />
                   ) : (
                     <>
-                      <Pressable onPress={() => setShowTimePicker(true)} className="border-2 border-slate-200 rounded-2xl px-4 py-3.5 bg-slate-50 mb-4">
-                        <Text className="text-slate-900 font-medium">{formatTimeHM(jamCustom)}</Text>
+                      <Pressable
+                        onPress={() => setShowTimePicker(true)}
+                        style={{
+                          borderWidth: 1.5, borderColor: '#E2E8F0', borderRadius: 14,
+                          paddingHorizontal: 16, paddingVertical: 14, backgroundColor: '#fff',
+                          marginBottom: 8,
+                        }}
+                      >
+                        <Text style={{ color: '#1E293B', fontWeight: '600', fontSize: 14 }}>
+                          {formatTimeHM(jamCustom)}
+                        </Text>
                       </Pressable>
-                      {showTimePicker ? (
+                      {showTimePicker && (
                         <DateTimePicker
                           value={new Date(`2026-01-01T${jamCustom || '21:00:00'}`)}
                           mode="time"
@@ -700,10 +891,12 @@ n              <SelectField
                             setJamCustom(formatTimeHMS(selectedDate));
                           }}
                         />
-                      ) : null}
+                      )}
                     </>
                   )}
-                  <Text className="text-xs text-slate-400 mt-2">Frekuensi 1x/hari bebas selama 24 jam, isi jam sesuai kebutuhan.</Text>
+                  <Text style={{ color: '#94A3B8', fontSize: 11, marginTop: 4 }}>
+                    Frekuensi 1x/hari bebas selama 24 jam, isi jam sesuai kebutuhan.
+                  </Text>
                 </View>
               ) : (
                 <SelectField
@@ -713,18 +906,24 @@ n              <SelectField
                   options={presetOptions}
                   isOpen={activeSelect === 'waktu'}
                   onToggle={() => setActiveSelect(activeSelect === 'waktu' ? null : 'waktu')}
-                  onSelect={(value) => {
-                    setWaktuKonsumsi(value);
-                    setActiveSelect(null);
-                  }}
+                  onSelect={(value) => { setWaktuKonsumsi(value); setActiveSelect(null); }}
                 />
               )}
 
-              <View className="mb-4">
-                <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Jumlah Obat</Text>
+              {/* Jumlah obat */}
+              <View style={{ marginBottom: 16 }}>
+                <Text style={{ fontSize: 10, fontWeight: '700', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 6 }}>
+                  Jumlah Obat
+                </Text>
                 <TextInput
-                  className="border-2 border-slate-200 rounded-2xl px-4 py-3.5 bg-slate-50 text-slate-900 font-medium"
+                  style={{
+                    borderWidth: 1.5, borderColor: '#E2E8F0', borderRadius: 14,
+                    paddingHorizontal: 16, paddingVertical: 14,
+                    backgroundColor: '#fff', color: '#1E293B',
+                    fontWeight: '500', fontSize: 14,
+                  }}
                   placeholder="Masukkan jumlah obat"
+                  placeholderTextColor="#94A3B8"
                   keyboardType="numeric"
                   value={jumlahObat}
                   onChangeText={(text) => setJumlahObat(text.replace(/[^0-9]/g, ''))}
@@ -744,33 +943,63 @@ n              <SelectField
                 onToggle={() => setActiveSelect(activeSelect === 'aturan' ? null : 'aturan')}
                 onSelect={(value) => {
                   setAturanMinum(value);
-                  if (value !== 'custom') {
-                    setAturanCustom('');
-                  }
+                  if (value !== 'custom') setAturanCustom('');
                   setActiveSelect(null);
                 }}
               />
 
-              {isCustomAturan ? (
-                <View className="mb-2">
-                  <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Isi Aturan Custom</Text>
+              {isCustomAturan && (
+                <View style={{ marginBottom: 16 }}>
+                  <Text style={{ fontSize: 10, fontWeight: '700', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 6 }}>
+                    Isi Aturan Custom
+                  </Text>
                   <TextInput
-                    className="border-2 border-slate-200 rounded-2xl px-4 py-3.5 bg-slate-50 text-slate-900 font-medium"
+                    style={{
+                      borderWidth: 1.5, borderColor: '#E2E8F0', borderRadius: 14,
+                      paddingHorizontal: 16, paddingVertical: 14,
+                      backgroundColor: '#fff', color: '#1E293B',
+                      fontWeight: '500', fontSize: 14,
+                    }}
                     placeholder="Contoh: Sesudah sarapan dan sebelum olahraga"
+                    placeholderTextColor="#94A3B8"
                     value={aturanCustom}
                     onChangeText={setAturanCustom}
                   />
-                  <Text className="text-xs text-slate-400 mt-2">Saran: isi waktu + kondisi, misalnya 30 menit setelah makan malam.</Text>
+                  <Text style={{ color: '#94A3B8', fontSize: 11, marginTop: 6 }}>
+                    Saran: isi waktu + kondisi, misalnya 30 menit setelah makan malam.
+                  </Text>
                 </View>
-              ) : null}
+              )}
+            </View>
 
-              <Pressable
-                onPress={handleSubmit}
-                className={`mt-4 rounded-2xl py-4 items-center ${canSubmit && !isSaving ? 'bg-blue-600 active:bg-blue-700' : 'bg-slate-300'}`}
-                disabled={!canSubmit || isSaving}
-              >
-                <Text className="text-white font-bold text-base">{isSaving ? 'Menyimpan...' : (editingReminder ? 'Simpan Perubahan' : 'Simpan Reminder Offline')}</Text>
-              </Pressable>
+            {/* Submit button */}
+            <Pressable
+              onPress={handleSubmit}
+              disabled={!canSubmit || isSaving}
+              style={({ pressed }) => ({
+                marginTop: 16,
+                borderRadius: 18,
+                paddingVertical: 16,
+                alignItems: 'center',
+                flexDirection: 'row',
+                justifyContent: 'center',
+                gap: 8,
+                backgroundColor: canSubmit && !isSaving ? '#6366F1' : '#E2E8F0',
+                opacity: pressed ? 0.85 : 1,
+                shadowColor: '#6366F1',
+                shadowOffset: { width: 0, height: 8 },
+                shadowOpacity: canSubmit && !isSaving ? 0.4 : 0,
+                shadowRadius: 16,
+                elevation: canSubmit && !isSaving ? 8 : 0,
+              })}
+            >
+              <Text style={{
+                color: canSubmit && !isSaving ? '#fff' : '#94A3B8',
+                fontWeight: '800', fontSize: 15, letterSpacing: 0.3,
+              }}>
+                {isSaving ? 'Menyimpan...' : editingReminder ? 'Simpan Perubahan' : 'Simpan Reminder'}
+              </Text>
+            </Pressable>
           </ScrollView>
         </SafeAreaView>
       </Modal>
