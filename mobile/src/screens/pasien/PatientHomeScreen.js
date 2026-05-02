@@ -32,6 +32,26 @@ export default function PatientHomeScreen({ onBack, onSubmitSuccess, existingPro
       setTanggalDiagnosa(existingProfile.tgl_diagnosa || '');
     }
   }, [existingProfile]);
+
+  const pad = (v) => String(v).padStart(2, '0');
+  const formatDisplayDate = (iso) => {
+    if (!iso) return '';
+    const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!m) return iso;
+    return `${m[3]}-${m[2]}-${m[1]}`;
+  };
+
+  const parseDisplayToIso = (display) => {
+    if (!display) return '';
+    const m = display.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+    if (!m) return '';
+    const dd = Number(m[1]);
+    const mm = Number(m[2]);
+    const yyyy = Number(m[3]);
+    const d = new Date(yyyy, mm - 1, dd);
+    if (d.getFullYear() !== yyyy || d.getMonth() !== mm - 1 || d.getDate() !== dd) return '';
+    return `${yyyy}-${pad(mm)}-${pad(dd)}`;
+  };
     
   const canSubmit = useMemo(() => {
     return Boolean(
@@ -51,7 +71,6 @@ export default function PatientHomeScreen({ onBack, onSubmitSuccess, existingPro
 
     const parsedUsia = Number(usia);
     const parsedBeratBadan = Number(beratBadan);
-    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
 
     if (!Number.isFinite(parsedUsia) || parsedUsia < 0) {
       Alert.alert('Usia tidak valid', 'Usia harus berupa angka yang benar.');
@@ -63,8 +82,10 @@ export default function PatientHomeScreen({ onBack, onSubmitSuccess, existingPro
       return;
     }
 
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+
     if (!dateRegex.test(tanggalDiagnosa)) {
-      Alert.alert('Tanggal diagnosa tidak valid', 'Gunakan format YYYY-MM-DD, contoh 2026-04-24.');
+      Alert.alert('Tanggal diagnosa tidak valid', 'Gunakan format dd-mm-yyyy, contoh 24-04-2026.');
       return;
     }
 
@@ -195,25 +216,29 @@ export default function PatientHomeScreen({ onBack, onSubmitSuccess, existingPro
 
             <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Tanggal Diagnosa</Text>
             {Platform.OS === 'web' ? (
-          <input
-            type="date"
-            value={tanggalDiagnosa}
-            onChange={(e) => setTanggalDiagnosa(e.target.value)}
-            style={{
-              padding: 10,
-              borderRadius: 10,
-              border: '1px solid #ccc',
-              marginBottom: 10
-            }}
-          />
-        ) : (
+            <input
+              type="text"
+              value={formatDisplayDate(tanggalDiagnosa)}
+              onChange={(e) => {
+                const iso = parseDisplayToIso(e.target.value);
+                setTanggalDiagnosa(iso || '');
+              }}
+              placeholder="dd-mm-yyyy"
+              style={{
+                padding: 10,
+                borderRadius: 10,
+                border: '1px solid #ccc',
+                marginBottom: 10
+              }}
+            />
+          ) : (
           <>
             <Pressable
               onPress={() => setShowDate(true)}
               className="border-2 border-slate-200 rounded-2xl px-4 py-3.5 mb-2 bg-slate-50"
             >
               <Text>
-                {tanggalDiagnosa || 'Pilih tanggal diagnosa'}
+                {formatDisplayDate(tanggalDiagnosa) || 'Pilih tanggal diagnosa'}
               </Text>
             </Pressable>
 
@@ -239,7 +264,7 @@ export default function PatientHomeScreen({ onBack, onSubmitSuccess, existingPro
             )}
           </>
         )}
-            <Text className="text-xs text-slate-400 mb-5">Format tanggal: tahun-bulan-hari. Contoh 24-04-2026</Text>
+            <Text className="text-xs text-slate-400 mb-5">Format tanggal: dd-mm-yyyy. Contoh 24-04-2026</Text>
 
             <Pressable
               onPress={handleSave}

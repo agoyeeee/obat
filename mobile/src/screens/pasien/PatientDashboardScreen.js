@@ -24,6 +24,16 @@ export default function PatientDashboardScreen({ profile, onEditProfile, onBack,
     }, 500);
   }, []);
 
+  const pad = (v) => String(v).padStart(2, '0');
+  const formatDisplayDate = (iso) => {
+    if (!iso) return '';
+    // support full ISO datetime strings like 2026-05-02T00:00:00.000000Z
+    const datePart = String(iso).split('T')[0];
+    const m = datePart.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!m) return iso;
+    return `${m[3]}-${m[2]}-${m[1]}`;
+  };
+
   const openMenu = (menuKey, menuName) => {
     if (onOpenMenu) {
       onOpenMenu(menuKey);
@@ -176,7 +186,7 @@ export default function PatientDashboardScreen({ profile, onEditProfile, onBack,
             <CalendarDays color="#64748B" size={18} />
             <Text className="ml-2 text-sm font-bold text-slate-500 uppercase">Tanggal Diagnosa</Text>
           </View>
-          <Text className="text-base font-black text-slate-900">{profile?.tgl_diagnosa || '-'}</Text>
+          <Text className="text-base font-black text-slate-900">Tanggal: {profile?.tgl_diagnosa ? formatDisplayDate(profile.tgl_diagnosa) : '-'}</Text>
           <Text className="text-xs text-slate-400 mt-2">Data ini diambil dari biodata pasien yang tersimpan di device.</Text>
         </View>
 
