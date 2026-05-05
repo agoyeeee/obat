@@ -1,7 +1,6 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import PatientKuisionerListScreen from '../screens/pasien/PatientKuisionerListScreen';
-import PatientKuisionerFormScreen from '../screens/pasien/PatientKuisionerFormScreen';
+import PatientKuisionerTahapScreen from '../screens/pasien/PatientKuisionerTahapScreen';
 import PatientRekapKuisionerScreen from '../screens/pasien/PatientRekapKuisionerScreen';
 
 const Stack = createNativeStackNavigator();
@@ -14,31 +13,16 @@ export default function KuisionerNavigator({ patientProfile, onBack }) {
       }}
     >
       <Stack.Screen
-        name="KuisionerList"
+        name="KuisionerTahap"
         options={{
           animationEnabled: false,
         }}
       >
         {(props) => (
-          <PatientKuisionerListScreen
+          <PatientKuisionerTahapScreen
             {...props}
             route={{ params: { patientProfile } }}
             onBack={onBack}
-          />
-        )}
-      </Stack.Screen>
-
-      <Stack.Screen
-        name="KuisionerForm"
-        options={{
-          animationEnabled: true,
-          cardStyle: { backgroundColor: 'transparent' },
-        }}
-      >
-        {(props) => (
-          <PatientKuisionerFormScreen
-            {...props}
-            route={{ params: { patientProfile, kuisioners: [] } }}
           />
         )}
       </Stack.Screen>

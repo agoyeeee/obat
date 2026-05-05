@@ -9,7 +9,8 @@ import {
   RefreshControl,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronLeft, Check } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { ChevronLeft, Check, ClipboardList } from 'lucide-react-native';
 import { fetchAllKuisioner, submitKuisionerAnswers } from '../../services/patientService';
 import { getPatientProfile } from '../../storage/patientStorage';
 
@@ -31,7 +32,6 @@ const PatientKuisionerListScreen = ({ route, navigation, onBack }) => {
     try {
       setLoading(true);
       const kuisionerData = await fetchAllKuisioner();
-
       setKuisioners(kuisionerData);
       const storedProfile = patientProfile?.id ? patientProfile : await getPatientProfile();
 
@@ -47,26 +47,17 @@ const PatientKuisionerListScreen = ({ route, navigation, onBack }) => {
   };
 
   const getOpsi = (kuisioner) => {
-    if (kuisioner.tipe === 'ya_tidak') {
-      return ['Ya', 'Tidak'];
-    }
-
+    if (kuisioner.tipe === 'ya_tidak') return ['Ya', 'Tidak'];
     return kuisioner.opsi || [];
   };
 
   const calculateSkor = (kuisioner, selectedOpsi) => {
-    if (kuisioner.tipe === 'ya_tidak') {
-      return selectedOpsi === 'Ya' ? 1 : 0;
-    }
-
+    if (kuisioner.tipe === 'ya_tidak') return selectedOpsi === 'Ya' ? 1 : 0;
     return getOpsi(kuisioner).indexOf(selectedOpsi);
   };
 
   const handleSelectAnswer = (kuisionerId, opsi) => {
-    setAnswers({
-      ...answers,
-      [kuisionerId]: opsi,
-    });
+    setAnswers({ ...answers, [kuisionerId]: opsi });
   };
 
   const handleSubmit = async () => {
@@ -136,97 +127,310 @@ const PatientKuisionerListScreen = ({ route, navigation, onBack }) => {
     }
   };
 
-  if (loading) {
+  const answeredCount = Object.keys(answers).length;
+  const progressPercent = kuisioners.length > 0 ? (answeredCount / kuisioners.length) * 100 : 0;
+  const isComplete = kuisioners.length > 0 && answeredCount === kuisioners.length;
+
+  if (loading && kuisioners.length === 0) {
     return (
-      <View className="flex-1 bg-white justify-center items-center">
-        <ActivityIndicator size="large" color="#0ea5e9" />
+      <View style={{ flex: 1, backgroundColor: '#F0F4FF', justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#F59E0B" />
       </View>
     );
   }
 
   return (
-    <View
-      className="flex-1 bg-gray-50"
-      style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}
-    >
-      {/* Header with Back Button */}
-      <View className="bg-white px-4 py-4 border-b border-gray-200 flex-row items-center">
-        <TouchableOpacity onPress={handleBackPress} className="mr-3">
-          <ChevronLeft color="#1f2937" size={24} />
-        </TouchableOpacity>
-        <View className="flex-1">
-          <Text className="text-xl font-bold text-gray-800">Kuesioner</Text>
-          <Text className="text-sm text-gray-600 mt-1">
-            Jawab semua pertanyaan lalu tekan submit
-          </Text>
+    <View style={{ flex: 1, backgroundColor: '#F0F4FF', paddingTop: insets.top }}>
+
+      {/* ── HEADER ── */}
+      <LinearGradient
+        colors={['#F59E0B', '#FCD34D', '#FBBF24']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{
+          paddingTop: 20,
+          paddingBottom: 30,
+          paddingHorizontal: 20,
+          borderBottomLeftRadius: 36,
+          borderBottomRightRadius: 36,
+        }}
+      >
+        {/* Decorative circles */}
+        <View style={{
+          position: 'absolute', top: -40, right: -40,
+          width: 180, height: 180, borderRadius: 90,
+          backgroundColor: '#ffffff18',
+        }} />
+        <View style={{
+          position: 'absolute', top: 30, right: 60,
+          width: 80, height: 80, borderRadius: 40,
+          backgroundColor: '#ffffff10',
+        }} />
+
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+            <TouchableOpacity
+              onPress={handleBackPress}
+              style={{
+                width: 42, height: 42, borderRadius: 13,
+                backgroundColor: '#ffffff25',
+                alignItems: 'center', justifyContent: 'center',
+                borderWidth: 1, borderColor: '#ffffff40',
+              }}
+            >
+              <ChevronLeft color="#fff" size={18} />
+            </TouchableOpacity>
+            <View>
+              <Text style={{
+                color: '#FAE8B6', fontSize: 10, letterSpacing: 1.5,
+                textTransform: 'uppercase', fontWeight: '700',
+              }}>
+                Evaluasi Pasien
+              </Text>
+              <Text style={{ color: '#fff', fontSize: 20, fontWeight: '900', marginTop: 2 }}>
+                Kuesioner
+              </Text>
+            </View>
+          </View>
+
+          <View style={{
+            width: 44, height: 44, borderRadius: 14,
+            backgroundColor: '#ffffff25',
+            alignItems: 'center', justifyContent: 'center',
+            borderWidth: 1, borderColor: '#ffffff40',
+          }}>
+            <ClipboardList color="#fff" size={20} />
+          </View>
         </View>
-      </View>
+      </LinearGradient>
 
       <ScrollView
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        className="flex-1 px-4 py-4"
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#F59E0B" />}
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: 40 }}
+        showsVerticalScrollIndicator={false}
       >
+        {/* ── PROGRESS CARD (floating) ── */}
+        <View style={{
+          marginHorizontal: 20,
+          marginTop: 25,
+          backgroundColor: '#fff',
+          borderRadius: 24,
+          padding: 20,
+          shadowColor: '#F59E0B',
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.15,
+          shadowRadius: 20,
+          elevation: 10,
+          marginBottom: 20,
+        }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <View>
+              <Text style={{ color: '#64748B', fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 }}>
+                Progress
+              </Text>
+              <Text style={{ color: '#1E293B', fontSize: 18, fontWeight: '900', marginTop: 2 }}>
+                {answeredCount} dari {kuisioners.length}
+              </Text>
+            </View>
+            <View style={{
+              width: 60, height: 60, borderRadius: 30,
+              backgroundColor: '#FEF3C7',
+              alignItems: 'center', justifyContent: 'center',
+            }}>
+              <Text style={{ color: '#92400E', fontSize: 16, fontWeight: '900' }}>
+                {Math.round(progressPercent)}%
+              </Text>
+            </View>
+          </View>
+
+          {/* Progress bar */}
+          <View style={{ height: 8, borderRadius: 4, backgroundColor: '#FEF3C7', overflow: 'hidden' }}>
+            <LinearGradient
+              colors={['#F59E0B', '#FCD34D']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={{ height: '100%', width: `${progressPercent}%` }}
+            />
+          </View>
+
+          <Text style={{ color: '#94A3B8', fontSize: 11, marginTop: 10 }}>
+            Selesaikan semua soal untuk melanjutkan
+          </Text>
+        </View>
+
+        {/* ── QUESTIONS ── */}
         {kuisioners.length > 0 ? (
-          <View>
+          <View style={{ paddingHorizontal: 20 }}>
             {kuisioners.map((kuisioner, index) => {
               const opsiList = getOpsi(kuisioner);
 
               return (
-                <View key={kuisioner.id} className="mb-6 bg-white rounded-3xl p-4 border border-gray-200">
-                  <Text className="text-xs font-bold text-blue-600 uppercase tracking-wide">
-                    Soal {index + 1}
-                  </Text>
-                  <Text className="text-base text-gray-800 font-semibold mt-2">
-                    {kuisioner.pertanyaan}
-                  </Text>
+                <View key={kuisioner.id} style={{ marginBottom: 24 }}>
+                  {/* Question header */}
+                  <View style={{ marginBottom: 14 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                      <View style={{
+                        width: 28, height: 28, borderRadius: 50,
+                        backgroundColor: '#FEF3C7',
+                        alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        <Text style={{ color: '#92400E', fontWeight: '900', fontSize: 12 }}>
+                          {index + 1}
+                        </Text>
+                      </View>
+                      <Text style={{
+                        color: '#94A3B8', fontSize: 11, fontWeight: '700',
+                        textTransform: 'uppercase', letterSpacing: 1,
+                      }}>
+                        Soal {index + 1} dari {kuisioners.length}
+                      </Text>
+                    </View>
+                    <Text style={{
+                      color: '#1E293B', fontWeight: '800', fontSize: 15, lineHeight: 22,
+                    }}>
+                      {kuisioner.pertanyaan}
+                    </Text>
+                  </View>
 
-                  <View className="mt-4 gap-2">
+                  {/* Answer options */}
+                  <View style={{ gap: 10 }}>
                     {opsiList.map((opsi, opsiIndex) => {
                       const isSelected = answers[kuisioner.id] === opsi;
-
                       return (
                         <TouchableOpacity
                           key={opsiIndex}
                           onPress={() => handleSelectAnswer(kuisioner.id, opsi)}
-                          className={`flex-row items-center px-4 py-3 rounded-2xl border-2 ${
-                            isSelected ? 'bg-blue-50 border-blue-500' : 'bg-white border-gray-200'
-                          }`}
+                          activeOpacity={0.8}
                         >
-                          <View
-                            className={`w-5 h-5 rounded-full border-2 mr-3 items-center justify-center ${
-                              isSelected ? 'bg-blue-500 border-blue-500' : 'bg-white border-gray-300'
-                            }`}
+                          <LinearGradient
+                            colors={isSelected ? ['#FEF3C7', '#FDE68A'] : ['#fff', '#fff']}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
+                            style={{
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              paddingHorizontal: 16,
+                              paddingVertical: 14,
+                              borderRadius: 16,
+                              borderWidth: 2,
+                              borderColor: isSelected ? '#F59E0B' : '#E2E8F0',
+                              shadowColor: isSelected ? '#F59E0B' : '#64748B',
+                              shadowOffset: { width: 0, height: isSelected ? 4 : 2 },
+                              shadowOpacity: isSelected ? 0.25 : 0.06,
+                              shadowRadius: isSelected ? 12 : 8,
+                              elevation: isSelected ? 6 : 2,
+                            }}
                           >
-                            {isSelected && <Check color="white" size={14} />}
-                          </View>
-                          <Text className={`flex-1 text-base ${isSelected ? 'text-blue-700 font-semibold' : 'text-gray-700'}`}>
-                            {opsi}
-                          </Text>
+                            {/* Radio button */}
+                            <View style={{
+                              width: 20, height: 20, borderRadius: 10,
+                              borderWidth: 2,
+                              borderColor: isSelected ? '#F59E0B' : '#CBD5E1',
+                              backgroundColor: isSelected ? '#F59E0B' : 'transparent',
+                              alignItems: 'center', justifyContent: 'center',
+                              marginRight: 12,
+                            }}>
+                              {isSelected && <Check color="#fff" size={12} strokeWidth={3} />}
+                            </View>
+
+                            {/* Option text */}
+                            <Text style={{
+                              flex: 1,
+                              fontSize: 14,
+                              fontWeight: isSelected ? '800' : '600',
+                              color: isSelected ? '#92400E' : '#475569',
+                            }}>
+                              {opsi}
+                            </Text>
+
+                            {isSelected && (
+                              <View style={{
+                                width: 24, height: 24, borderRadius: 50,
+                                backgroundColor: '#F59E0B',
+                                alignItems: 'center', justifyContent: 'center',
+                              }}>
+                                <Check color="#fff" size={14} strokeWidth={3} />
+                              </View>
+                            )}
+                          </LinearGradient>
                         </TouchableOpacity>
                       );
                     })}
                   </View>
+
+                  {/* Divider */}
+                  {index < kuisioners.length - 1 && (
+                    <View style={{ height: 1, backgroundColor: '#F1F5F9', marginTop: 24 }} />
+                  )}
                 </View>
               );
             })}
 
+            {/* Submit button */}
             <TouchableOpacity
               onPress={handleSubmit}
-              disabled={Object.keys(answers).length < kuisioners.length || loading}
-              className={`py-4 px-4 rounded-2xl mt-2 mb-6 ${
-                Object.keys(answers).length === kuisioners.length ? 'bg-blue-600' : 'bg-gray-300'
-              }`}
+              disabled={!isComplete || loading}
+              activeOpacity={0.85}
+              style={{ marginTop: 12, marginBottom: 20 }}
             >
-              {loading ? (
-                <ActivityIndicator size="small" color="white" />
-              ) : (
-                <Text className="text-white font-bold text-center text-base">Submit Jawaban</Text>
-              )}
+              <LinearGradient
+                colors={isComplete && !loading ? ['#F59E0B', '#FCD34D'] : ['#E2E8F0', '#E2E8F0']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={{
+                  paddingVertical: 16,
+                  borderRadius: 18,
+                  alignItems: 'center',
+                  flexDirection: 'row',
+                  justifyContent: 'center',
+                  gap: 8,
+                  shadowColor: '#F59E0B',
+                  shadowOffset: { width: 0, height: 8 },
+                  shadowOpacity: isComplete && !loading ? 0.4 : 0,
+                  shadowRadius: 16,
+                  elevation: isComplete && !loading ? 8 : 0,
+                }}
+              >
+                {loading ? (
+                  <>
+                    <ActivityIndicator size="small" color={isComplete ? '#92400E' : '#94A3B8'} />
+                    <Text style={{
+                      color: isComplete ? '#92400E' : '#94A3B8',
+                      fontWeight: '800', fontSize: 15, letterSpacing: 0.3,
+                    }}>
+                      Menyimpan...
+                    </Text>
+                  </>
+                ) : (
+                  <Text style={{
+                    color: isComplete ? '#92400E' : '#94A3B8',
+                    fontWeight: '800', fontSize: 15, letterSpacing: 0.3,
+                  }}>
+                    Simpan Jawaban Kuesioner
+                  </Text>
+                )}
+              </LinearGradient>
             </TouchableOpacity>
+
+            {/* Incomplete warning */}
+            {!isComplete && (
+              <View style={{
+                backgroundColor: '#FEF3C7', borderRadius: 14,
+                paddingHorizontal: 14, paddingVertical: 10,
+                marginBottom: 20,
+                flexDirection: 'row', gap: 8,
+                alignItems: 'center',
+              }}>
+                <Text style={{ color: '#92400E', fontSize: 12, fontWeight: '600', flex: 1 }}>
+                  Jawab {kuisioners.length - answeredCount} pertanyaan lagi untuk melanjutkan
+                </Text>
+              </View>
+            )}
           </View>
         ) : (
-          <View className="flex-1 justify-center items-center py-10">
-            <Text className="text-gray-500 text-center">
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 60 }}>
+            <Text style={{ color: '#94A3B8', fontSize: 14, textAlign: 'center' }}>
               Tidak ada kuesioner tersedia saat ini
             </Text>
           </View>

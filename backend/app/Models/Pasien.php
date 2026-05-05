@@ -16,6 +16,13 @@ class Pasien extends Model
         'jenis_kelamin',
         'berat_badan',
         'tgl_diagnosa',
+        'tgl_lahir',
+        'status_pernikahan',
+        'suku',
+        'pendidikan',
+        'pekerjaan',
+        'nomor_hp',
+        'pendapatan',
     ];
 
     protected function casts(): array
@@ -23,6 +30,7 @@ class Pasien extends Model
         return [
             'berat_badan'  => 'float',
             'tgl_diagnosa' => 'date',
+            'tgl_lahir'    => 'date',
         ];
     }
 

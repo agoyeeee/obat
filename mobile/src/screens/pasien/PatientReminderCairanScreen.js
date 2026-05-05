@@ -91,7 +91,7 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
 
   const [tanggal, setTanggal] = useState(formatDateYMD(new Date()));
   const [catatanAsupan, setCatatanAsupan] = useState('');
-  const [minuman, setMinuman] = useState('Air mineral');
+  const [minuman, setMinuman] = useState('Contoh: Air mineral');
   const [jumlahMl, setJumlahMl] = useState('');
   const [waktu, setWaktu] = useState(formatTimeHMS(new Date()));
   const [showDatePicker, setShowDatePicker] = useState(false);

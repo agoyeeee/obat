@@ -14,12 +14,18 @@ class RekapKuisioner extends Model
         'pasien_id',
         'tanggal',
         'total_skor',
+        'tahap_1_identitas',
+        'tahap_2_riwayat',
+        'tahap_3_efek_samping',
     ];
 
     protected function casts(): array
     {
         return [
             'tanggal' => 'date',
+            'tahap_1_identitas' => 'array',
+            'tahap_2_riwayat' => 'array',
+            'tahap_3_efek_samping' => 'array',
         ];
     }
 
