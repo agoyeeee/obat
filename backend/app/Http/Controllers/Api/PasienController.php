@@ -249,6 +249,7 @@ class PasienController extends Controller
             'patient.tgl_diagnosa' => ['required', 'date'],
             'reminders' => ['required', 'array', 'min:1'],
             'reminders.*.local_id' => ['required', 'string'],
+            'reminders.*.server_id' => ['nullable', 'integer', 'exists:reminder_cairan,id'],
             'reminders.*.tanggal' => ['required', 'date_format:Y-m-d'],
             'reminders.*.waktu' => ['required', 'date_format:H:i:s'],
             'reminders.*.catatan_asupan' => ['nullable', 'string', 'max:255'],
@@ -281,13 +282,20 @@ class PasienController extends Controller
             $serverMap = [];
 
             foreach ($validated['reminders'] as $item) {
-                $reminder = ReminderCairan::query()->create([
+                $reminderData = [
                     'pasien_id' => $pasien->id,
                     'jumlah_ml' => (int) $item['jumlah_ml'],
                     'waktu' => $item['waktu'],
                     'minuman' => $item['minuman'],
                     'catatan_asupan' => $item['catatan_asupan'] ?? null,
-                ]);
+                ];
+
+                if (!empty($item['server_id'])) {
+                    $reminder = ReminderCairan::query()->findOrFail((int) $item['server_id']);
+                    $reminder->update($reminderData);
+                } else {
+                    $reminder = ReminderCairan::query()->create($reminderData);
+                }
 
                 $synced[] = $item['local_id'];
                 $serverMap[$item['local_id']] = $reminder->id;

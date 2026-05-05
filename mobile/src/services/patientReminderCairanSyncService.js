@@ -28,6 +28,7 @@ export const syncPendingReminderCairan = async (profile) => {
       },
       reminders: pendingItems.map((item) => ({
         local_id: item.local_id,
+        server_id: item.server_id || null,
         tanggal: item.tanggal,
         waktu: item.waktu,
         catatan_asupan: item.catatan_asupan,

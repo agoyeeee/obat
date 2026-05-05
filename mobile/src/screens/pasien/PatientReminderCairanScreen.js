@@ -67,15 +67,15 @@ const PickerTrigger = ({ label, value, icon, onPress }) => (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => ({
-        borderWidth: 1.5, borderColor: '#E2E8F0', borderRadius: 14,
-        paddingHorizontal: 16, paddingVertical: 14,
-        backgroundColor: '#fff',
-        flexDirection: 'row', alignItems: 'center', gap: 10,
+        borderWidth: 2, borderColor: '#E2E8F0', borderRadius: 24,
+        paddingHorizontal: 18, paddingVertical: 16,
+        backgroundColor: '#F8FAFC',
+        flexDirection: 'row', alignItems: 'center', gap: 12,
         opacity: pressed ? 0.8 : 1,
       })}
     >
       {icon}
-      <Text style={{ color: '#1E293B', fontWeight: '500', fontSize: 14, flex: 1 }}>{value}</Text>
+      <Text style={{ color: '#0F172A', fontWeight: '500', fontSize: 16, flex: 1 }}>{value}</Text>
     </Pressable>
   </View>
 );
@@ -179,31 +179,58 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
       };
       if (editingReminder) {
         const isSyncedReminder = editingReminder.sync_status === 'synced' && editingReminder.server_id;
-        if (isSyncedReminder) {
-          await deleteReminderCairan(editingReminder.server_id);
-          await cancelReminderCairanAlarms(editingReminder.alarm_notification_ids || []);
-        }
-        await updatePatientReminderCairanItem(editingReminder.local_id, {
+        const updatedLocalItem = await updatePatientReminderCairanItem(editingReminder.local_id, {
           ...payload,
           sync_status: isSyncedReminder ? 'pending' : editingReminder.sync_status,
           synced_at: isSyncedReminder ? null : editingReminder.synced_at,
-          server_id: isSyncedReminder ? null : editingReminder.server_id,
+          server_id: editingReminder.server_id || null,
           alarm_notification_ids: isSyncedReminder ? [] : (editingReminder.alarm_notification_ids || []),
           last_error: null,
         });
+
+        let syncWarning = '';
+
+        if (isSyncedReminder) {
+          try {
+            await cancelReminderCairanAlarms(editingReminder.alarm_notification_ids || []);
+          } catch (alarmError) {
+            console.error('Failed to cancel cairan alarm before edit sync:', alarmError?.message || alarmError);
+          }
+
+          const syncResult = await syncPendingReminderCairan(profile);
+          if (syncResult?.error) {
+            syncWarning = syncResult.error;
+          }
+        }
+
         setIsAddModalOpen(false);
         resetForm();
         await loadQueue();
+        const syncResultAfterSave = isSyncedReminder ? null : await syncPendingReminderCairan(profile);
+        if (syncResultAfterSave && syncResultAfterSave.error) {
+          syncWarning = syncResultAfterSave.error;
+        }
         await autoSync();
-        Alert.alert('Reminder cairan diperbarui', isSyncedReminder ? 'Data diperbarui dan akan tersinkron ulang.' : 'Data reminder berhasil diperbarui.');
-        return;
+        Alert.alert(
+          'Reminder cairan diperbarui',
+          syncWarning
+            ? `Data tersimpan lokal, tetapi sinkronisasi belum berhasil. ${syncWarning}`
+            : (isSyncedReminder ? 'Data diperbarui dan akan tersinkron ulang.' : 'Data reminder berhasil diperbarui.')
+        );
+        return updatedLocalItem;
       }
       await addPatientReminderCairan(payload);
       setIsAddModalOpen(false);
       resetForm();
       await loadQueue();
+      const syncResult = await syncPendingReminderCairan(profile);
       await autoSync();
-      Alert.alert('Tersimpan', 'Reminder cairan tersimpan di device dan akan auto sync saat online.');
+      Alert.alert(
+        'Tersimpan',
+        syncResult?.error
+          ? `Reminder tersimpan lokal, tetapi sinkronisasi belum berhasil. ${syncResult.error}`
+          : 'Reminder cairan tersimpan di device dan akan auto sync saat online.'
+      );
     } catch (error) {
       Alert.alert('Gagal', error?.message || 'Gagal menyimpan reminder cairan.');
     } finally {
@@ -224,7 +251,11 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
             try {
               setIsSubmitting(true);
               if (item.sync_status === 'synced' && item.server_id) {
-                await deleteReminderCairan(item.server_id);
+                try {
+                  await deleteReminderCairan(item.server_id);
+                } catch (serverError) {
+                  console.warn('Server delete reminder cairan failed, continuing local delete:', serverError?.message || serverError);
+                }
               }
               await cancelReminderCairanAlarms(item.alarm_notification_ids || []);
               await deletePatientReminderCairanItem(item.local_id);
@@ -324,7 +355,7 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
 
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingBottom: 48 }}
+        contentContainerStyle={{ paddingBottom: 20 }}
         refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#0EA5E9" />}
         showsVerticalScrollIndicator={false}
       >
@@ -566,7 +597,7 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
             {/* Form card */}
             <View style={{
               backgroundColor: '#fff', borderRadius: 24, padding: 20,
-              shadowColor: '#0EA5E9',
+              shadowColor: '#6366F1',
               shadowOffset: { width: 0, height: 4 },
               shadowOpacity: 0.08,
               shadowRadius: 16,
@@ -592,7 +623,7 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
                   <PickerTrigger
                     label="Tanggal"
                     value={formatDateDisplay(tanggal) || 'Pilih tanggal'}
-                    icon={<CalendarDays size={16} color="#94A3B8" />}
+                    icon={<CalendarDays size={18} color="#94A3B8" />}
                     onPress={() => setShowDatePicker(true)}
                   />
                   {showDatePicker && (
@@ -651,7 +682,7 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
                   <PickerTrigger
                     label="Waktu"
                     value={formatTimeHM(waktu)}
-                    icon={<Clock size={16} color="#94A3B8" />}
+                    icon={<Clock size={18} color="#94A3B8" />}
                     onPress={() => setShowTimePicker(true)}
                   />
                   {showTimePicker && (
@@ -669,35 +700,45 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
               )}
             </View>
 
-            {/* Submit button */}
+          </ScrollView>
+
+          {/* Submit button - Fixed at bottom */}
+          <View style={{
+            paddingHorizontal: 20,
+            paddingVertical: 16,
+            paddingBottom: 24,
+            borderTopWidth: 1,
+            borderTopColor: '#E2E8F0',
+            backgroundColor: '#0EA5E9',
+          }}>
             <Pressable
               onPress={submitCairan}
               disabled={!canSubmit || isSubmitting}
               style={({ pressed }) => ({
-                marginTop: 16,
-                borderRadius: 18,
-                paddingVertical: 16,
+                borderRadius: 16,
+                paddingVertical: 18,
+                paddingHorizontal: 20,
                 alignItems: 'center',
-                flexDirection: 'row',
                 justifyContent: 'center',
-                gap: 8,
-                backgroundColor: canSubmit && !isSubmitting ? '#0EA5E9' : '#E2E8F0',
-                opacity: pressed ? 0.85 : 1,
+                backgroundColor: canSubmit && !isSubmitting ? '#0EA5E9' : '#CBD5E1',
+                opacity: pressed && (canSubmit && !isSubmitting) ? 0.8 : 1,
                 shadowColor: '#0EA5E9',
-                shadowOffset: { width: 0, height: 8 },
-                shadowOpacity: canSubmit && !isSubmitting ? 0.4 : 0,
-                shadowRadius: 16,
-                elevation: canSubmit && !isSubmitting ? 8 : 0,
+                shadowOffset: { width: 0, height: 6 },
+                shadowOpacity: canSubmit && !isSubmitting ? 0.3 : 0,
+                shadowRadius: 12,
+                elevation: canSubmit && !isSubmitting ? 6 : 0,
               })}
             >
               <Text style={{
-                color: canSubmit && !isSubmitting ? '#fff' : '#94A3B8',
-                fontWeight: '800', fontSize: 15, letterSpacing: 0.3,
+                color: canSubmit && !isSubmitting ? '#fff' : '#fff',
+                fontWeight: '700',
+                fontSize: 16,
+                letterSpacing: 0.5,
               }}>
                 {isSubmitting ? 'Menyimpan...' : editingReminder ? 'Simpan Perubahan' : 'Simpan Catatan'}
               </Text>
             </Pressable>
-          </ScrollView>
+          </View>
         </SafeAreaView>
       </Modal>
     </View>
