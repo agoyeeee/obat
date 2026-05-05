@@ -243,49 +243,6 @@ export default function PatientDashboardScreen({ profile, onEditProfile, onBack,
           </View>
         </View>
 
-        {/* ── QUICK STATS ── */}
-        <View style={{ flexDirection: 'row', gap: 12, marginHorizontal: 20, marginTop: 16 }}>
-          {[
-            {
-              icon: <AlertTriangle color="#F43F5E" size={16} />,
-              value: profile?.tgl_diagnosa ? '1' : '0',
-              label: 'Diagnosa',
-              iconBg: '#FFF1F2',
-            },
-            {
-              icon: <Activity color="#6366F1" size={16} />,
-              value: '4',
-              label: 'Fitur Aktif',
-              iconBg: '#EEF2FF',
-            },
-          ].map((s, i) => (
-            <View key={i} style={{
-              flex: 1, backgroundColor: '#fff', borderRadius: 18, padding: 18,
-              shadowColor: '#64748B',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.07,
-              shadowRadius: 10,
-              elevation: 3,
-            }}>
-              <View style={{
-                width: 36, height: 36, borderRadius: 11,
-                backgroundColor: s.iconBg,
-                alignItems: 'center', justifyContent: 'center',
-                marginBottom: 12,
-              }}>
-                {s.icon}
-              </View>
-              <Text style={{ color: '#1E293B', fontSize: 26, fontWeight: '900' }}>{s.value}</Text>
-              <Text style={{
-                color: '#94A3B8', fontSize: 11,
-                textTransform: 'uppercase', letterSpacing: 1, marginTop: 2,
-              }}>
-                {s.label}
-              </Text>
-            </View>
-          ))}
-        </View>
-
         {/* ── MENU UTAMA ── */}
         <View style={{ marginTop: 28, paddingHorizontal: 20 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 16 }}>
@@ -380,7 +337,6 @@ export default function PatientDashboardScreen({ profile, onEditProfile, onBack,
                   </Text>
                 </View>
               </View>
-              <ChevronRight color="#CBD5E1" size={18} />
             </View>
           </Pressable>
         </View>
