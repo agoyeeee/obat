@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View, Text, Pressable, ScrollView, TextInput, Alert,
-  RefreshControl, ActivityIndicator, Modal, Platform, SafeAreaView,
+  RefreshControl, ActivityIndicator, Modal, Platform, SafeAreaView, TouchableOpacity,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   ArrowLeft, Pill, CloudUpload, CircleCheck, Clock3,
-  Plus, X, Bell, ChevronDown, Pencil, Trash2, AlertCircle,
+  Plus, X, Bell, ChevronDown, Pencil, Trash2, AlertCircle, ChevronRight,
 } from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { fetchPublicObatList } from '../../services/patientService';
@@ -72,75 +72,38 @@ const resolveDoseOptions = (obat) => {
   return options;
 };
 
+const renderLabel = (label) => (
+  <Text style={{
+    fontSize: 10, fontWeight: '700', color: '#94A3B8',
+    textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 6,
+  }}>
+    {label}
+  </Text>
+);
+
 // ── SELECT FIELD ──────────────────────────────────────────────
-const SelectField = ({ label, valueLabel, placeholder, options, isOpen, onToggle, onSelect }) => (
+const renderSelectField = (label, value, options, onChangeText, setSelectModal) => (
   <View style={{ marginBottom: 16 }}>
-    <Text style={{
-      fontSize: 10, fontWeight: '700', color: '#94A3B8',
-      textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 3,
-    }}>
-      {label}
-    </Text>
-    <Pressable
-      onPress={onToggle}
-      style={({ pressed }) => ({
+    {renderLabel(label)}
+    <TouchableOpacity
+      onPress={() => setSelectModal({ visible: true, label, options, onSelect: onChangeText })}
+      style={{
         borderWidth: 1.5,
-        borderColor: isOpen ? '#14B8A6' : '#E2E8F0',
-        borderRadius: 14,
+        borderColor: value ? '#14B8A6' : '#E2E8F0',
+        borderRadius: 16,
         paddingHorizontal: 16,
         paddingVertical: 14,
-        backgroundColor: isOpen ? '#F5F3FF' : '#fff',
+        backgroundColor: value ? '#F5F3FF' : '#fff',
         flexDirection: 'row',
-        justifyContent: 'space-between',
         alignItems: 'center',
-        opacity: pressed ? 0.8 : 1,
-      })}
+        justifyContent: 'space-between',
+      }}
     >
-      <Text style={{
-        color: valueLabel ? '#1E293B' : '#94A3B8',
-        fontWeight: valueLabel ? '600' : '400',
-        fontSize: 14,
-        flex: 1,
-      }}>
-        {valueLabel || placeholder}
+      <Text style={{ color: value ? '#1E293B' : '#94A3B8', fontWeight: value ? '600' : '400', fontSize: 14, flex: 1 }}>
+        {value || 'Pilih opsi...'}
       </Text>
-      <ChevronDown
-        color={isOpen ? '#6366F1' : '#14B8A6'}
-        size={16}
-        style={{ transform: [{ rotate: isOpen ? '180deg' : '0deg' }] }}
-      />
-    </Pressable>
-    {isOpen && (
-      <View style={{
-        marginTop: 4,
-        backgroundColor: '#fff',
-        borderRadius: 14,
-        borderWidth: 1.5,
-        borderColor: '#14B8A6',
-        overflow: 'hidden',
-        shadowColor: '#14B8A6',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 12,
-        elevation: 6,
-      }}>
-        {options.map((item, i) => (
-          <Pressable
-            key={item.value}
-            onPress={() => onSelect(item.value)}
-            style={({ pressed }) => ({
-              paddingHorizontal: 16,
-              paddingVertical: 13,
-              borderBottomWidth: i < options.length - 1 ? 1 : 0,
-              borderBottomColor: '#F1F5F9',
-              backgroundColor: pressed ? '#EEF2FF' : '#fff',
-            })}
-          >
-            <Text style={{ color: '#1E293B', fontWeight: '500', fontSize: 14 }}>{item.label}</Text>
-          </Pressable>
-        ))}
-      </View>
-    )}
+      <ChevronRight color={value ? '#14B8A6' : '#CBD5E1'} size={18} />
+    </TouchableOpacity>
   </View>
 );
 
@@ -151,12 +114,12 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
   const [isSaving, setIsSaving] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [obatList, setObatList] = useState([]);
-  const [activeSelect, setActiveSelect] = useState(null);
   const [pendingCount, setPendingCount] = useState(0);
   const [syncedCount, setSyncedCount] = useState(0);
   const [reminderItems, setReminderItems] = useState([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isAutoSchedulingAlarm, setIsAutoSchedulingAlarm] = useState(false);
+  const [selectModal, setSelectModal] = useState({ visible: false, label: '', options: [], onSelect: null });
 
   const [selectedObatId, setSelectedObatId] = useState('');
   const [selectedMerkId, setSelectedMerkId] = useState('');
@@ -264,7 +227,7 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
   const handleSelectObat = (obatId) => {
     setSelectedObatId(obatId);
     setSelectedMerkId('');
-    setActiveSelect(null);
+    setSelectModal({ visible: false, label: '', options: [], onSelect: null });
     const obat = obatList.find((item) => String(item.id) === String(obatId));
     if (!obat) return;
     const freq = Number(obat.frekuensi_default || 0);
@@ -291,7 +254,7 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
     setJumlahObat('');
     setAturanMinum('');
     setAturanCustom('');
-    setActiveSelect(null);
+    setSelectModal({ visible: false, label: '', options: [], onSelect: null });
     setEditingReminder(null);
   };
 
@@ -312,7 +275,7 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
     setJumlahObat(String(item.jumlah_obat || ''));
     setAturanMinum(item.aturan_minum || '');
     setAturanCustom('');
-    setActiveSelect(null);
+    setSelectModal({ visible: false, label: '', options: [], onSelect: null });
     setIsAddModalOpen(true);
   };
 
@@ -360,20 +323,29 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
       setIsSaving(true);
       if (editingReminder) {
         const isSyncedReminder = editingReminder.sync_status === 'synced' && editingReminder.server_id;
-        if (isSyncedReminder) {
-          await deleteReminderObat(editingReminder.server_id);
-          await cancelReminderObatAlarms(editingReminder.alarm_notification_ids || []);
-        }
         const updatedLocalItem = await updatePatientReminderObatItem(editingReminder.local_id, {
           ...payload,
           sync_status: isSyncedReminder ? 'pending' : editingReminder.sync_status,
           synced_at: isSyncedReminder ? null : editingReminder.synced_at,
-          server_id: isSyncedReminder ? null : editingReminder.server_id,
+          server_id: editingReminder.server_id || null,
           alarm_notification_ids: isSyncedReminder ? [] : (editingReminder.alarm_notification_ids || []),
           last_error: null,
         });
+
+        let syncWarning = '';
+
         if (isSyncedReminder) {
-          await syncPendingReminderObat(profile);
+          try {
+            await cancelReminderObatAlarms(editingReminder.alarm_notification_ids || []);
+          } catch (alarmError) {
+            console.error('Failed to cancel alarm before edit sync:', alarmError?.message || alarmError);
+          }
+
+          const syncResult = await syncPendingReminderObat(profile);
+          if (syncResult?.error) {
+            syncWarning = syncResult.error;
+          }
+
           await loadQueueStats();
           const latestQueue = await getPatientReminderObatQueue();
           const updatedAfterSync = latestQueue.find((item) => item.local_id === editingReminder.local_id);
@@ -391,14 +363,19 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
         }
         setIsAddModalOpen(false);
         resetForm();
-        Alert.alert('Reminder diperbarui', isSyncedReminder
-          ? 'Data diperbarui dan akan tersinkron ulang ke server.'
-          : 'Data reminder berhasil diperbarui.'
+        Alert.alert(
+          'Reminder diperbarui',
+          syncWarning
+            ? `Data tersimpan lokal, tetapi sinkronisasi belum berhasil. ${syncWarning}`
+            : (isSyncedReminder
+              ? 'Data diperbarui dan akan tersinkron ulang ke server.'
+              : 'Data reminder berhasil diperbarui.'
+            )
         );
         return updatedLocalItem;
       }
       const createdItem = await addPatientReminderObat(payload);
-      await syncPendingReminderObat(profile);
+      const syncResult = await syncPendingReminderObat(profile);
       await loadQueueStats();
       const latestQueue = await getPatientReminderObatQueue();
       const createdAfterSync = latestQueue.find((item) => item.local_id === createdItem.local_id);
@@ -413,7 +390,12 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
       }
       setIsAddModalOpen(false);
       resetForm();
-      Alert.alert('Reminder ditambahkan', 'Data tersimpan, dan alarm otomatis diaktifkan jika sinkronisasi berhasil.');
+      Alert.alert(
+        'Reminder ditambahkan',
+        syncResult?.error
+          ? `Data tersimpan lokal, tetapi sinkronisasi belum berhasil. ${syncResult.error}`
+          : 'Data tersimpan, dan alarm otomatis diaktifkan jika sinkronisasi berhasil.'
+      );
     } catch (error) {
       Alert.alert('Gagal menyimpan offline', error?.message || 'Terjadi kesalahan saat menyimpan data.');
     } finally {
@@ -434,7 +416,11 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
             try {
               setIsSaving(true);
               if (item.sync_status === 'synced' && item.server_id) {
-                await deleteReminderObat(item.server_id);
+                try {
+                  await deleteReminderObat(item.server_id);
+                } catch (serverError) {
+                  console.warn('Server delete reminder failed, continuing local delete:', serverError?.message || serverError);
+                }
               }
               await cancelReminderObatAlarms(item.alarm_notification_ids || []);
               await deletePatientReminderObatItem(item.local_id);
@@ -776,7 +762,7 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
 
           <ScrollView
             style={{ flex: 1 }}
-            contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
+            contentContainerStyle={{ padding: 20, paddingBottom: 20 }}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
@@ -789,50 +775,31 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
               shadowRadius: 16,
               elevation: 6,
             }}>
-              <SelectField
-                label="Nama Obat"
-                valueLabel={selectedObat?.nama_obat || ''}
-                placeholder="Pilih nama obat"
-                options={obatOptions}
-                isOpen={activeSelect === 'obat'}
-                onToggle={() => setActiveSelect(activeSelect === 'obat' ? null : 'obat')}
-                onSelect={handleSelectObat}
-              />
+              {renderSelectField('Nama Obat', selectedObat?.nama_obat || '', obatOptions, handleSelectObat, setSelectModal)}
 
-              {merkOptions.length > 0 && (
-                <SelectField
-                  label="Merk Obat"
-                  valueLabel={selectedMerkId ? (merkOptions.find((m) => m.value === selectedMerkId)?.label || '') : ''}
-                  placeholder={merkOptions.length > 1 ? 'Pilih merk' : merkOptions[0]?.label}
-                  options={merkOptions}
-                  isOpen={activeSelect === 'merk'}
-                  onToggle={() => setActiveSelect(activeSelect === 'merk' ? null : 'merk')}
-                  onSelect={(value) => { setSelectedMerkId(value); setActiveSelect(null); }}
-                />
+              {merkOptions.length > 0 && renderSelectField(
+                'Merk Obat',
+                selectedMerkId ? (merkOptions.find((m) => m.value === selectedMerkId)?.label || '') : '',
+                merkOptions,
+                (value) => { setSelectedMerkId(value); setSelectModal({ visible: false, label: '', options: [], onSelect: null }); },
+                setSelectModal
               )}
 
-              <SelectField
-                label="Dosis"
-                valueLabel={dosis}
-                placeholder={selectedObat ? 'Pilih dosis' : 'Pilih nama obat dulu'}
-                options={doseOptions}
-                isOpen={activeSelect === 'dosis'}
-                onToggle={() => {
-                  if (!selectedObat || doseOptions.length === 0) return;
-                  setActiveSelect(activeSelect === 'dosis' ? null : 'dosis');
-                }}
-                onSelect={(value) => { setDosis(value); setActiveSelect(null); }}
-              />
+              {renderSelectField(
+                'Dosis',
+                dosis,
+                doseOptions,
+                (value) => { setDosis(value); setSelectModal({ visible: false, label: '', options: [], onSelect: null }); },
+                setSelectModal
+              )}
 
-              <SelectField
-                label="Sediaan"
-                valueLabel={sediaan ? SEDIAAN_OPTIONS.find((item) => item.value === sediaan)?.label : ''}
-                placeholder="Pilih sediaan"
-                options={SEDIAAN_OPTIONS}
-                isOpen={activeSelect === 'sediaan'}
-                onToggle={() => setActiveSelect(activeSelect === 'sediaan' ? null : 'sediaan')}
-                onSelect={(value) => { setSediaan(value); setActiveSelect(null); }}
-              />
+              {renderSelectField(
+                'Sediaan',
+                sediaan ? SEDIAAN_OPTIONS.find((item) => item.value === sediaan)?.label : '',
+                SEDIAAN_OPTIONS,
+                (value) => { setSediaan(value); setSelectModal({ visible: false, label: '', options: [], onSelect: null }); },
+                setSelectModal
+              )}
 
               {/* Frekuensi (read-only) */}
               <View style={{ marginBottom: 16 }}>
@@ -899,15 +866,13 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
                   </Text>
                 </View>
               ) : (
-                <SelectField
-                  label="Waktu Konsumsi Obat"
-                  valueLabel={waktuKonsumsi}
-                  placeholder="Pilih jadwal default"
-                  options={presetOptions}
-                  isOpen={activeSelect === 'waktu'}
-                  onToggle={() => setActiveSelect(activeSelect === 'waktu' ? null : 'waktu')}
-                  onSelect={(value) => { setWaktuKonsumsi(value); setActiveSelect(null); }}
-                />
+                renderSelectField(
+                  'Waktu Konsumsi Obat',
+                  waktuKonsumsi,
+                  presetOptions,
+                  (value) => { setWaktuKonsumsi(value); setSelectModal({ visible: false, label: '', options: [], onSelect: null }); },
+                  setSelectModal
+                )
               )}
 
               {/* Jumlah obat */}
@@ -930,23 +895,19 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
                 />
               </View>
 
-              <SelectField
-                label="Aturan Minum Obat"
-                valueLabel={
-                  aturanMinum
-                    ? (ATURAN_OPTIONS.find((item) => item.value === aturanMinum)?.label || aturanMinum)
-                    : ''
-                }
-                placeholder="Pilih aturan minum"
-                options={ATURAN_OPTIONS}
-                isOpen={activeSelect === 'aturan'}
-                onToggle={() => setActiveSelect(activeSelect === 'aturan' ? null : 'aturan')}
-                onSelect={(value) => {
+              {renderSelectField(
+                'Aturan Minum Obat',
+                aturanMinum
+                  ? (ATURAN_OPTIONS.find((item) => item.value === aturanMinum)?.label || aturanMinum)
+                  : '',
+                ATURAN_OPTIONS,
+                (value) => {
                   setAturanMinum(value);
                   if (value !== 'custom') setAturanCustom('');
-                  setActiveSelect(null);
-                }}
-              />
+                  setSelectModal({ visible: false, label: '', options: [], onSelect: null });
+                },
+                setSelectModal
+              )}
 
               {isCustomAturan && (
                 <View style={{ marginBottom: 16 }}>
@@ -972,35 +933,109 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
               )}
             </View>
 
-            {/* Submit button */}
+            {/* Modal Selector */}
+            <Modal
+              visible={selectModal.visible}
+              transparent
+              animationType="fade"
+              onRequestClose={() => setSelectModal({ visible: false, label: '', options: [], onSelect: null })}
+            >
+              <View style={{
+                flex: 1,
+                backgroundColor: '#00000040',
+                justifyContent: 'flex-end',
+              }}>
+                <View style={{
+                  backgroundColor: '#fff',
+                  borderTopLeftRadius: 24,
+                  borderTopRightRadius: 24,
+                  paddingHorizontal: 20,
+                  paddingTop: 24,
+                  paddingBottom: 32,
+                  maxHeight: '80%',
+                }}>
+                  <Text style={{
+                    fontSize: 16,
+                    fontWeight: '700',
+                    color: '#1E293B',
+                    marginBottom: 16,
+                  }}>
+                    {selectModal.label}
+                  </Text>
+
+                  <ScrollView
+                    style={{ maxHeight: 400 }}
+                    showsVerticalScrollIndicator={false}
+                  >
+                    {selectModal.options.map((option, i) => (
+                      <Pressable
+                        key={`${i}-${option.value}`}
+                        onPress={() => {
+                          if (selectModal.onSelect) {
+                            selectModal.onSelect(option.value);
+                          }
+                          setSelectModal({ visible: false, label: '', options: [], onSelect: null });
+                        }}
+                        style={({ pressed }) => ({
+                          paddingHorizontal: 16,
+                          paddingVertical: 16,
+                          marginVertical: 6,
+                          borderBottomWidth: 0,
+                          backgroundColor: pressed ? '#F5F3FF' : '#fff',
+                        })}
+                      >
+                        <Text style={{
+                          color: '#1E293B',
+                          fontWeight: '500',
+                          fontSize: 15,
+                        }}>
+                          {option.label}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </ScrollView>
+                </View>
+              </View>
+            </Modal>
+          </ScrollView>
+
+          {/* Submit button - Fixed at bottom */}
+          <View style={{
+            paddingHorizontal: 20,
+            paddingVertical: 16,
+            paddingBottom: 24,
+            borderTopWidth: 1,
+            borderTopColor: '#E2E8F0',
+            backgroundColor: '#6366F1',
+          }}>
             <Pressable
               onPress={handleSubmit}
               disabled={!canSubmit || isSaving}
               style={({ pressed }) => ({
-                marginTop: 16,
-                borderRadius: 18,
-                paddingVertical: 16,
+                borderRadius: 16,
+                paddingVertical: 18,
+                paddingHorizontal: 20,
                 alignItems: 'center',
-                flexDirection: 'row',
                 justifyContent: 'center',
-                gap: 8,
-                backgroundColor: canSubmit && !isSaving ? '#6366F1' : '#E2E8F0',
-                opacity: pressed ? 0.85 : 1,
+                backgroundColor: canSubmit && !isSaving ? '#6366F1' : '#CBD5E1',
+                opacity: pressed && (canSubmit && !isSaving) ? 0.8 : 1,
                 shadowColor: '#6366F1',
-                shadowOffset: { width: 0, height: 8 },
-                shadowOpacity: canSubmit && !isSaving ? 0.4 : 0,
-                shadowRadius: 16,
-                elevation: canSubmit && !isSaving ? 8 : 0,
+                shadowOffset: { width: 0, height: 6 },
+                shadowOpacity: canSubmit && !isSaving ? 0.3 : 0,
+                shadowRadius: 12,
+                elevation: canSubmit && !isSaving ? 6 : 0,
               })}
             >
               <Text style={{
                 color: canSubmit && !isSaving ? '#fff' : '#94A3B8',
-                fontWeight: '800', fontSize: 15, letterSpacing: 0.3,
+                fontWeight: '700',
+                fontSize: 16,
+                letterSpacing: 0.5,
               }}>
                 {isSaving ? 'Menyimpan...' : editingReminder ? 'Simpan Perubahan' : 'Simpan Reminder'}
               </Text>
             </Pressable>
-          </ScrollView>
+          </View>
         </SafeAreaView>
       </Modal>
     </View>

@@ -45,6 +45,7 @@ class PasienController extends Controller
             'patient.tgl_diagnosa' => ['required', 'date'],
             'reminders' => ['required', 'array', 'min:1'],
             'reminders.*.local_id' => ['required', 'string'],
+            'reminders.*.server_id' => ['nullable', 'integer', 'exists:reminder_obat,id'],
             'reminders.*.obat_id' => ['required', 'integer', 'exists:obat,id'],
             'reminders.*.merk_id' => ['nullable', 'integer', 'exists:merk,id'],
             'reminders.*.dosis' => ['required', 'string', 'max:100'],
@@ -92,7 +93,7 @@ class PasienController extends Controller
                     ]
                 );
 
-                $reminder = ReminderObat::query()->create([
+                $reminderData = [
                     'pasien_id' => $pasien->id,
                     'obat_id' => (int) $item['obat_id'],
                     'merk_id' => isset($item['merk_id']) ? (int) $item['merk_id'] : null,
@@ -101,7 +102,14 @@ class PasienController extends Controller
                     'jumlah_obat' => (int) $item['jumlah_obat'],
                     'waktu_konsumsi_id' => $waktu->id,
                     'cara_pemakaian' => $item['aturan_minum'],
-                ]);
+                ];
+
+                if (!empty($item['server_id'])) {
+                    $reminder = ReminderObat::query()->findOrFail((int) $item['server_id']);
+                    $reminder->update($reminderData);
+                } else {
+                    $reminder = ReminderObat::query()->create($reminderData);
+                }
 
                 $synced[] = $item['local_id'];
                 $serverMap[$item['local_id']] = $reminder->id;
