@@ -29,16 +29,22 @@ export default function PatientHomeScreen({ onBack, onSubmitSuccess, existingPro
       setUsia(existingProfile.usia ? String(existingProfile.usia) : '');
       setJenisKelamin(existingProfile.jenis_kelamin || '');
       setBeratBadan(existingProfile.berat_badan ? String(existingProfile.berat_badan) : '');
-      setTanggalDiagnosa(existingProfile.tgl_diagnosa || '');
+      setTanggalDiagnosa(formatDisplayDate(existingProfile.tgl_diagnosa || '') ? String(existingProfile.tgl_diagnosa).slice(0, 10) : '');
     }
   }, [existingProfile]);
 
   const pad = (v) => String(v).padStart(2, '0');
   const formatDisplayDate = (iso) => {
     if (!iso) return '';
-    const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})/);
     if (!m) return iso;
     return `${m[3]}-${m[2]}-${m[1]}`;
+  };
+
+  const normalizeIsoDate = (value) => {
+    if (!value) return '';
+    const match = String(value).match(/^(\d{4}-\d{2}-\d{2})/);
+    return match ? match[1] : '';
   };
 
   const parseDisplayToIso = (display) => {
@@ -83,8 +89,9 @@ export default function PatientHomeScreen({ onBack, onSubmitSuccess, existingPro
     }
 
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    const normalizedTanggalDiagnosa = normalizeIsoDate(tanggalDiagnosa);
 
-    if (!dateRegex.test(tanggalDiagnosa)) {
+    if (!dateRegex.test(normalizedTanggalDiagnosa)) {
       Alert.alert('Tanggal diagnosa tidak valid', 'Gunakan format dd-mm-yyyy, contoh 24-04-2026.');
       return;
     }
@@ -96,7 +103,7 @@ export default function PatientHomeScreen({ onBack, onSubmitSuccess, existingPro
         usia: parsedUsia,
         jenis_kelamin: jenisKelamin,
         berat_badan: parsedBeratBadan,
-        tgl_diagnosa: tanggalDiagnosa,
+        tgl_diagnosa: normalizedTanggalDiagnosa,
       };
 
       // Call backend to register patient and get ID
