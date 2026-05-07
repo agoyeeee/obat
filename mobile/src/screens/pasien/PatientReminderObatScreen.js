@@ -29,18 +29,19 @@ const SEDIAAN_OPTIONS = [
 ];
 
 const ATURAN_OPTIONS = [
-  { label: 'Sebelum makan (±30 menit)', value: 'Sebelum makan (±30 menit)' },
-  { label: 'Sesudah makan (±30 menit)', value: 'Sesudah makan (±30 menit)' },
+  { label: 'Sebelum makan (±1 jam)', value: 'Sebelum makan (±1 jam)' },
+  { label: 'Sesudah makan (±2 jam)', value: 'Sesudah makan (±2 jam)' },
   { label: 'Saat makan', value: 'Saat makan' },
   { label: 'Sebelum tidur', value: 'Sebelum tidur' },
   { label: 'Pagi hari', value: 'Pagi hari' },
+  { label: 'Siang hari', value: 'Siang hari' },
   { label: 'Malam hari', value: 'Malam hari' },
   { label: 'Custom', value: 'custom' },
 ];
 
 const TIME_PRESETS = {
-  2: ['07.00 - 19.00', '06.00 - 18.00', '08.00 - 20.00'],
-  3: ['06.00 - 14.00 - 22.00', '06.30 - 14.30 - 22.30', '07.00 - 15.00 - 23.00', '07.30 - 15.30 - 23.30'],
+  2: ['07.00 - 19.00', '06.00 - 18.00', '08.00 - 20.00', '09.00 - 21.00', '10.00 - 22.00'],
+  3: ['06.00 - 14.00 - 22.00', '07.00 - 15.00 - 23.00', '08.00 - 16.00 - 24.00', '09.00 - 17.00 - 01.00', '10.00 - 18.00 - 02.00'],
 };
 
 const formatDoseOption = (item) => {
