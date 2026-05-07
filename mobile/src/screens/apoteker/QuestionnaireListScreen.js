@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, Modal, TextInput } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { ClipboardList, MessageSquareText, FileText, Clock3, UserRound, ChevronRight, Search } from 'lucide-react-native';
+import { ClipboardList, MessageSquareText, FileText, Clock3, UserRound, ChevronRight, Search, X } from 'lucide-react-native';
 import { fetchApotekerKuisionerRekaps } from '../../services/patientService';
 import { formatDateDDMMYY } from '../../utils/date';
 
@@ -244,6 +244,11 @@ export default function QuestionnaireListScreen() {
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
+        {searchQuery ? (
+          <Pressable onPress={() => setSearchQuery('')} style={{ padding: 4 }}>
+            <X color="#94A3B8" size={16} />
+          </Pressable>
+        ) : null}
       </View>
     </View>
   );
