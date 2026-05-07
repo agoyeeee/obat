@@ -282,7 +282,7 @@ export default function MedicineListScreen({ navigation }) {
   return (
     <View className="flex-1 bg-[#F0F4F3] pt-16 px-6">
       <View className="flex-row items-center justify-between mb-5">
-        <Text className="text-3xl font-black text-[#1A2820] tracking-tight">Ensiklopedia Obat</Text>
+        <Text className="text-2xl font-black text-[#1A2820] tracking-tight">Ensiklopedia Obat</Text>
         <Pressable
           className="flex-row items-center bg-[#0D7A6A] px-4 py-2.5 rounded-2xl active:opacity-80"
           onPress={() => {
@@ -291,7 +291,7 @@ export default function MedicineListScreen({ navigation }) {
           }}
         >
           <Plus color="white" size={18} />
-          <Text className="text-white font-bold ml-2">Tambah</Text>
+          <Text className="text-white font-bold text-sm ml-2">Tambah</Text>
         </Pressable>
       </View>
       
@@ -299,7 +299,7 @@ export default function MedicineListScreen({ navigation }) {
       <View className="flex-row items-center bg-white border-[1.5px] border-[#EEF0EF] rounded-2xl px-5 py-4 mb-6 shadow-sm shadow-black/5">
         <Search color="#9DB0AA" size={24} />
         <TextInput
-          className="flex-1 ml-3 text-lg font-semibold text-[#1A2820]"
+          className="flex-1 ml-3 text-base font-semibold text-[#1A2820]"
           placeholder="Cari nama atau indikasi obat..."
           placeholderTextColor="#9DB0AA"
           value={searchQuery}
@@ -324,8 +324,8 @@ export default function MedicineListScreen({ navigation }) {
                     <Pill color="#0D7A6A" size={28} />
                   </View>
                   <View className="flex-1">
-                    <Text className="text-xl font-extrabold text-[#1A2820]">{item.nama_obat}</Text>
-                    <Text className="text-base font-bold text-[#9DB0AA] mt-1" numberOfLines={2}>
+                    <Text className="text-lg font-extrabold text-[#1A2820]">{item.nama_obat}</Text>
+                    <Text className="text-sm font-bold text-[#9DB0AA] mt-1" numberOfLines={2}>
                       {item.indikasi || 'Tidak ada info indikasi.'}
                     </Text>
                   </View>
@@ -345,7 +345,7 @@ export default function MedicineListScreen({ navigation }) {
           />
         ) : (
           <View className="p-10 items-center justify-center flex-1">
-            <Text className="text-[#9DB0AA] text-lg font-bold text-center">Obat tidak ditemukan.</Text>
+            <Text className="text-[#9DB0AA] text-base font-bold text-center">Obat tidak ditemukan.</Text>
           </View>
         )}
       </View>
@@ -389,7 +389,7 @@ export default function MedicineListScreen({ navigation }) {
           />
           <View className="bg-white rounded-t-3xl max-h-[90%]">
             <View className="flex-row items-center justify-between px-5 py-4 border-b border-slate-200">
-              <Text className="text-lg font-extrabold text-slate-900">{editingMedicineId ? 'Edit Data Obat' : 'Tambah Data Obat'}</Text>
+              <Text className="text-base font-extrabold text-slate-900">{editingMedicineId ? 'Edit Data Obat' : 'Tambah Data Obat'}</Text>
               <Pressable onPress={() => {
                 setIsAddModalOpen(false);
                 resetForm();
@@ -514,7 +514,7 @@ export default function MedicineListScreen({ navigation }) {
           <Pressable style={{ flex: 1 }} onPress={() => setIsDosisInisiasiModalOpen(false)} />
           <View className="bg-white rounded-t-3xl px-6 pt-6 pb-8">
             <View className="flex-row items-center justify-between mb-4">
-              <Text className="text-lg font-extrabold text-slate-900">Isi Dosis Inisiasi</Text>
+              <Text className="text-base font-extrabold text-slate-900">Isi Dosis Inisiasi</Text>
               <Pressable onPress={() => setIsDosisInisiasiModalOpen(false)} className="w-8 h-8 rounded-full bg-teal-100 items-center justify-center">
                 <X color="#0D5450" size={18} />
               </Pressable>
@@ -538,7 +538,7 @@ export default function MedicineListScreen({ navigation }) {
                 end={{ x: 1, y: 0 }}
                 style={{ borderRadius: 16, paddingVertical: 14, alignItems: 'center' }}
               >
-                <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 15 }}>Tambah Dosis Inisiasi</Text>
+                <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 14 }}>Tambah Dosis Inisiasi</Text>
               </LinearGradient>
             </Pressable>
 
@@ -569,7 +569,7 @@ export default function MedicineListScreen({ navigation }) {
                 end={{ x: 1, y: 0 }}
                 style={{ borderRadius: 16, paddingVertical: 14, alignItems: 'center' }}
               >
-                <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 15 }}>Simpan Dosis Inisiasi</Text>
+                <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 14 }}>Simpan Dosis Inisiasi</Text>
               </LinearGradient>
             </Pressable>
           </View>
@@ -586,7 +586,7 @@ export default function MedicineListScreen({ navigation }) {
           <Pressable style={{ flex: 1 }} onPress={() => setIsDoseTargetModalOpen(false)} />
           <View className="bg-white rounded-t-3xl px-6 pt-6 pb-8">
             <View className="flex-row items-center justify-between mb-4">
-              <Text className="text-lg font-extrabold text-slate-900">Isi Dosis Target</Text>
+              <Text className="text-base font-extrabold text-slate-900">Isi Dosis Target</Text>
               <Pressable onPress={() => setIsDoseTargetModalOpen(false)} className="w-8 h-8 rounded-full bg-teal-100 items-center justify-center">
                 <X color="#0D5450" size={18} />
               </Pressable>
@@ -610,7 +610,7 @@ export default function MedicineListScreen({ navigation }) {
                 end={{ x: 1, y: 0 }}
                 style={{ borderRadius: 16, paddingVertical: 14, alignItems: 'center' }}
               >
-                <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 15 }}>Tambah Dosis Target</Text>
+                <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 14 }}>Tambah Dosis Target</Text>
               </LinearGradient>
             </Pressable>
 
@@ -640,7 +640,7 @@ export default function MedicineListScreen({ navigation }) {
                 start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                 style={{ borderRadius: 16, paddingVertical: 14, alignItems: 'center' }}
               >
-                <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 15 }}>Simpan Dosis Target</Text>
+                <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 14 }}>Simpan Dosis Target</Text>
               </LinearGradient>
             </Pressable>
           </View>
@@ -658,7 +658,7 @@ export default function MedicineListScreen({ navigation }) {
           <Pressable style={{ flex: 1 }} onPress={() => setBrandModalOpen(false)} />
           <View className="bg-white rounded-t-3xl max-h-[80%]">
             <View className="flex-row items-center justify-between px-5 py-4 border-b border-slate-200">
-              <Text className="text-lg font-extrabold text-slate-900">Pilih Merek untuk: {currentObatForBrand?.nama_obat}</Text>
+              <Text className="text-base font-extrabold text-slate-900">Pilih Merek untuk: {currentObatForBrand?.nama_obat}</Text>
               <Pressable onPress={() => setBrandModalOpen(false)}>
                 <X color="#334155" size={22} />
               </Pressable>
@@ -692,7 +692,7 @@ export default function MedicineListScreen({ navigation }) {
                   onChangeText={setMerkNamaInput}
                 />
                 <Pressable onPress={handleAddMerkInline} disabled={merkLoading} className={`rounded-2xl py-3 items-center ${merkLoading ? 'bg-slate-400' : 'bg-[#0D7A6A]'}`}>
-                  {merkLoading ? <ActivityIndicator color="white" /> : <Text className="text-white font-bold">Simpan Merek</Text>}
+                  {merkLoading ? <ActivityIndicator color="white" /> : <Text className="text-white font-bold text-sm">Simpan Merek</Text>}
                 </Pressable>
               </View>
             </View>

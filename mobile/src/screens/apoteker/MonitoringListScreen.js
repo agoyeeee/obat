@@ -43,8 +43,8 @@ export default function MonitoringListScreen({ navigation }) {
       
       {/* HEADER */}
       <View className="bg-white pt-16 pb-7 px-6 border-b-[1.5px] border-[#EEF0EF]">
-        <Text className="text-3xl font-black text-[#1A2820] tracking-tight">Pantau Pasien</Text>
-        <Text className="text-base font-bold text-[#9DB0AA] mt-1">Monitoring Kepatuhan Mingguan</Text>
+        <Text className="text-2xl font-black text-[#1A2820] tracking-tight">Pantau Pasien</Text>
+        <Text className="text-sm font-bold text-[#9DB0AA] mt-1">Monitoring Kepatuhan Mingguan</Text>
       </View>
 
       <ScrollView 
@@ -57,8 +57,8 @@ export default function MonitoringListScreen({ navigation }) {
           <View className="bg-white rounded-[28px] p-7 border-[1.5px] border-[#EEF0EF] shadow-sm shadow-black/5 mb-4">
             <View className="flex-row items-center justify-between">
               <View>
-                <Text className="text-[48px] leading-[54px] font-black text-[#1A2820]">{totalPatients}</Text>
-                <Text className="text-base font-extrabold text-[#9DB0AA] uppercase tracking-widest mt-1">Total Monitoring</Text>
+                <Text className="text-3xl leading-[38px] font-black text-[#1A2820]">{totalPatients}</Text>
+                <Text className="text-xs font-extrabold text-[#9DB0AA] uppercase tracking-widest mt-1">Total Monitoring</Text>
               </View>
               <View className="w-16 h-16 rounded-[20px] bg-blue-50 items-center justify-center">
                 <Users color="#3B82F6" size={32} />
@@ -71,7 +71,7 @@ export default function MonitoringListScreen({ navigation }) {
               <View className="w-12 h-12 rounded-2xl bg-emerald-50 items-center justify-center mb-3">
                 <CheckCircle color="#10B981" size={24} />
               </View>
-              <Text className="text-4xl font-black text-emerald-500 text-center">{patuhCount}</Text>
+              <Text className="text-3xl font-black text-emerald-500 text-center">{patuhCount}</Text>
               <Text className="text-xs font-extrabold text-[#9DB0AA] uppercase tracking-wider mt-1 text-center">Patuh</Text>
             </View>
 
@@ -79,7 +79,7 @@ export default function MonitoringListScreen({ navigation }) {
               <View className="w-12 h-12 rounded-2xl bg-rose-50 items-center justify-center mb-3">
                 <XCircle color="#F43F5E" size={24} />
               </View>
-              <Text className="text-4xl font-black text-rose-500 text-center">{tidakPatuhCount}</Text>
+              <Text className="text-3xl font-black text-rose-500 text-center">{tidakPatuhCount}</Text>
               <Text className="text-xs font-extrabold text-[#9DB0AA] uppercase tracking-wider mt-1 text-center">Tidak Patuh</Text>
             </View>
           </View>
@@ -89,7 +89,7 @@ export default function MonitoringListScreen({ navigation }) {
         <View className="flex-row items-center bg-white border-[1.5px] border-[#EEF0EF] rounded-2xl px-5 py-4 mb-5 shadow-sm shadow-black/5">
           <Search color="#9DB0AA" size={24} />
           <TextInput
-            className="flex-1 ml-3 text-lg font-semibold text-[#1A2820]"
+            className="flex-1 ml-3 text-base font-semibold text-[#1A2820]"
             placeholder="Cari pasien untuk dipantau..."
             placeholderTextColor="#9DB0AA"
             value={searchQuery}
@@ -114,19 +114,18 @@ export default function MonitoringListScreen({ navigation }) {
                   <View className="w-16 h-16 rounded-[20px] bg-[#E8F8F3] items-center justify-center mr-4">
                     <Activity color="#0D7A6A" size={28} />
                   </View>
-                  <View className="flex-1">
-                    <Text className="text-xl font-extrabold text-[#1A2820]">{item.nama}</Text>
-                    <Text className="text-sm font-bold text-[#9DB0AA] mt-1">ID: {item.id}</Text>
+                  <View className="flex-1 pr-2">
+                    <Text className="text-lg font-extrabold text-[#1A2820]" numberOfLines={1} ellipsizeMode="tail">
+                      {item.nama}
+                    </Text>
+                    {status ? (
+                      <View className={`self-start px-3 py-1.5 rounded-full mt-2 ${isPatuh ? 'bg-[#E8F8F3]' : 'bg-[#FFF0F2]'}`}>
+                        <Text className={`text-xs font-black uppercase ${isPatuh ? 'text-[#0D7A6A]' : 'text-[#F43F5E]'}`}>
+                          {status === 'TIDAK_PATUH' ? 'TIDAK PATUH' : status}
+                        </Text>
+                      </View>
+                    ) : null}
                   </View>
-                  
-                  {status ? (
-                    <View className={`px-3 py-1.5 rounded-full mr-3 ${isPatuh ? 'bg-[#E8F8F3]' : 'bg-[#FFF0F2]'}`}>
-                      <Text className={`text-xs font-black uppercase ${isPatuh ? 'text-[#0D7A6A]' : 'text-[#F43F5E]'}`}>
-                        {status === 'TIDAK_PATUH' ? 'TIDAK PATUH' : status}
-                      </Text>
-                    </View>
-                  ) : null}
-                  
                   <ChevronRight color="#CBD5E1" size={24} />
                 </Pressable>
               );
@@ -135,7 +134,7 @@ export default function MonitoringListScreen({ navigation }) {
         ) : (
           <View className="bg-white rounded-3xl p-10 items-center border-[1.5px] border-[#EEF0EF]">
             <Calendar color="#CBD5E1" size={64} />
-            <Text className="text-[#9DB0AA] text-lg font-bold mt-5 text-center">Tidak ada data pasien</Text>
+            <Text className="text-[#9DB0AA] text-base font-bold mt-5 text-center">Tidak ada data pasien</Text>
           </View>
         )}
       </ScrollView>

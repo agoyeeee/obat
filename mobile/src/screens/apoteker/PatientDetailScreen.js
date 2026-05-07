@@ -107,8 +107,8 @@ export default function PatientDetailScreen({ route, navigation }) {
             <ArrowLeft color="#1A2820" size={28} />
           </Pressable>
           <View className="flex-1">
-            <Text className="text-3xl font-black text-[#1A2820] tracking-tight">Pantau Pasien</Text>
-            {pasien && <Text className="text-lg font-bold text-[#0D7A6A] mt-1">{pasien.nama}</Text>}
+            <Text className="text-2xl font-black text-[#1A2820] tracking-tight">Pantau Pasien</Text>
+            {pasien && <Text className="text-base font-bold text-[#0D7A6A] mt-1">{pasien.nama}</Text>}
           </View>
         </View>
 
@@ -123,7 +123,7 @@ export default function PatientDetailScreen({ route, navigation }) {
               }}
               className={`px-5 py-3 rounded-full border-2 mr-3 ${selectedMonth === opt.month && selectedYear === opt.year ? 'bg-[#0D7A6A] border-[#0D7A6A]' : 'bg-white border-[#EEF0EF]'}`}
             >
-              <Text className={`text-[15px] font-extrabold ${selectedMonth === opt.month && selectedYear === opt.year ? 'text-white' : 'text-[#9DB0AA]'}`}>
+              <Text className={`text-sm font-extrabold ${selectedMonth === opt.month && selectedYear === opt.year ? 'text-white' : 'text-[#9DB0AA]'}`}>
                 {opt.label}
               </Text>
             </Pressable>
@@ -148,9 +148,9 @@ export default function PatientDetailScreen({ route, navigation }) {
                   <View className="w-12 h-12 rounded-2xl bg-[#E8F8F3] items-center justify-center mr-3">
                     <Pill color="#0D7A6A" size={24} />
                   </View>
-                  <Text className="text-2xl font-black text-[#1A2820]">Obat</Text>
+                  <Text className="text-xl font-black text-[#1A2820]">Obat</Text>
                 </View>
-                <Text className="text-sm font-extrabold text-[#9DB0AA] uppercase tracking-widest">{MONTHS[selectedMonth]}</Text>
+                <Text className="text-xs font-extrabold text-[#9DB0AA] uppercase tracking-widest">{MONTHS[selectedMonth]}</Text>
               </View>
 
               {filteredData.obat.length > 0 ? (
@@ -164,8 +164,8 @@ export default function PatientDetailScreen({ route, navigation }) {
                       className="bg-white rounded-[28px] p-6 border-[1.5px] border-[#EEF0EF] mb-4 flex-row items-center justify-between shadow-sm shadow-black/5 active:bg-[#F8FAFA]"
                     >
                       <View>
-                        <Text className="text-[22px] font-black text-[#1A2820]">Minggu ke-{weekNum}</Text>
-                        <Text className="text-sm font-bold text-[#9DB0AA] mt-1">{formatDateDDMMYY(rekap.minggu_mulai)}</Text>
+                        <Text className="text-lg font-black text-[#1A2820]">Minggu ke-{weekNum}</Text>
+                        <Text className="text-xs font-bold text-[#9DB0AA] mt-1">{formatDateDDMMYY(rekap.minggu_mulai)}</Text>
                         <View className={`self-start px-3 py-1.5 rounded-full mt-3 ${isPatuh ? 'bg-[#E8F8F3]' : 'bg-[#FFF0F2]'}`}>
                           <Text className={`text-xs font-black uppercase tracking-wider ${isPatuh ? 'text-[#0D7A6A]' : 'text-[#F43F5E]'}`}>
                             {isPatuh ? 'PATUH' : 'TIDAK PATUH'}
@@ -181,7 +181,7 @@ export default function PatientDetailScreen({ route, navigation }) {
               ) : (
                 <View className="bg-white rounded-[28px] p-10 items-center border-[1.5px] border-[#EEF0EF]">
                   <Calendar color="#CBD5E1" size={56} />
-                  <Text className="text-[#9DB0AA] text-lg font-bold mt-4">Tidak ada data obat</Text>
+                  <Text className="text-[#9DB0AA] text-base font-bold mt-4">Tidak ada data obat</Text>
                 </View>
               )}
             </View>
@@ -193,9 +193,9 @@ export default function PatientDetailScreen({ route, navigation }) {
                   <View className="w-12 h-12 rounded-2xl bg-blue-50 items-center justify-center mr-3">
                     <Droplets color="#3B82F6" size={24} />
                   </View>
-                  <Text className="text-2xl font-black text-[#1A2820]">Cairan</Text>
+                  <Text className="text-xl font-black text-[#1A2820]">Cairan</Text>
                 </View>
-                <Text className="text-sm font-extrabold text-[#9DB0AA] uppercase tracking-widest">{MONTHS[selectedMonth]}</Text>
+                <Text className="text-xs font-extrabold text-[#9DB0AA] uppercase tracking-widest">{MONTHS[selectedMonth]}</Text>
               </View>
 
               {filteredData.cairan.length > 0 ? (
@@ -209,8 +209,8 @@ export default function PatientDetailScreen({ route, navigation }) {
                       className="bg-white rounded-[28px] p-6 border-[1.5px] border-[#EEF0EF] mb-4 flex-row items-center justify-between shadow-sm shadow-black/5 active:bg-[#F8FAFA]"
                     >
                       <View>
-                        <Text className="text-[22px] font-black text-[#1A2820]">Minggu ke-{weekNum}</Text>
-                        <Text className="text-sm font-bold text-[#9DB0AA] mt-1">{formatDateDDMMYY(rekap.minggu_mulai)}</Text>
+                        <Text className="text-lg font-black text-[#1A2820]">Minggu ke-{weekNum}</Text>
+                        <Text className="text-xs font-bold text-[#9DB0AA] mt-1">{formatDateDDMMYY(rekap.minggu_mulai)}</Text>
                         <View className={`self-start px-3 py-1.5 rounded-full mt-3 ${isPatuh ? 'bg-[#E8F8F3]' : 'bg-[#FFF0F2]'}`}>
                           <Text className={`text-xs font-black uppercase tracking-wider ${isPatuh ? 'text-[#0D7A6A]' : 'text-[#F43F5E]'}`}>
                             {isPatuh ? 'PATUH' : 'TIDAK PATUH'}
@@ -226,7 +226,7 @@ export default function PatientDetailScreen({ route, navigation }) {
               ) : (
                 <View className="bg-white rounded-[28px] p-10 items-center border-[1.5px] border-[#EEF0EF]">
                   <Calendar color="#CBD5E1" size={56} />
-                  <Text className="text-[#9DB0AA] text-lg font-bold mt-4">Tidak ada data cairan</Text>
+                  <Text className="text-[#9DB0AA] text-base font-bold mt-4">Tidak ada data cairan</Text>
                 </View>
               )}
             </View>
@@ -240,8 +240,8 @@ export default function PatientDetailScreen({ route, navigation }) {
           <View className="bg-white rounded-t-[40px] overflow-hidden h-[85%]">
             <View className="flex-row items-center justify-between p-7 border-b-[1.5px] border-[#EEF0EF]">
               <View className="flex-1">
-                <Text className="text-[26px] font-black text-[#1A2820]">Detail Harian</Text>
-                <Text className="text-base font-bold text-[#9DB0AA] mt-1">
+                <Text className="text-xl font-black text-[#1A2820]">Detail Harian</Text>
+                <Text className="text-sm font-bold text-[#9DB0AA] mt-1">
                   {detailData?.minggu_mulai ? `Mulai ${formatDateDDMMYY(detailData.minggu_mulai)}` : 'Memuat...'}
                 </Text>
               </View>
@@ -261,7 +261,7 @@ export default function PatientDetailScreen({ route, navigation }) {
                   <View key={dayIdx} className="mb-8">
                     <View className="flex-row items-center mb-4 px-2">
                       <View className="w-2.5 h-2.5 rounded-full bg-[#0D7A6A] mr-3" />
-                      <Text className="text-xl font-black text-[#1A2820] uppercase tracking-wide">
+                      <Text className="text-lg font-black text-[#1A2820] uppercase tracking-wide">
                         {formatDateDDMMYY(date)}
                       </Text>
                     </View>
@@ -272,10 +272,10 @@ export default function PatientDetailScreen({ route, navigation }) {
                           {detailData.type === 'obat' ? <Pill color="#0D7A6A" size={28} /> : <Droplets color="#3B82F6" size={28} />}
                         </View>
                         <View className="flex-1">
-                          <Text className="text-lg font-extrabold text-[#1A2820]">
+                          <Text className="text-base font-extrabold text-[#1A2820]">
                             {detailData.type === 'obat' ? item.reminder_obat?.obat?.nama : `${item.reminder_cairan?.jumlah_ml} ml`}
                           </Text>
-                          <Text className="text-sm font-bold text-[#9DB0AA] mt-1 uppercase tracking-wider">
+                          <Text className="text-xs font-bold text-[#9DB0AA] mt-1 uppercase tracking-wider">
                             {item.waktu} {item.reminder_obat?.merk ? `• ${item.reminder_obat.merk.nama}` : ''}
                           </Text>
                         </View>
@@ -291,7 +291,7 @@ export default function PatientDetailScreen({ route, navigation }) {
               ) : (
                 <View className="items-center py-16">
                   <Info color="#CBD5E1" size={64} />
-                  <Text className="text-[#9DB0AA] text-lg font-bold mt-5">Data tidak ditemukan</Text>
+                  <Text className="text-[#9DB0AA] text-base font-bold mt-5">Data tidak ditemukan</Text>
                 </View>
               )}
             </ScrollView>

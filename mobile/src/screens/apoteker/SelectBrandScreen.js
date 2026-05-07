@@ -64,10 +64,10 @@ export default function SelectBrandScreen({ navigation, route }) {
   return (
     <View className="flex-1 bg-[#F0F4F3] pt-16 px-6">
       <View className="flex-row items-center justify-between mb-5">
-        <Text className="text-2xl font-black text-[#1A2820]">Merek untuk: {namaObat}</Text>
+        <Text className="text-xl font-black text-[#1A2820]">Merek untuk: {namaObat}</Text>
         <Pressable onPress={() => setIsAddModalOpen(true)} className="flex-row items-center bg-[#0D7A6A] px-3 py-2 rounded-2xl">
           <Plus color="white" size={16} />
-          <Text className="text-white font-bold ml-2">Tambah</Text>
+          <Text className="text-white font-bold text-sm ml-2">Tambah</Text>
         </Pressable>
       </View>
 
@@ -81,7 +81,7 @@ export default function SelectBrandScreen({ navigation, route }) {
             renderItem={({ item }) => (
               <Pressable onPress={() => handleSelectMerk(item)} className="flex-row items-center p-4 border-b border-[#EEF0EF]">
                 <View className="flex-1">
-                  <Text className="text-lg font-extrabold text-[#1A2820]">{item.nama_merk}</Text>
+                  <Text className="text-base font-extrabold text-[#1A2820]">{item.nama_merk}</Text>
                 </View>
                 <ChevronRight color="#CBD5E1" size={20} />
               </Pressable>
@@ -89,7 +89,7 @@ export default function SelectBrandScreen({ navigation, route }) {
           />
         ) : (
           <View className="p-8 items-center">
-            <Text className="text-[#9DB0AA] text-lg font-bold">Belum ada merek untuk obat ini.</Text>
+            <Text className="text-[#9DB0AA] text-base font-bold">Belum ada merek untuk obat ini.</Text>
           </View>
         )}
       </View>
@@ -98,7 +98,7 @@ export default function SelectBrandScreen({ navigation, route }) {
         <View className="flex-1 bg-black/35 justify-end">
           <View className="bg-white rounded-t-3xl max-h-[50%]">
             <View className="flex-row items-center justify-between px-5 py-4 border-b border-slate-200">
-              <Text className="text-lg font-extrabold">Tambah Merek</Text>
+              <Text className="text-base font-extrabold">Tambah Merek</Text>
               <Pressable onPress={() => setIsAddModalOpen(false)}>
                 <X color="#334155" size={22} />
               </Pressable>
@@ -108,7 +108,7 @@ export default function SelectBrandScreen({ navigation, route }) {
               <TextInput value={namaMerk} onChangeText={setNamaMerk} placeholder="Contoh: Merk A" className="border-2 border-slate-200 rounded-2xl px-4 py-3 mb-4" />
 
               <Pressable onPress={handleAddMerk} disabled={isSubmitting} className={`rounded-2xl py-3 items-center ${isSubmitting ? 'bg-slate-400' : 'bg-[#0D7A6A]'}`}>
-                {isSubmitting ? <ActivityIndicator color="white" /> : <Text className="text-white font-bold">Simpan Merek</Text>}
+                {isSubmitting ? <ActivityIndicator color="white" /> : <Text className="text-white font-bold text-sm">Simpan Merek</Text>}
               </Pressable>
             </View>
           </View>

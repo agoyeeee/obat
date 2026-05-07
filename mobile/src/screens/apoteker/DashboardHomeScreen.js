@@ -18,12 +18,12 @@ import { formatDateDDMMYY } from '../../utils/date';
 function SectionHeader({ title, onPressAll }) {
   return (
     <View className="flex-row items-center justify-between mb-4">
-      <Text className="text-2xl font-black text-[#1A2820] tracking-tight">
+      <Text className="text-xl font-black text-[#1A2820] tracking-tight">
         {title}
       </Text>
       {onPressAll && (
         <Pressable onPress={onPressAll} className="py-2 pl-3">
-          <Text className="text-base font-bold text-[#0D9488]">Lihat Semua →</Text>
+          <Text className="text-sm font-bold text-[#0D9488]">Lihat Semua →</Text>
         </Pressable>
       )}
     </View>
@@ -36,7 +36,7 @@ function MetricCard({ icon, iconBg, value, label, badge }) {
       <View className={`w-14 h-14 rounded-2xl ${iconBg} items-center justify-center mb-4`}>
         {icon}
       </View>
-      <Text className="text-[42px] font-black text-[#1A2820] leading-[46px] text-center">{value ?? 0}</Text>
+      <Text className="text-3xl font-black text-[#1A2820] leading-[38px] text-center">{value ?? 0}</Text>
       <Text className="text-xs font-extrabold text-[#9DB0AA] uppercase tracking-wider mt-2 text-center">
         {label}
       </Text>
@@ -59,8 +59,8 @@ function PatientRow({ patient, onPress }) {
         <UserMinus color="#F43F5E" size={32} />
       </View>
       <View className="flex-1">
-        <Text className="text-[22px] font-black text-[#1A2820]">{patient.nama}</Text>
-        <Text className="text-base font-extrabold text-rose-500 uppercase tracking-widest mt-1.5">
+        <Text className="text-lg font-black text-[#1A2820]">{patient.nama}</Text>
+        <Text className="text-sm font-extrabold text-rose-500 uppercase tracking-widest mt-1.5">
           ● {patient.last_status}
         </Text>
       </View>
@@ -78,8 +78,8 @@ function ActivityItem({ activity, isLast }) {
         {activity.type === 'new_patient' ? <UserPlus color="#0D7A6A" size={28} /> : <Clock color="#64748B" size={28} />}
       </View>
       <View className="flex-1">
-        <Text className="text-lg font-bold text-[#1A2820]">{activity.title}</Text>
-        <Text className="text-sm font-bold text-[#9DB0AA] uppercase tracking-widest mt-1">
+        <Text className="text-base font-bold text-[#1A2820]">{activity.title}</Text>
+        <Text className="text-xs font-bold text-[#9DB0AA] uppercase tracking-widest mt-1">
           {activity.time}
         </Text>
       </View>
@@ -131,7 +131,7 @@ export default function DashboardHomeScreen({ route, navigation }) {
             <Text className="text-sm font-bold text-[#9DB0AA] uppercase tracking-[1.5px]">
               {formatDateDDMMYY(new Date())}
             </Text>
-            <Text className="text-4xl font-black text-[#1A2820] tracking-tight mt-1">
+            <Text className="text-2xl font-black text-[#1A2820] tracking-tight mt-1">
               Halo, {user?.nama?.split(' ')[0] || 'Apoteker'} 👋
             </Text>
           </View>
@@ -159,10 +159,10 @@ export default function DashboardHomeScreen({ route, navigation }) {
           <Text className="text-sm font-extrabold text-white/70 uppercase tracking-widest">
             Aktivitas Hari Ini
           </Text>
-          <Text className="text-[64px] font-black text-white leading-[72px] my-1">
+          <Text className="text-3xl font-black text-white leading-[36px] my-1">
             {today.total ?? 0}
           </Text>
-          <Text className="text-lg text-white/85 font-bold mb-7">
+          <Text className="text-base text-white/85 font-bold mb-7">
             Total Jadwal Obat
           </Text>
           
@@ -173,8 +173,8 @@ export default function DashboardHomeScreen({ route, navigation }) {
               { num: today.pending ?? 0, label: 'Antri', color: 'text-white' },
             ].map(({ num, label, color }, i, arr) => (
               <View key={label} className={`flex-1 items-center justify-center px-1 ${i < arr.length - 1 ? 'border-r border-white/15' : ''}`}>
-                <Text className={`text-3xl font-black text-center ${color}`}>{num}</Text>
-                <Text className="text-[11px] font-extrabold text-white/60 uppercase tracking-wider mt-1 text-center">
+                <Text className={`text-2xl font-black text-center ${color}`}>{num}</Text>
+                <Text className="text-xs font-extrabold text-white/60 uppercase tracking-wider mt-1 text-center">
                   {label}
                 </Text>
               </View>
@@ -203,7 +203,7 @@ export default function DashboardHomeScreen({ route, navigation }) {
           ) : (
             <View className="bg-[#E8F8F3] border-2 border-[#52C7A0] rounded-[22px] p-8 items-center">
               <CheckCircle2 color="#0D7A6A" size={40} />
-              <Text className="text-[15px] font-bold text-[#0D7A6A] text-center mt-3 leading-[22px]">
+              <Text className="text-sm font-bold text-[#0D7A6A] text-center mt-3 leading-[20px]">
                 Luar biasa! Semua pasien patuh hari ini.
               </Text>
             </View>
