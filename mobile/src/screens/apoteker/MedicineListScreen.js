@@ -1,20 +1,46 @@
 import { useState, useEffect, useMemo } from 'react';
 import { View, Text, FlatList, Pressable, TextInput, Modal, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useReminders } from '../../hooks/useReminders';
 import { Pill, ChevronRight, Search, Plus, X } from 'lucide-react-native';
 import MedicineModal from '../../components/MedicineModal';
 import { fetchMerksByObat, createMerk } from '../../services/reminderService';
+
+const normalizeDoseValue = (value) => String(value || '').replace(/\s*mg\s*$/i, '').trim();
+
+const parseDoseLines = (text) =>
+  String(text || '')
+    .split(/\n|,|;/)
+    .map((item) => normalizeDoseValue(item))
+    .filter(Boolean);
+
+const formatDoseLines = (values) =>
+  Array.isArray(values)
+    ? values.map((item) => normalizeDoseValue(item)).filter(Boolean).join('\n')
+    : '';
+
+const formatDoseSummary = (values) => {
+  const list = Array.isArray(values) ? values.filter(Boolean) : [];
+  if (list.length === 0) return '';
+  if (list.length === 1) return `${list[0]} mg`;
+  if (list.length === 2) return `${list[0]} mg, ${list[1]} mg`;
+  return `${list[0]} mg, ${list[1]} mg +${list.length - 2}`;
+};
 
 export default function MedicineListScreen({ navigation }) {
   const { medicines, loadData, addMedicine, editMedicine, removeMedicine } = useReminders();
   const [selectedMedicine, setSelectedMedicine] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isDosisInisiasiModalOpen, setIsDosisInisiasiModalOpen] = useState(false);
+  const [isDoseTargetModalOpen, setIsDoseTargetModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [namaObat, setNamaObat] = useState('');
   const [indikasi, setIndikasi] = useState('');
-  const [dosisInisiasi, setDosisInisiasi] = useState('');
-  const [dosisTarget, setDosisTarget] = useState('');
+  const [dosisInisiasiList, setDosisInisiasiList] = useState([]);
+  const [dosisInisiasiDraft, setDosisInisiasiDraft] = useState('');
+  const [doseTargetList, setDoseTargetList] = useState([]);
+  const [doseTargetDraft, setDoseTargetDraft] = useState('');
   const [frekuensiDefault, setFrekuensiDefault] = useState('');
   const [kontraindikasi, setKontraindikasi] = useState('');
   const [efekSamping, setEfekSamping] = useState('');
@@ -44,8 +70,10 @@ export default function MedicineListScreen({ navigation }) {
     setEditingMedicineId(null);
     setNamaObat('');
     setIndikasi('');
-    setDosisInisiasi('');
-    setDosisTarget('');
+    setDosisInisiasiList([]);
+    setDosisInisiasiDraft('');
+    setDoseTargetList([]);
+    setDoseTargetDraft('');
     setFrekuensiDefault('');
     setKontraindikasi('');
     setEfekSamping('');
@@ -56,8 +84,10 @@ export default function MedicineListScreen({ navigation }) {
     setEditingMedicineId(medicine.id);
     setNamaObat(medicine.nama_obat || '');
     setIndikasi(medicine.indikasi || '');
-    setDosisInisiasi(Array.isArray(medicine.dosis_inisiasi) ? medicine.dosis_inisiasi.join(', ') : '');
-    setDosisTarget(medicine.dosis_target || '');
+    setDosisInisiasiList(Array.isArray(medicine.dosis_inisiasi) ? medicine.dosis_inisiasi.map((item) => normalizeDoseValue(item)) : []);
+    setDosisInisiasiDraft('');
+    setDoseTargetList(parseDoseLines(medicine.dosis_target));
+    setDoseTargetDraft('');
     setFrekuensiDefault(String(medicine.frekuensi_default || ''));
     setKontraindikasi(medicine.kontraindikasi || '');
     setEfekSamping(medicine.efek_samping || '');
@@ -93,7 +123,7 @@ export default function MedicineListScreen({ navigation }) {
   };
 
   const handleSubmitAddMedicine = async () => {
-    if (!namaObat.trim() || !indikasi.trim() || !dosisInisiasi.trim() || !dosisTarget.trim() || !frekuensiDefault.trim()) {
+    if (!namaObat.trim() || !indikasi.trim() || dosisInisiasiList.length === 0 || doseTargetList.length === 0 || !frekuensiDefault.trim()) {
       Alert.alert('Data belum lengkap', 'Mohon isi nama obat, indikasi, dosis inisiasi, dosis target, dan frekuensi default.');
       return;
     }
@@ -104,24 +134,14 @@ export default function MedicineListScreen({ navigation }) {
       return;
     }
 
-    const dosisInisiasiList = dosisInisiasi
-      .split(',')
-      .map((item) => item.trim())
-      .filter(Boolean);
-
-    if (dosisInisiasiList.length === 0) {
-      Alert.alert('Dosis inisiasi tidak valid', 'Isi minimal satu dosis inisiasi.');
-      return;
-    }
-
     try {
       setIsSubmitting(true);
 
       const payload = {
         nama_obat: namaObat.trim(),
         indikasi: indikasi.trim(),
-        dosis_inisiasi: dosisInisiasiList,
-        dosis_target: dosisTarget.trim(),
+        dosis_inisiasi: dosisInisiasiList.map((item) => `${item} mg`),
+        dosis_target: doseTargetList.map((item) => `${item} mg`).join('\n'),
         frekuensi_default: freq,
         kontraindikasi: kontraindikasi.trim() || null,
         efek_samping: efekSamping.trim() || null,
@@ -200,6 +220,62 @@ export default function MedicineListScreen({ navigation }) {
     }
 
     navigation.navigate('SelectBrand', { obatId, namaObat });
+  };
+
+  const openDosisInisiasiModal = () => {
+    setDosisInisiasiDraft('');
+    setIsDosisInisiasiModalOpen(true);
+  };
+
+  const addDosisInisiasiItem = () => {
+    const nextValue = normalizeDoseValue(dosisInisiasiDraft);
+    if (!nextValue) {
+      Alert.alert('Validasi', 'Dosis inisiasi harus diisi dengan angka.');
+      return;
+    }
+
+    setDosisInisiasiList((prev) => (prev.includes(nextValue) ? prev : [...prev, nextValue]));
+    setDosisInisiasiDraft('');
+  };
+
+  const removeDosisInisiasiItem = (value) => {
+    setDosisInisiasiList((prev) => prev.filter((item) => item !== value));
+  };
+
+  const saveDosisInisiasiModal = () => {
+    if (dosisInisiasiList.length === 0) {
+      Alert.alert('Validasi', 'Tambahkan minimal satu dosis inisiasi.');
+      return;
+    }
+    setIsDosisInisiasiModalOpen(false);
+  };
+
+  const openDoseTargetModal = () => {
+    setDoseTargetDraft('');
+    setIsDoseTargetModalOpen(true);
+  };
+
+  const addDoseTargetItem = () => {
+    const nextValue = normalizeDoseValue(doseTargetDraft);
+    if (!nextValue) {
+      Alert.alert('Validasi', 'Dosis target harus diisi dengan angka.');
+      return;
+    }
+
+    setDoseTargetList((prev) => (prev.includes(nextValue) ? prev : [...prev, nextValue]));
+    setDoseTargetDraft('');
+  };
+
+  const removeDoseTargetItem = (value) => {
+    setDoseTargetList((prev) => prev.filter((item) => item !== value));
+  };
+
+  const saveDoseTargetModal = () => {
+    if (doseTargetList.length === 0) {
+      Alert.alert('Validasi', 'Tambahkan minimal satu dosis target.');
+      return;
+    }
+    setIsDoseTargetModalOpen(false);
   };
 
 
@@ -304,6 +380,13 @@ export default function MedicineListScreen({ navigation }) {
         }}
       >
         <View className="flex-1 bg-black/35 justify-end">
+          <Pressable
+            style={{ flex: 1 }}
+            onPress={() => {
+              setIsAddModalOpen(false);
+              resetForm();
+            }}
+          />
           <View className="bg-white rounded-t-3xl max-h-[90%]">
             <View className="flex-row items-center justify-between px-5 py-4 border-b border-slate-200">
               <Text className="text-lg font-extrabold text-slate-900">{editingMedicineId ? 'Edit Data Obat' : 'Tambah Data Obat'}</Text>
@@ -334,21 +417,40 @@ export default function MedicineListScreen({ navigation }) {
               />
 
               <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Dosis Inisiasi</Text>
-              <TextInput
-                className="border-2 border-slate-200 rounded-2xl px-4 py-3.5 mb-1 bg-slate-50 text-slate-900 font-medium"
-                placeholder="Pisahkan dengan koma, contoh: 5 mg, 10 mg"
-                value={dosisInisiasi}
-                onChangeText={setDosisInisiasi}
-              />
-              <Text className="text-xs text-slate-400 mb-4">Format: nilai dipisahkan koma.</Text>
+              <Pressable
+                onPress={openDosisInisiasiModal}
+                className="border-2 border-slate-200 rounded-2xl px-4 py-3.5 mb-4 bg-slate-50 flex-row items-center justify-between active:opacity-80"
+              >
+                <View className="flex-1 pr-3">
+                  <Text className={`font-medium ${dosisInisiasiList.length > 0 ? 'text-slate-900' : 'text-slate-400'}`} numberOfLines={2}>
+                    {dosisInisiasiList.length > 0 ? formatDoseSummary(dosisInisiasiList) : 'Contoh: 5'}
+                  </Text>
+                  {dosisInisiasiList.length > 2 ? (
+                    <Text className="text-xs text-slate-400 mt-1">
+                      {dosisInisiasiList.length} dosis inisiasi dipilih
+                    </Text>
+                  ) : null}
+                </View>
+                <ChevronRight color="#CBD5E1" size={18} />
+              </Pressable>
 
               <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Dosis Target</Text>
-              <TextInput
-                className="border-2 border-slate-200 rounded-2xl px-4 py-3.5 mb-4 bg-slate-50 text-slate-900 font-medium"
-                placeholder="Contoh: 10 mg"
-                value={dosisTarget}
-                onChangeText={setDosisTarget}
-              />
+              <Pressable
+                onPress={openDoseTargetModal}
+                className="border-2 border-slate-200 rounded-2xl px-4 py-3.5 mb-4 bg-slate-50 flex-row items-center justify-between active:opacity-80"
+              >
+                <View className="flex-1 pr-3">
+                  <Text className={`font-medium ${doseTargetList.length > 0 ? 'text-slate-900' : 'text-slate-400'}`} numberOfLines={2}>
+                    {doseTargetList.length > 0 ? formatDoseSummary(doseTargetList) : 'Contoh: 10'}
+                  </Text>
+                  {doseTargetList.length > 2 ? (
+                    <Text className="text-xs text-slate-400 mt-1">
+                      {doseTargetList.length} dosis target dipilih
+                    </Text>
+                  ) : null}
+                </View>
+                <ChevronRight color="#CBD5E1" size={18} />
+              </Pressable>
 
               <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Frekuensi Default (kali/hari)</Text>
               <TextInput
@@ -402,6 +504,149 @@ export default function MedicineListScreen({ navigation }) {
         </View>
       </Modal>
 
+      <Modal
+        visible={isDosisInisiasiModalOpen}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setIsDosisInisiasiModalOpen(false)}
+      >
+        <View className="flex-1 bg-black/35 justify-end">
+          <Pressable style={{ flex: 1 }} onPress={() => setIsDosisInisiasiModalOpen(false)} />
+          <View className="bg-white rounded-t-3xl px-6 pt-6 pb-8">
+            <View className="flex-row items-center justify-between mb-4">
+              <Text className="text-lg font-extrabold text-slate-900">Isi Dosis Inisiasi</Text>
+              <Pressable onPress={() => setIsDosisInisiasiModalOpen(false)} className="w-8 h-8 rounded-full bg-teal-100 items-center justify-center">
+                <X color="#0D5450" size={18} />
+              </Pressable>
+            </View>
+
+            <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Angka saja</Text>
+            <TextInput
+              className="border-2 border-teal-200 rounded-2xl px-4 py-3.5 mb-3 bg-teal-50 text-slate-900 font-medium"
+              placeholder="Contoh: 5"
+              placeholderTextColor="#94A3B8"
+              value={dosisInisiasiDraft}
+              onChangeText={(text) => setDosisInisiasiDraft(text.replace(/[^0-9]/g, ''))}
+              keyboardType="numeric"
+            />
+            <Text className="text-xs text-slate-400 mb-4">Tekan Tambah untuk memasukkan lebih dari satu dosis inisiasi.</Text>
+
+            <Pressable onPress={addDosisInisiasiItem} activeOpacity={0.85} className="mb-4">
+              <LinearGradient
+                colors={['#0D7A6A', '#14B8A6']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={{ borderRadius: 16, paddingVertical: 14, alignItems: 'center' }}
+              >
+                <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 15 }}>Tambah Dosis Inisiasi</Text>
+              </LinearGradient>
+            </Pressable>
+
+            <View className="mb-5">
+              <Text className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Daftar Dosis Inisiasi</Text>
+              {dosisInisiasiList.length > 0 ? (
+                <View className="flex-row flex-wrap">
+                  {dosisInisiasiList.map((item) => (
+                    <View key={item} className="flex-row items-center bg-teal-50 border border-teal-200 rounded-full px-3 py-2 mr-2 mb-2">
+                      <Text className="text-teal-900 font-semibold mr-2">{item} mg</Text>
+                      <Pressable onPress={() => removeDosisInisiasiItem(item)} className="w-5 h-5 rounded-full bg-white items-center justify-center">
+                        <X color="#DC2626" size={12} />
+                      </Pressable>
+                    </View>
+                  ))}
+                </View>
+              ) : (
+                <View className="bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3">
+                  <Text className="text-slate-400 text-sm">Belum ada dosis inisiasi ditambahkan.</Text>
+                </View>
+              )}
+            </View>
+
+            <Pressable onPress={saveDosisInisiasiModal} activeOpacity={0.85}>
+              <LinearGradient
+                colors={['#0D7A6A', '#14B8A6']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={{ borderRadius: 16, paddingVertical: 14, alignItems: 'center' }}
+              >
+                <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 15 }}>Simpan Dosis Inisiasi</Text>
+              </LinearGradient>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={isDoseTargetModalOpen}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setIsDoseTargetModalOpen(false)}
+      >
+        <View className="flex-1 bg-black/35 justify-end">
+          <Pressable style={{ flex: 1 }} onPress={() => setIsDoseTargetModalOpen(false)} />
+          <View className="bg-white rounded-t-3xl px-6 pt-6 pb-8">
+            <View className="flex-row items-center justify-between mb-4">
+              <Text className="text-lg font-extrabold text-slate-900">Isi Dosis Target</Text>
+              <Pressable onPress={() => setIsDoseTargetModalOpen(false)} className="w-8 h-8 rounded-full bg-teal-100 items-center justify-center">
+                <X color="#0D5450" size={18} />
+              </Pressable>
+            </View>
+
+            <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Angka saja</Text>
+            <TextInput
+              className="border-2 border-teal-200 rounded-2xl px-4 py-3.5 mb-3 bg-teal-50 text-slate-900 font-medium"
+              placeholder="Contoh: 10"
+              placeholderTextColor="#94A3B8"
+              value={doseTargetDraft}
+              onChangeText={(text) => setDoseTargetDraft(text.replace(/[^0-9]/g, ''))}
+              keyboardType="numeric"
+            />
+            <Text className="text-xs text-slate-400 mb-4">Tekan Tambah untuk memasukkan lebih dari satu dosis target.</Text>
+
+            <Pressable onPress={addDoseTargetItem} activeOpacity={0.85} className="mb-4">
+              <LinearGradient
+                colors={['#0D7A6A', '#14B8A6']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={{ borderRadius: 16, paddingVertical: 14, alignItems: 'center' }}
+              >
+                <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 15 }}>Tambah Dosis Target</Text>
+              </LinearGradient>
+            </Pressable>
+
+            <View className="mb-5">
+              <Text className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Daftar Dosis Target</Text>
+              {doseTargetList.length > 0 ? (
+                <View className="flex-row flex-wrap">
+                  {doseTargetList.map((item) => (
+                    <View key={item} className="flex-row items-center bg-teal-50 border border-teal-200 rounded-full px-3 py-2 mr-2 mb-2">
+                      <Text className="text-teal-900 font-semibold mr-2">{item} mg</Text>
+                      <Pressable onPress={() => removeDoseTargetItem(item)} className="w-5 h-5 rounded-full bg-white items-center justify-center">
+                        <X color="#DC2626" size={12} />
+                      </Pressable>
+                    </View>
+                  ))}
+                </View>
+              ) : (
+                <View className="bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3">
+                  <Text className="text-slate-400 text-sm">Belum ada dosis target ditambahkan.</Text>
+                </View>
+              )}
+            </View>
+
+            <Pressable onPress={saveDoseTargetModal} activeOpacity={0.85}>
+              <LinearGradient
+                colors={['#0D7A6A', '#14B8A6']}
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                style={{ borderRadius: 16, paddingVertical: 14, alignItems: 'center' }}
+              >
+                <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 15 }}>Simpan Dosis Target</Text>
+              </LinearGradient>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
       {/* Inline Brand Modal: pilih atau tambah merk untuk obat yang baru ditambahkan */}
       <Modal
         visible={brandModalOpen}
@@ -410,6 +655,7 @@ export default function MedicineListScreen({ navigation }) {
         onRequestClose={() => setBrandModalOpen(false)}
       >
         <View className="flex-1 bg-black/35 justify-end">
+          <Pressable style={{ flex: 1 }} onPress={() => setBrandModalOpen(false)} />
           <View className="bg-white rounded-t-3xl max-h-[80%]">
             <View className="flex-row items-center justify-between px-5 py-4 border-b border-slate-200">
               <Text className="text-lg font-extrabold text-slate-900">Pilih Merek untuk: {currentObatForBrand?.nama_obat}</Text>
