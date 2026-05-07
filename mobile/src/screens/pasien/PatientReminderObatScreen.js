@@ -72,6 +72,22 @@ const resolveDoseOptions = (obat) => {
   return options;
 };
 
+const getDoseDisplay = (obat) => {
+  if (!obat) return '';
+  if (obat.dosis_target) return String(obat.dosis_target);
+  if (Array.isArray(obat.dosis_inisiasi) && obat.dosis_inisiasi.length > 0) {
+    const parts = obat.dosis_inisiasi.map((item) => {
+      if (item && typeof item === 'object' && item.dosis !== undefined) {
+        return `${item.dosis}${item.satuan ? ` ${item.satuan}` : ''}`;
+      }
+      return String(item);
+    }).filter(Boolean);
+    if (parts.length === 1) return parts[0];
+    return `${parts[0]} - ${parts[parts.length - 1]}`;
+  }
+  return '';
+};
+
 const renderLabel = (label) => (
   <Text style={{
     fontSize: 10, fontWeight: '700', color: '#94A3B8',
@@ -226,8 +242,8 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
     const obat = obatList.find((item) => String(item.id) === String(obatId));
     if (!obat) return;
     const freq = Number(obat.frekuensi_default || 0);
-    const obatDoseOptions = resolveDoseOptions(obat);
-    setDosis(obatDoseOptions[0]?.value || '');
+    const doseDisplay = getDoseDisplay(obat);
+    setDosis(doseDisplay || '');
     setFrekuensi(String(freq || ''));
     if (freq === 1) {
       setWaktuKonsumsi('');
@@ -768,13 +784,24 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
 
               
 
-              {renderSelectField(
-                'Dosis',
-                dosis,
-                doseOptions,
-                (value) => { setDosis(value); setSelectModal({ visible: false, label: '', options: [], onSelect: null }); },
-                setSelectModal
-              )}
+              <View style={{ marginBottom: 16 }}>
+                {renderLabel('Dosis')}
+                <View style={{
+                  borderWidth: 1.5,
+                  borderColor: dosis ? '#14B8A6' : '#E2E8F0',
+                  borderRadius: 16,
+                  paddingHorizontal: 16,
+                  paddingVertical: 14,
+                  backgroundColor: dosis ? '#F5F3FF' : '#fff',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}>
+                  <Text style={{ color: dosis ? '#1E293B' : '#94A3B8', fontWeight: dosis ? '600' : '400', fontSize: 14, flex: 1 }}>
+                    {dosis || '—'}
+                  </Text>
+                </View>
+              </View>
 
               {renderSelectField(
                 'Sediaan',

@@ -36,14 +36,21 @@ class ObatController extends Controller
         $validated = $request->validate([
             'nama_obat' => ['required', 'string', 'max:255', 'unique:obat,nama_obat'],
             'indikasi' => ['required', 'string'],
-            'dosis_inisiasi' => ['required', 'array', 'min:1'],
-            'dosis_inisiasi.*' => ['required', 'string', 'max:100'],
+            'dosis_inisiasi' => ['required'], // accept string or array; normalize below
             'dosis_target' => ['required', 'string', 'max:100'],
             'frekuensi_default' => ['required', 'integer', 'min:1', 'max:24'],
             'kontraindikasi' => ['nullable', 'string'],
             'efek_samping' => ['nullable', 'string'],
             'monitoring' => ['nullable', 'string'],
         ]);
+
+        // Normalize dosis_inisiasi: if array provided, join into newline-separated string
+        $dosisInisiasiInput = $request->input('dosis_inisiasi');
+        if (is_array($dosisInisiasiInput)) {
+            $validated['dosis_inisiasi'] = collect($dosisInisiasiInput)->map(fn($v) => (string) $v)->filter()->implode("\n");
+        } else {
+            $validated['dosis_inisiasi'] = (string) $dosisInisiasiInput;
+        }
 
         $obat = Obat::query()->create($validated);
 
@@ -66,14 +73,20 @@ class ObatController extends Controller
         $validated = $request->validate([
             'nama_obat' => ['required', 'string', 'max:255', Rule::unique('obat', 'nama_obat')->ignore($obat->id)],
             'indikasi' => ['required', 'string'],
-            'dosis_inisiasi' => ['required', 'array', 'min:1'],
-            'dosis_inisiasi.*' => ['required', 'string', 'max:100'],
+            'dosis_inisiasi' => ['required'], // accept string or array; normalize below
             'dosis_target' => ['required', 'string', 'max:100'],
             'frekuensi_default' => ['required', 'integer', 'min:1', 'max:24'],
             'kontraindikasi' => ['nullable', 'string'],
             'efek_samping' => ['nullable', 'string'],
             'monitoring' => ['nullable', 'string'],
         ]);
+
+        $dosisInisiasiInput = $request->input('dosis_inisiasi');
+        if (is_array($dosisInisiasiInput)) {
+            $validated['dosis_inisiasi'] = collect($dosisInisiasiInput)->map(fn($v) => (string) $v)->filter()->implode("\n");
+        } else {
+            $validated['dosis_inisiasi'] = (string) $dosisInisiasiInput;
+        }
 
         $obat->update($validated);
 

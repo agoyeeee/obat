@@ -20,12 +20,10 @@ class Obat extends Model
         'monitoring',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'dosis_inisiasi' => 'array',
-        ];
-    }
+    /** @var array<string,string> */
+    protected $casts = [
+        'dosis_inisiasi' => 'string',
+    ];
 
     public function merks(): HasMany
     {
