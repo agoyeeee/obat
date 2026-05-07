@@ -122,7 +122,6 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
   const [selectModal, setSelectModal] = useState({ visible: false, label: '', options: [], onSelect: null });
 
   const [selectedObatId, setSelectedObatId] = useState('');
-  const [selectedMerkId, setSelectedMerkId] = useState('');
   const [dosis, setDosis] = useState('');
   const [frekuensi, setFrekuensi] = useState('');
   const [sediaan, setSediaan] = useState('');
@@ -202,10 +201,7 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
 
   const doseOptions = useMemo(() => resolveDoseOptions(selectedObat), [selectedObat]);
 
-  const merkOptions = useMemo(() => {
-    if (!selectedObat?.merks || selectedObat.merks.length === 0) return [];
-    return selectedObat.merks.map((merk) => ({ label: merk.nama_merk, value: String(merk.id) }));
-  }, [selectedObat]);
+  
 
   const frekuensiNumber = Number(frekuensi);
   const presetOptions = useMemo(() => {
@@ -226,7 +222,6 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
 
   const handleSelectObat = (obatId) => {
     setSelectedObatId(obatId);
-    setSelectedMerkId('');
     setSelectModal({ visible: false, label: '', options: [], onSelect: null });
     const obat = obatList.find((item) => String(item.id) === String(obatId));
     if (!obat) return;
@@ -245,7 +240,6 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
 
   const resetForm = () => {
     setSelectedObatId('');
-    setSelectedMerkId('');
     setDosis('');
     setFrekuensi('');
     setSediaan('');
@@ -266,7 +260,6 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
   const openEditModal = (item) => {
     setEditingReminder(item);
     setSelectedObatId(String(item.obat_id || ''));
-    setSelectedMerkId(String(item.merk_id || ''));
     setDosis(item.dosis || '');
     setFrekuensi(String(item.frekuensi || ''));
     setSediaan(item.sediaan || '');
@@ -304,14 +297,12 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
 
   const handleSubmit = async () => {
     if (!canSubmit) {
-      Alert.alert('Data belum lengkap', 'Mohon lengkapi semua field reminder obat terlebih dahulu.');
+      Alert.alert('Data belum lengkap', 'Mohon lengkapi semua field pengingat minum obat terlebih dahulu.');
       return;
     }
     const payload = {
       obat_id: Number(selectedObatId),
-      merk_id: selectedMerkId ? Number(selectedMerkId) : null,
       nama_obat: selectedObat?.nama_obat || '-',
-      nama_merk: selectedMerkId ? (merkOptions.find((m) => m.value === selectedMerkId)?.label || null) : null,
       dosis,
       sediaan,
       frekuensi: Number(frekuensi),
@@ -405,7 +396,7 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
 
   const handleDeleteReminder = async (item) => {
     Alert.alert(
-      'Hapus Reminder Obat',
+      'Hapus Pengigat Minum Obat',
       `Hapus reminder untuk ${item.nama_obat}? Tindakan ini tidak dapat dibatalkan.`,
       [
         { text: 'Batal', style: 'cancel' },
@@ -425,7 +416,7 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
               await cancelReminderObatAlarms(item.alarm_notification_ids || []);
               await deletePatientReminderObatItem(item.local_id);
               await loadQueueStats();
-              Alert.alert('Reminder dihapus', 'Reminder obat berhasil dihapus.');
+              Alert.alert('Reminder dihapus', 'Pengigat Minum obat berhasil dihapus.');
             } catch (error) {
               Alert.alert('Gagal menghapus', error?.message || 'Terjadi kesalahan saat menghapus reminder.');
             } finally {
@@ -514,7 +505,7 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
                 Menu Pasien
               </Text>
               <Text style={{ color: '#fff', fontSize: 20, fontWeight: '900', marginTop: 2 }}>
-                Reminder Obat
+                Pengigat Minum Obat
               </Text>
             </View>
           </View>
@@ -542,9 +533,9 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
         <View style={{ marginHorizontal: 20, marginTop: 20 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
             <View>
-              <Text style={{ color: '#1E293B', fontWeight: '900', fontSize: 18 }}>Daftar Reminder</Text>
+              <Text style={{ color: '#1E293B', fontWeight: '900', fontSize: 18 }}>Daftar Pengingat Minum Obat</Text>
               <Text style={{ color: '#94A3B8', fontSize: 12, marginTop: 1 }}>
-                {reminderItems.length} reminder terdaftar
+                {reminderItems.length} pengingat minum obat terdaftar
               </Text>
             </View>
 
@@ -584,10 +575,10 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
                 <Bell color="#6366F1" size={24} />
               </View>
               <Text style={{ color: '#1E293B', fontWeight: '800', fontSize: 15, marginBottom: 4 }}>
-                Belum Ada Reminder
+                Belum Ada Pengingat Minum Obat
               </Text>
               <Text style={{ color: '#94A3B8', fontSize: 13, textAlign: 'center', lineHeight: 20 }}>
-                Tekan tombol Tambah untuk membuat reminder minum obat baru.
+                Tekan tombol Tambah untuk membuat pengingat minum obat baru.
               </Text>
             </View>
           ) : (
@@ -621,9 +612,7 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
                         <Text style={{ color: '#1E293B', fontWeight: '800', fontSize: 15 }} numberOfLines={1}>
                           {item.nama_obat}
                         </Text>
-                        {item.nama_merk && (
-                          <Text style={{ color: '#94A3B8', fontSize: 11, marginTop: 1 }}>Merk: {item.nama_merk}</Text>
-                        )}
+                        
                       </View>
                     </View>
 
@@ -743,7 +732,7 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
                 Form Reminder
               </Text>
               <Text style={{ color: '#fff', fontSize: 18, fontWeight: '900', marginTop: 2 }}>
-                {editingReminder ? 'Edit Reminder Obat' : 'Tambah Reminder Obat'}
+                {editingReminder ? 'Edit Pengigat Minum Obat' : 'Tambah Pengigat Minum Obat'}
               </Text>
             </View>
             <Pressable
@@ -777,13 +766,7 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
             }}>
               {renderSelectField('Nama Obat', selectedObat?.nama_obat || '', obatOptions, handleSelectObat, setSelectModal)}
 
-              {merkOptions.length > 0 && renderSelectField(
-                'Merk Obat',
-                selectedMerkId ? (merkOptions.find((m) => m.value === selectedMerkId)?.label || '') : '',
-                merkOptions,
-                (value) => { setSelectedMerkId(value); setSelectModal({ visible: false, label: '', options: [], onSelect: null }); },
-                setSelectModal
-              )}
+              
 
               {renderSelectField(
                 'Dosis',
