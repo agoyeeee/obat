@@ -60,14 +60,14 @@ export default function PatientDashboardScreen({ profile, onEditProfile, onBack,
   const menuItems = [
     {
       key: 'obat',
-      title: 'Reminder Obat',
+      title: 'Pengingat Minum Obat',
       subtitle: 'Jadwal & tracking',
       icon: <Pill color="#fff" size={20} />,
       gradientColors: ['#6366F1', '#818CF8'],
     },
     {
       key: 'cairan',
-      title: 'Cairan Harian',
+      title: 'Catatan Asupan Cairan',
       subtitle: 'Pantau target minum',
       icon: <Droplets color="#fff" size={20} />,
       gradientColors: ['#0EA5E9', '#38BDF8'],
