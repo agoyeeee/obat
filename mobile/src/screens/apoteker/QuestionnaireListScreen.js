@@ -3,34 +3,14 @@ import { View, Text, ScrollView, Pressable, ActivityIndicator, Modal } from 'rea
 import { StatusBar } from 'expo-status-bar';
 import { ClipboardList, MessageSquareText, FileText, Clock3, UserRound, ChevronRight } from 'lucide-react-native';
 import { fetchApotekerKuisionerRekaps } from '../../services/patientService';
+import { formatDateDDMMYY } from '../../utils/date';
 
 const formatDate = (value) => {
-  if (!value) return '-';
-  try {
-    return new Date(value).toLocaleDateString('id-ID', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric',
-    });
-  } catch {
-    return String(value);
-  }
+  return formatDateDDMMYY(value);
 };
 
 const formatDateDDMMYYYY = (value) => {
-  if (!value) return '-';
-  const isoMatch = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (isoMatch) {
-    return `${isoMatch[3]}-${isoMatch[2]}-${isoMatch[1]}`;
-  }
-
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return String(value);
-
-  const day = String(parsed.getDate()).padStart(2, '0');
-  const month = String(parsed.getMonth() + 1).padStart(2, '0');
-  const year = parsed.getFullYear();
-  return `${day}-${month}-${year}`;
+  return formatDateDDMMYY(value);
 };
 
 const formatValue = (value) => {
