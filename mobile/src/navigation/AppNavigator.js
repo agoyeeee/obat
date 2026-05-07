@@ -38,7 +38,6 @@ import {
 
 import {
   publicLogKonsumsiObat,
-  publicLogKonsumsiCairanAlarm,
   publicRegisterPatient,
 } from '../services/patientService';
 
@@ -46,11 +45,6 @@ import {
   addReminderAlarmResponseListener,
   initializeReminderAlarmNotifications,
 } from '../services/reminderAlarmService';
-
-import {
-  addReminderCairanAlarmResponseListener,
-  initializeReminderCairanNotifications,
-} from '../services/reminderCairanAlarmService';
 
 import { enqueuePatientAlarmLog } from '../storage/patientAlarmLogStorage';
 import { syncPendingAlarmLogs } from '../services/patientAlarmLogSyncService';
@@ -116,7 +110,6 @@ export default function AppNavigator() {
   useEffect(() => {
     // AKTIFKAN kalau device support (jangan Expo Go kalau error)
     initializeReminderAlarmNotifications();
-    initializeReminderCairanNotifications();
 
     const responseSubscription =
       addReminderAlarmResponseListener(async (data) => {
@@ -141,29 +134,6 @@ export default function AppNavigator() {
         }
       });
 
-    const cairanSubscription =
-      addReminderCairanAlarmResponseListener(async (data) => {
-        try {
-          await publicLogKonsumsiCairanAlarm({
-            reminder_cairan_id: data.reminderCairanId,
-            status: 'diminum',
-            logged_at: data.loggedAt,
-            tanggal: data.tanggal,
-            waktu: data.waktu,
-            alarm_waktu: data.alarmWaktu,
-          });
-        } catch (error) {
-          await enqueuePatientAlarmLog({
-            entity_type: 'cairan',
-            reminder_cairan_id: data.reminderCairanId,
-            status: 'diminum',
-            logged_at: data.loggedAt,
-            tanggal: data.tanggal,
-            waktu: data.waktu,
-          });
-        }
-      });
-
     const unsubscribeNetInfo = NetInfo.addEventListener((state) => {
       if (state.isConnected && state.isInternetReachable !== false) {
         tryAutoSync();
@@ -184,7 +154,6 @@ export default function AppNavigator() {
       unsubscribeNetInfo();
       appStateSub.remove();
       responseSubscription.remove();
-      cairanSubscription.remove();
     };
   }, [patientProfile]);
 

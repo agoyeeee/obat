@@ -7,7 +7,7 @@ import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   ArrowLeft, Droplets, Plus, X, Pencil, Trash2,
-  Bell, AlertCircle, CalendarDays, Clock,
+  AlertCircle, CalendarDays, Clock,
 } from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {
@@ -17,7 +17,6 @@ import {
   deletePatientReminderCairanItem,
 } from '../../storage/patientReminderCairanStorage';
 import { syncPendingReminderCairan } from '../../services/patientReminderCairanSyncService';
-import { cancelReminderCairanAlarms } from '../../services/reminderCairanAlarmService';
 import { deleteReminderCairan } from '../../services/reminderService';
 
 const pad = (value) => String(value).padStart(2, '0');
@@ -184,29 +183,15 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
           sync_status: isSyncedReminder ? 'pending' : editingReminder.sync_status,
           synced_at: isSyncedReminder ? null : editingReminder.synced_at,
           server_id: editingReminder.server_id || null,
-          alarm_notification_ids: isSyncedReminder ? [] : (editingReminder.alarm_notification_ids || []),
           last_error: null,
         });
 
         let syncWarning = '';
 
-        if (isSyncedReminder) {
-          try {
-            await cancelReminderCairanAlarms(editingReminder.alarm_notification_ids || []);
-          } catch (alarmError) {
-            console.error('Failed to cancel cairan alarm before edit sync:', alarmError?.message || alarmError);
-          }
-
-          const syncResult = await syncPendingReminderCairan(profile);
-          if (syncResult?.error) {
-            syncWarning = syncResult.error;
-          }
-        }
-
         setIsAddModalOpen(false);
         resetForm();
         await loadQueue();
-        const syncResultAfterSave = isSyncedReminder ? null : await syncPendingReminderCairan(profile);
+        const syncResultAfterSave = await syncPendingReminderCairan(profile);
         if (syncResultAfterSave && syncResultAfterSave.error) {
           syncWarning = syncResultAfterSave.error;
         }
@@ -215,7 +200,7 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
           'Reminder cairan diperbarui',
           syncWarning
             ? `Data tersimpan lokal, tetapi sinkronisasi belum berhasil. ${syncWarning}`
-            : (isSyncedReminder ? 'Data diperbarui dan akan tersinkron ulang.' : 'Data reminder berhasil diperbarui.')
+            : 'Data reminder berhasil diperbarui.'
         );
         return updatedLocalItem;
       }
@@ -228,8 +213,8 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
       Alert.alert(
         'Tersimpan',
         syncResult?.error
-          ? `Reminder tersimpan lokal, tetapi sinkronisasi belum berhasil. ${syncResult.error}`
-          : 'Reminder cairan tersimpan di device dan akan auto sync saat online.'
+          ? `Catatan tersimpan lokal, tetapi sinkronisasi belum berhasil. ${syncResult.error}`
+          : 'Catatan cairan tersimpan di device dan akan auto sync saat online.'
       );
     } catch (error) {
       Alert.alert('Gagal', error?.message || 'Gagal menyimpan reminder cairan.');
@@ -257,12 +242,11 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
                   console.warn('Server delete reminder cairan failed, continuing local delete:', serverError?.message || serverError);
                 }
               }
-              await cancelReminderCairanAlarms(item.alarm_notification_ids || []);
               await deletePatientReminderCairanItem(item.local_id);
               await loadQueue();
-              Alert.alert('Reminder dihapus', 'Reminder cairan berhasil dihapus.');
+              Alert.alert('Catatan dihapus', 'Catatan cairan berhasil dihapus.');
             } catch (error) {
-              Alert.alert('Gagal menghapus', error?.message || 'Terjadi kesalahan saat menghapus reminder cairan.');
+              Alert.alert('Gagal menghapus', error?.message || 'Terjadi kesalahan saat menghapus catatan cairan.');
             } finally {
               setIsSubmitting(false);
             }
@@ -284,7 +268,15 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
 
   const pendingCount = queue.filter((i) => i.sync_status !== 'synced').length;
   const syncedCount = queue.filter((i) => i.sync_status === 'synced').length;
-  const totalMl = queue.reduce((acc, i) => acc + (Number(i.jumlah_ml) || 0), 0);
+  const todayYmd = formatDateYMD(new Date());
+  const todayItems = queue.filter((item) => item.tanggal === todayYmd);
+  const totalMlToday = todayItems.reduce((acc, item) => acc + (Number(item.jumlah_ml) || 0), 0);
+  const dailyTargetMin = 900;
+  const dailyTargetMax = 1200;
+  const isTargetReached = totalMlToday >= dailyTargetMin && totalMlToday <= dailyTargetMax;
+  const dailyScore = isTargetReached ? 1 : 0;
+  const dailyStatus = isTargetReached ? 'Tercukupi' : 'Tidak tercukupi';
+  const targetStatusColor = isTargetReached ? '#059669' : '#D97706';
 
   return (
     <View style={{ flex: 1, backgroundColor: '#F0F4FF' }}>
@@ -360,8 +352,69 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
         showsVerticalScrollIndicator={false}
       >
 
-        {/* ── DAFTAR REMINDER ── */}
         <View style={{ marginHorizontal: 20, marginTop: 20 }}>
+          <View style={{
+            backgroundColor: '#fff',
+            borderRadius: 20,
+            padding: 18,
+            borderWidth: 1,
+            borderColor: '#E0F2FE',
+            shadowColor: '#0EA5E9',
+            shadowOffset: { width: 0, height: 6 },
+            shadowOpacity: 0.08,
+            shadowRadius: 14,
+            elevation: 4,
+          }}>
+            <Text style={{ color: '#64748B', fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 }}>
+              Target Minum Harian
+            </Text>
+            <Text style={{ color: '#1E293B', fontSize: 20, fontWeight: '900', marginTop: 4 }}>
+              900 - 1200 ml
+            </Text>
+            <Text style={{ color: '#475569', fontSize: 13, marginTop: 8, lineHeight: 20 }}>
+              Hari ini kamu sudah mencatat {totalMlToday} ml cairan dari target harian.
+            </Text>
+
+            <View style={{ marginTop: 14, height: 10, borderRadius: 999, backgroundColor: '#E2E8F0', overflow: 'hidden' }}>
+              <View
+                style={{
+                  width: `${Math.min((totalMlToday / dailyTargetMax) * 100, 100)}%`,
+                  height: '100%',
+                  borderRadius: 999,
+                  backgroundColor: targetStatusColor,
+                }}
+              />
+            </View>
+
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
+              <Text style={{ color: targetStatusColor, fontSize: 12, fontWeight: '800' }}>
+                Status: {dailyStatus}
+              </Text>
+              <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700' }}>
+                {Math.min(Math.round((totalMlToday / dailyTargetMax) * 100), 100)}%
+              </Text>
+            </View>
+
+            <View style={{ marginTop: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={{ color: '#64748B', fontSize: 12, fontWeight: '700' }}>
+                Skor Hari Ini
+              </Text>
+              <View style={{
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                borderRadius: 999,
+                backgroundColor: isTargetReached ? '#DCFCE7' : '#FEF3C7',
+              }}>
+                <Text style={{ color: targetStatusColor, fontSize: 12, fontWeight: '900' }}>
+                  {dailyScore}
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* ── DAFTAR REMINDER ── */}
+        <View style={{ marginHorizontal: 20, marginTop: 16 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
             <View>
               <Text style={{ color: '#1E293B', fontWeight: '900', fontSize: 18 }}>Daftar Cairan</Text>
@@ -415,7 +468,6 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
           ) : (
             queue.map((item) => {
               const isSynced = item.sync_status === 'synced';
-              const isAlarmActive = Array.isArray(item.alarm_notification_ids) && item.alarm_notification_ids.length > 0;
 
               return (
                 <View key={item.local_id} style={{
@@ -486,21 +538,6 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
                       "{item.catatan_asupan}"
                     </Text>
                   ) : null}
-
-                  {/* Alarm status */}
-                  <View style={{
-                    marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 6,
-                    backgroundColor: isAlarmActive ? '#F0FDF4' : '#F8FAFC',
-                    paddingHorizontal: 10, paddingVertical: 7, borderRadius: 10,
-                  }}>
-                    <Bell size={12} color={isAlarmActive ? '#059669' : '#CBD5E1'} />
-                    <Text style={{
-                      fontSize: 11, fontWeight: '700',
-                      color: isAlarmActive ? '#059669' : '#94A3B8',
-                    }}>
-                      {isAlarmActive ? 'Alarm Aktif Otomatis' : 'Menyiapkan Alarm...'}
-                    </Text>
-                  </View>
 
                   {/* Error */}
                   {item.last_error && (
@@ -661,6 +698,9 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
                 value={jumlahMl}
                 onChangeText={(text) => setJumlahMl(text.replace(/[^0-9]/g, ''))}
               />
+              <Text style={{ color: '#64748B', fontSize: 12, lineHeight: 18, marginTop: -8, marginBottom: 16 }}>
+                Gunakan gelas dengan ukuran volume yang telah diketahui (misalnya 250 ml) untuk memudahkan proses pencatatan.
+              </Text>
 
               {/* Waktu */}
               {Platform.OS === 'web' ? (

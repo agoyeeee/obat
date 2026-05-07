@@ -3,9 +3,7 @@ import {
   getPendingPatientReminderCairan,
   markPatientReminderCairanSyncFailed,
   markPatientReminderCairanSyncSuccess,
-  updatePatientReminderCairanAlarmIds,
 } from '../storage/patientReminderCairanStorage';
-import { scheduleReminderCairanAlarm } from './reminderCairanAlarmService';
 
 export const syncPendingReminderCairan = async (profile) => {
   if (!profile) {
@@ -45,25 +43,6 @@ export const syncPendingReminderCairan = async (profile) => {
     }
 
     const latestQueue = await getPendingPatientReminderCairan();
-    const syncedItems = pendingItems.filter((item) => syncedIds.includes(item.local_id));
-
-    for (const item of syncedItems) {
-      const serverId = serverMap[item.local_id];
-      if (!serverId) continue;
-      try {
-        const notificationIds = await scheduleReminderCairanAlarm({
-          id: serverId,
-          minuman: item.minuman,
-          jumlah_ml: item.jumlah_ml,
-          waktu: item.waktu,
-          alarm_notification_ids: item.alarm_notification_ids,
-        });
-        await updatePatientReminderCairanAlarmIds(item.local_id, notificationIds);
-      } catch (error) {
-        console.error('Failed to schedule cairan alarm:', error?.message || error);
-      }
-    }
-
     return { syncedCount: syncedIds.length, pendingCount: latestQueue.length, skipped: false };
   } catch (error) {
     const pendingIds = pendingItems.map((item) => item.local_id);
