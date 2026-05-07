@@ -10,6 +10,8 @@ import PatientHomeScreen from '../screens/pasien/PatientHomeScreen';
 import PatientDashboardScreen from '../screens/pasien/PatientDashboardScreen';
 import PatientReminderObatScreen from '../screens/pasien/PatientReminderObatScreen';
 import PatientReminderCairanScreen from '../screens/pasien/PatientReminderCairanScreen';
+import PatientInformasiObatListScreen from '../screens/pasien/PatientInformasiObatListScreen';
+import PatientInformasiObatDetailScreen from '../screens/pasien/PatientInformasiObatDetailScreen';
 
 import PatientDetailScreen from '../screens/apoteker/PatientDetailScreen';
 import SelectBrandScreen from '../screens/apoteker/SelectBrandScreen';
@@ -61,6 +63,7 @@ export default function AppNavigator() {
 
   const [selectedRole, setSelectedRole] = useState(null);
   const [patientProfile, setPatientProfile] = useState(null);
+  const [selectedObatInfo, setSelectedObatInfo] = useState(null);
 
   const isAutoSyncingRef = useRef(false);
 
@@ -207,6 +210,10 @@ export default function AppNavigator() {
   const handlePatientMenu = async (menuKey) => {
     if (menuKey === 'obat') return setSelectedRole('pasien-reminder-obat');
     if (menuKey === 'cairan') return setSelectedRole('pasien-reminder-cairan');
+    if (menuKey === 'informasi-obat') {
+      setSelectedObatInfo(null);
+      return setSelectedRole('pasien-informasi-obat');
+    }
     if (menuKey === 'tanya-apoteker') {
       await openRandomApotekerWhatsApp(patientProfile);
       return;
@@ -220,6 +227,16 @@ export default function AppNavigator() {
 
   const handleBackToDashboard = () =>
     setSelectedRole('pasien-dashboard');
+
+  const handleOpenObatInfoDetail = (obat) => {
+    setSelectedObatInfo(obat);
+    setSelectedRole('pasien-informasi-obat-detail');
+  };
+
+  const handleBackToObatInfoList = () => {
+    setSelectedObatInfo(null);
+    setSelectedRole('pasien-informasi-obat');
+  };
 
   const handleClearPatientProfile = async () => {
     await clearPatientProfile();
@@ -282,6 +299,26 @@ export default function AppNavigator() {
                   {...props}
                   profile={patientProfile}
                   onBack={handleBackToDashboard}
+                />
+              )}
+            </Stack.Screen>
+          ) : selectedRole === 'pasien-informasi-obat-detail' && patientProfile && selectedObatInfo ? (
+            <Stack.Screen name="PatientInformasiObatDetail">
+              {(props) => (
+                <PatientInformasiObatDetailScreen
+                  {...props}
+                  obat={selectedObatInfo}
+                  onBack={handleBackToObatInfoList}
+                />
+              )}
+            </Stack.Screen>
+          ) : selectedRole === 'pasien-informasi-obat' && patientProfile ? (
+            <Stack.Screen name="PatientInformasiObatList">
+              {(props) => (
+                <PatientInformasiObatListScreen
+                  {...props}
+                  onBack={handleBackToDashboard}
+                  onOpenDetail={handleOpenObatInfoDetail}
                 />
               )}
             </Stack.Screen>

@@ -16,6 +16,7 @@ import {
   Pencil,
   HeartPulse,
   Pill,
+  BookOpen,
 } from 'lucide-react-native';
 
 export default function PatientDashboardScreen({ profile, onEditProfile, onBack, onOpenMenu }) {
@@ -59,6 +60,13 @@ export default function PatientDashboardScreen({ profile, onEditProfile, onBack,
 
   const menuItems = [
     {
+      key: 'informasi-obat',
+      title: 'Informasi Obat',
+      subtitle: 'Lihat detail obat',
+      icon: <BookOpen color="#fff" size={20} />,
+      gradientColors: ['#0D9488', '#14B8A6'],
+    },
+    {
       key: 'obat',
       title: 'Pengingat Minum Obat',
       subtitle: 'Jadwal & tracking',
@@ -73,18 +81,18 @@ export default function PatientDashboardScreen({ profile, onEditProfile, onBack,
       gradientColors: ['#0EA5E9', '#38BDF8'],
     },
     {
-      key: 'tanya',
-      title: 'Tanya Apoteker',
-      subtitle: 'Konsultasi cepat',
-      icon: <MessageCircle color="#fff" size={20} />,
-      gradientColors: ['#10B981', '#34D399'],
-    },
-    {
       key: 'kuisioner',
       title: 'Kuisioner',
       subtitle: 'Evaluasi kondisi',
       icon: <ClipboardList color="#fff" size={20} />,
       gradientColors: ['#F59E0B', '#FCD34D'],
+    },
+    {
+      key: 'tanya',
+      title: 'Tanya Apoteker',
+      subtitle: 'Konsultasi cepat',
+      icon: <MessageCircle color="#fff" size={20} />,
+      gradientColors: ['#10B981', '#34D399'],
     },
   ];
 
@@ -247,7 +255,7 @@ export default function PatientDashboardScreen({ profile, onEditProfile, onBack,
         <View style={{ marginTop: 28, paddingHorizontal: 20 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 16 }}>
             <Text style={{ color: '#1E293B', fontWeight: '900', fontSize: 18 }}>Menu Utama</Text>
-            <Text style={{ color: '#94A3B8', fontSize: 12 }}>4 fitur tersedia</Text>
+            <Text style={{ color: '#94A3B8', fontSize: 12 }}>5 fitur tersedia</Text>
           </View>
 
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -6 }}>
