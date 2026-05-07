@@ -66,7 +66,7 @@ serve-mobile-build: ensure-android-localprops
 	cd mobile && npm run android:dev
 
 run:
-	powershell -NoProfile -Command "Start-Process powershell -ArgumentList '-NoExit','-Command','cd ''$(CURDIR)\\backend''; php artisan serve'"
+	powershell -NoProfile -Command "Start-Process powershell -ArgumentList '-NoExit','-Command','cd ''$(CURDIR)\\backend''; php artisan serve --host 0.0.0.0 --port 8000'"
 	powershell -NoProfile -Command "Start-Process powershell -ArgumentList '-NoExit','-Command','cd ''$(CURDIR)\\mobile''; npm run start'"
 	@echo "Backend and mobile (development build dev client) started in separate windows."
 
