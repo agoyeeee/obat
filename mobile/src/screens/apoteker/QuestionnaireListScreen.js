@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { View, Text, ScrollView, Pressable, ActivityIndicator, Modal } from 'react-native';
+import { View, Text, ScrollView, Pressable, ActivityIndicator, Modal, TextInput } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { ClipboardList, MessageSquareText, FileText, Clock3, UserRound, ChevronRight } from 'lucide-react-native';
+import { ClipboardList, MessageSquareText, FileText, Clock3, UserRound, ChevronRight, Search } from 'lucide-react-native';
 import { fetchApotekerKuisionerRekaps } from '../../services/patientService';
 import { formatDateDDMMYY } from '../../utils/date';
 
@@ -180,6 +180,7 @@ export default function QuestionnaireListScreen() {
   const [loading, setLoading] = useState(true);
   const [rekaps, setRekaps] = useState([]);
   const [selectedRekap, setSelectedRekap] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const loadData = async () => {
     try {
@@ -208,6 +209,15 @@ export default function QuestionnaireListScreen() {
     };
   }, [rekaps]);
 
+  const filteredRekaps = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return rekaps;
+    return rekaps.filter((rekap) => {
+      const name = String(rekap.pasien?.nama || rekap.pasien?.nama_lengkap || '').toLowerCase();
+      return name.includes(query);
+    });
+  }, [rekaps, searchQuery]);
+
   const renderHeader = () => (
     <View style={{ backgroundColor: '#FFFFFF', paddingTop: 64, paddingBottom: 20, paddingHorizontal: 24, borderBottomWidth: 1.5, borderBottomColor: '#EEF0EF' }}>
       <Text style={{ fontSize: 24, fontWeight: '900', color: '#1A2820', letterSpacing: -0.6 }}>Menu Kuisioner</Text>
@@ -223,6 +233,17 @@ export default function QuestionnaireListScreen() {
         <View style={{ backgroundColor: '#F8FAFA', borderRadius: 16, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 10 }}>
           <Text style={{ fontSize: 12, fontWeight: '800', color: '#64748B' }}>Terbaru: {formatDate(summary.latestDate)}</Text>
         </View>
+      </View>
+
+      <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', borderWidth: 1.5, borderColor: '#EEF0EF', borderRadius: 18, paddingHorizontal: 16, paddingVertical: 12, marginTop: 8 }}>
+        <Search color="#9DB0AA" size={18} />
+        <TextInput
+          style={{ flex: 1, marginLeft: 10, fontSize: 14, fontWeight: '600', color: '#1A2820' }}
+          placeholder="Cari nama pasien..."
+          placeholderTextColor="#9DB0AA"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
       </View>
     </View>
   );
@@ -246,8 +267,8 @@ export default function QuestionnaireListScreen() {
           <ActivityIndicator size="large" color="#0D7A6A" />
           <Text style={{ marginTop: 12, color: '#9DB0AA', fontWeight: '700' }}>Memuat rekap kuisioner...</Text>
         </View>
-      ) : rekaps.length > 0 ? (
-        rekaps.map((rekap) => (
+      ) : filteredRekaps.length > 0 ? (
+        filteredRekaps.map((rekap) => (
           <Pressable
             key={rekap.id}
             onPress={() => setSelectedRekap(rekap)}
@@ -290,7 +311,9 @@ export default function QuestionnaireListScreen() {
       ) : (
         <View style={{ backgroundColor: '#FFFFFF', borderRadius: 28, padding: 30, alignItems: 'center', borderWidth: 1.5, borderColor: '#EEF0EF' }}>
           <ClipboardList color="#CBD5E1" size={56} />
-          <Text style={{ color: '#9DB0AA', fontSize: 16, fontWeight: '700', marginTop: 16, textAlign: 'center' }}>Belum ada data rekap kuisioner.</Text>
+          <Text style={{ color: '#9DB0AA', fontSize: 16, fontWeight: '700', marginTop: 16, textAlign: 'center' }}>
+            {searchQuery ? 'Data pasien tidak ditemukan.' : 'Belum ada data rekap kuisioner.'}
+          </Text>
         </View>
       )}
     </ScrollView>
