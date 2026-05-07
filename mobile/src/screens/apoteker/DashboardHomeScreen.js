@@ -13,6 +13,7 @@ import {
   LogOut,
   Pill,
 } from 'lucide-react-native';
+import { formatDateDDMMYY } from '../../utils/date';
 
 function SectionHeader({ title, onPressAll }) {
   return (
@@ -128,7 +129,7 @@ export default function DashboardHomeScreen({ route, navigation }) {
         <View className="flex-row items-start justify-between">
           <View>
             <Text className="text-sm font-bold text-[#9DB0AA] uppercase tracking-[1.5px]">
-              {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
+              {formatDateDDMMYY(new Date())}
             </Text>
             <Text className="text-4xl font-black text-[#1A2820] tracking-tight mt-1">
               Halo, {user?.nama?.split(' ')[0] || 'Apoteker'} 👋

@@ -3,6 +3,7 @@ import { View, Text, Pressable, ScrollView, ActivityIndicator, Modal } from 'rea
 import { StatusBar } from 'expo-status-bar';
 import api from '../../services/api';
 import { ArrowLeft, CheckCircle, XCircle, Droplets, Pill, Calendar, X, Info } from 'lucide-react-native';
+import { formatDateDDMMYY } from '../../utils/date';
 
 const MONTHS = [
   'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
@@ -164,7 +165,7 @@ export default function PatientDetailScreen({ route, navigation }) {
                     >
                       <View>
                         <Text className="text-[22px] font-black text-[#1A2820]">Minggu ke-{weekNum}</Text>
-                        <Text className="text-sm font-bold text-[#9DB0AA] mt-1">{rekap.minggu_mulai}</Text>
+                        <Text className="text-sm font-bold text-[#9DB0AA] mt-1">{formatDateDDMMYY(rekap.minggu_mulai)}</Text>
                         <View className={`self-start px-3 py-1.5 rounded-full mt-3 ${isPatuh ? 'bg-[#E8F8F3]' : 'bg-[#FFF0F2]'}`}>
                           <Text className={`text-xs font-black uppercase tracking-wider ${isPatuh ? 'text-[#0D7A6A]' : 'text-[#F43F5E]'}`}>
                             {isPatuh ? 'PATUH' : 'TIDAK PATUH'}
@@ -209,7 +210,7 @@ export default function PatientDetailScreen({ route, navigation }) {
                     >
                       <View>
                         <Text className="text-[22px] font-black text-[#1A2820]">Minggu ke-{weekNum}</Text>
-                        <Text className="text-sm font-bold text-[#9DB0AA] mt-1">{rekap.minggu_mulai}</Text>
+                        <Text className="text-sm font-bold text-[#9DB0AA] mt-1">{formatDateDDMMYY(rekap.minggu_mulai)}</Text>
                         <View className={`self-start px-3 py-1.5 rounded-full mt-3 ${isPatuh ? 'bg-[#E8F8F3]' : 'bg-[#FFF0F2]'}`}>
                           <Text className={`text-xs font-black uppercase tracking-wider ${isPatuh ? 'text-[#0D7A6A]' : 'text-[#F43F5E]'}`}>
                             {isPatuh ? 'PATUH' : 'TIDAK PATUH'}
@@ -241,7 +242,7 @@ export default function PatientDetailScreen({ route, navigation }) {
               <View className="flex-1">
                 <Text className="text-[26px] font-black text-[#1A2820]">Detail Harian</Text>
                 <Text className="text-base font-bold text-[#9DB0AA] mt-1">
-                  {detailData?.minggu_mulai ? `Mulai ${detailData.minggu_mulai}` : 'Memuat...'}
+                  {detailData?.minggu_mulai ? `Mulai ${formatDateDDMMYY(detailData.minggu_mulai)}` : 'Memuat...'}
                 </Text>
               </View>
               <Pressable 
@@ -261,7 +262,7 @@ export default function PatientDetailScreen({ route, navigation }) {
                     <View className="flex-row items-center mb-4 px-2">
                       <View className="w-2.5 h-2.5 rounded-full bg-[#0D7A6A] mr-3" />
                       <Text className="text-xl font-black text-[#1A2820] uppercase tracking-wide">
-                        {date}
+                        {formatDateDDMMYY(date)}
                       </Text>
                     </View>
                     
