@@ -32,7 +32,6 @@ class ReminderObatController extends Controller
             'sediaan'          => ['required', 'string', 'max:100'],
             'jumlah_obat'      => ['required', 'integer', 'min:1'],
             'waktu_konsumsi_id' => ['required', 'integer', 'exists:waktu_konsumsi,id'],
-            'cara_pemakaian'   => ['required', 'string'],
         ]);
 
         $reminder = ReminderObat::query()->create($validated);
@@ -60,7 +59,6 @@ class ReminderObatController extends Controller
             'sediaan'          => ['sometimes', 'string', 'max:100'],
             'jumlah_obat'      => ['sometimes', 'integer', 'min:1'],
             'waktu_konsumsi_id' => ['sometimes', 'integer', 'exists:waktu_konsumsi,id'],
-            'cara_pemakaian'   => ['sometimes', 'string'],
         ]);
 
         $reminder->update($validated);

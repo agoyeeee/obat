@@ -17,7 +17,6 @@ class ReminderObat extends Model
         'sediaan',
         'jumlah_obat',
         'waktu_konsumsi_id',
-        'cara_pemakaian',
     ];
 
     public function logs()

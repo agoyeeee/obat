@@ -13,7 +13,7 @@ class ObatController extends Controller
     public function publicList(): JsonResponse
     {
         $obats = Obat::query()
-            ->select(['id', 'nama_obat', 'dosis_target', 'dosis_inisiasi', 'frekuensi_default'])
+            ->select(['id', 'nama_obat', 'dosis_target', 'dosis_inisiasi', 'frekuensi_default', 'cara_pemakaian'])
             ->with('merks:id,obat_id,nama_merk')
             ->orderBy('nama_obat')
             ->get();

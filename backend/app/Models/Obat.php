@@ -18,6 +18,7 @@ class Obat extends Model
         'kontraindikasi',
         'efek_samping',
         'monitoring',
+        'cara_pemakaian',
     ];
 
     /** @var array<string,string> */

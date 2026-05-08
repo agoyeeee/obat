@@ -30,17 +30,6 @@ const SEDIAAN_OPTIONS = [
   { label: 'Sirup', value: 'sirup' },
 ];
 
-const ATURAN_OPTIONS = [
-  { label: 'Sebelum makan (±1 jam)', value: 'Sebelum makan (±1 jam)' },
-  { label: 'Sesudah makan (±2 jam)', value: 'Sesudah makan (±2 jam)' },
-  { label: 'Saat makan', value: 'Saat makan' },
-  { label: 'Sebelum tidur', value: 'Sebelum tidur' },
-  { label: 'Pagi hari', value: 'Pagi hari' },
-  { label: 'Siang hari', value: 'Siang hari' },
-  { label: 'Malam hari', value: 'Malam hari' },
-  { label: 'Custom', value: 'custom' },
-];
-
 const TIME_PRESETS = {
   2: ['07.00 - 19.00', '06.00 - 18.00', '08.00 - 20.00', '09.00 - 21.00', '10.00 - 22.00'],
   3: ['06.00 - 14.00 - 22.00', '07.00 - 15.00 - 23.00', '08.00 - 16.00 - 24.00', '09.00 - 17.00 - 01.00', '10.00 - 18.00 - 02.00'],
@@ -150,7 +139,6 @@ export default function PatientReminderObatScreen({ onBack, profile, onOpenDetai
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [jumlahObat, setJumlahObat] = useState('');
   const [aturanMinum, setAturanMinum] = useState('');
-  const [aturanCustom, setAturanCustom] = useState('');
   const [editingReminder, setEditingReminder] = useState(null);
 
   const loadQueueStats = useCallback(async () => {
@@ -221,24 +209,29 @@ export default function PatientReminderObatScreen({ onBack, profile, onOpenDetai
 
   const doseOptions = useMemo(() => resolveDoseOptions(selectedObat), [selectedObat]);
 
-  
-
   const frekuensiNumber = Number(frekuensi);
   const presetOptions = useMemo(() => {
     const presets = TIME_PRESETS[frekuensiNumber] || [];
     return presets.map((item) => ({ label: item, value: item }));
   }, [frekuensiNumber]);
 
-  const isCustomAturan = aturanMinum === 'custom';
   const isFrekuensiOne = frekuensiNumber === 1;
 
   const canSubmit = useMemo(() => {
     if (!selectedObatId || !dosis || !sediaan || !jumlahObat || !aturanMinum) return false;
     if (isFrekuensiOne && !jamCustom.trim()) return false;
     if (!isFrekuensiOne && !waktuKonsumsi) return false;
-    if (isCustomAturan && !aturanCustom.trim()) return false;
     return true;
-  }, [selectedObatId, dosis, sediaan, jumlahObat, aturanMinum, isFrekuensiOne, jamCustom, waktuKonsumsi, isCustomAturan, aturanCustom]);
+  }, [selectedObatId, dosis, sediaan, jumlahObat, aturanMinum, isFrekuensiOne, jamCustom, waktuKonsumsi]);
+
+  useEffect(() => {
+    if (!selectedObat) {
+      setAturanMinum('');
+      return;
+    }
+
+    setAturanMinum(selectedObat.cara_pemakaian || '');
+  }, [selectedObat]);
 
   const handleSelectObat = (obatId) => {
     setSelectedObatId(obatId);
@@ -249,6 +242,7 @@ export default function PatientReminderObatScreen({ onBack, profile, onOpenDetai
     const doseDisplay = getDoseDisplay(obat);
     setDosis(doseDisplay || '');
     setFrekuensi(String(freq || ''));
+    setAturanMinum(obat.cara_pemakaian || '');
     if (freq === 1) {
       setWaktuKonsumsi('');
     } else {
@@ -267,7 +261,6 @@ export default function PatientReminderObatScreen({ onBack, profile, onOpenDetai
     setJamCustom('');
     setJumlahObat('');
     setAturanMinum('');
-    setAturanCustom('');
     setSelectModal({ visible: false, label: '', options: [], onSelect: null });
     setEditingReminder(null);
   };
@@ -286,8 +279,6 @@ export default function PatientReminderObatScreen({ onBack, profile, onOpenDetai
     setWaktuKonsumsi(item.waktu_konsumsi || '');
     setJamCustom(item.frekuensi === 1 ? (item.waktu_konsumsi || '') : '');
     setJumlahObat(String(item.jumlah_obat || ''));
-    setAturanMinum(item.aturan_minum || '');
-    setAturanCustom('');
     setSelectModal({ visible: false, label: '', options: [], onSelect: null });
     setIsAddModalOpen(true);
   };
@@ -328,7 +319,7 @@ export default function PatientReminderObatScreen({ onBack, profile, onOpenDetai
       frekuensi: Number(frekuensi),
       waktu_konsumsi: isFrekuensiOne ? jamCustom.trim() : waktuKonsumsi,
       jumlah_obat: Number(jumlahObat),
-      aturan_minum: isCustomAturan ? aturanCustom.trim() : aturanMinum,
+      aturan_minum: aturanMinum,
     };
     try {
       setIsSaving(true);
@@ -920,42 +911,24 @@ export default function PatientReminderObatScreen({ onBack, profile, onOpenDetai
                 />
               </View>
 
-              {renderSelectField(
-                'Aturan Minum Obat',
-                aturanMinum
-                  ? (ATURAN_OPTIONS.find((item) => item.value === aturanMinum)?.label || aturanMinum)
-                  : '',
-                ATURAN_OPTIONS,
-                (value) => {
-                  setAturanMinum(value);
-                  if (value !== 'custom') setAturanCustom('');
-                  setSelectModal({ visible: false, label: '', options: [], onSelect: null });
-                },
-                setSelectModal
-              )}
-
-              {isCustomAturan && (
-                <View style={{ marginBottom: 16 }}>
-                  <Text style={{ fontSize: 10, fontWeight: '700', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 6 }}>
-                    Isi Aturan Custom
-                  </Text>
-                  <TextInput
-                    style={{
-                      borderWidth: 1.5, borderColor: '#E2E8F0', borderRadius: 14,
-                      paddingHorizontal: 16, paddingVertical: 14,
-                      backgroundColor: '#fff', color: '#1E293B',
-                      fontWeight: '500', fontSize: 14,
-                    }}
-                    placeholder="Contoh: Sesudah sarapan dan sebelum olahraga"
-                    placeholderTextColor="#94A3B8"
-                    value={aturanCustom}
-                    onChangeText={setAturanCustom}
-                  />
-                  <Text style={{ color: '#94A3B8', fontSize: 11, marginTop: 6 }}>
-                    Saran: isi waktu + kondisi, misalnya 30 menit setelah makan malam.
+              <View style={{ marginBottom: 16 }}>
+                {renderLabel('Aturan Minum Obat')}
+                <View style={{
+                  borderWidth: 1.5,
+                  borderColor: aturanMinum ? '#14B8A6' : '#E2E8F0',
+                  borderRadius: 16,
+                  paddingHorizontal: 16,
+                  paddingVertical: 14,
+                  backgroundColor: aturanMinum ? '#F5F3FF' : '#F8FAFC',
+                }}>
+                  <Text style={{ color: aturanMinum ? '#1E293B' : '#94A3B8', fontWeight: aturanMinum ? '600' : '400', fontSize: 14, lineHeight: 20 }}>
+                    {aturanMinum || 'Akan terisi otomatis dari data obat yang dipilih'}
                   </Text>
                 </View>
-              )}
+                <Text style={{ color: '#94A3B8', fontSize: 11, marginTop: 6 }}>
+                  Aturan minum mengikuti data bawaan obat dan tidak perlu dipilih lagi.
+                </Text>
+              </View>
             </View>
 
             {/* Modal Selector */}

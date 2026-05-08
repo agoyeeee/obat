@@ -26,7 +26,7 @@ export default function ReminderItem({ item, onDetail, onMarkIntake }) {
         </View>
         <View className="flex-row items-start">
           <Info color="#94A3B8" size={16} className="mt-0.5" />
-          <Text className="text-slate-600 text-sm font-bold ml-2.5 flex-1 leading-relaxed">{item.cara_pemakaian}</Text>
+          <Text className="text-slate-600 text-sm font-bold ml-2.5 flex-1 leading-relaxed">{item.obat?.cara_pemakaian || item.cara_pemakaian || '-'}</Text>
         </View>
       </View>
 

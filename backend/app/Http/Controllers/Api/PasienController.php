@@ -8,6 +8,7 @@ use App\Models\LogKonsumsiObat;
 use App\Models\Pasien;
 use App\Models\ReminderCairan;
 use App\Models\ReminderObat;
+use App\Models\Obat;
 use App\Models\WaktuKonsumsi;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -101,8 +102,16 @@ class PasienController extends Controller
                     'sediaan' => $item['sediaan'],
                     'jumlah_obat' => (int) $item['jumlah_obat'],
                     'waktu_konsumsi_id' => $waktu->id,
-                    'cara_pemakaian' => $item['aturan_minum'],
                 ];
+
+                // If client sent aturan_minum (previously mapped to cara_pemakaian on reminder),
+                // store it on the obat record so obat contains default usage instructions.
+                if (!empty($item['aturan_minum'])) {
+                    $obat = Obat::query()->find((int) $item['obat_id']);
+                    if ($obat) {
+                        $obat->update(['cara_pemakaian' => $item['aturan_minum']]);
+                    }
+                }
 
                 if (!empty($item['server_id'])) {
                     $reminder = ReminderObat::query()->findOrFail((int) $item['server_id']);
