@@ -42,9 +42,16 @@ import {
 } from '../services/patientService';
 
 import {
+  getPatientReminderObatQueue,
+  updatePatientReminderObatItem,
+  updatePatientReminderObatAlarmIds,
+} from '../storage/patientReminderObatStorage';
+
+import {
   addReminderAlarmResponseListener,
   addReminderAlarmDeliveryListener,
   initializeReminderAlarmNotifications,
+  cancelReminderObatAlarms,
 } from '../services/reminderAlarmService';
 
 import { enqueuePatientAlarmLog } from '../storage/patientAlarmLogStorage';
@@ -127,7 +134,16 @@ export default function AppNavigator() {
             waktu: data.waktu,
             alarm_waktu: data.alarmWaktu,
           });
+          await consumePatientReminderStock({
+            reminderObatId: data.reminderObatId || null,
+            reminderLocalId: data.reminderLocalId || null,
+          });
         } catch (error) {
+          await consumePatientReminderStock({
+            reminderObatId: data.reminderObatId || null,
+            reminderLocalId: data.reminderLocalId || null,
+          });
+
           await enqueuePatientAlarmLog({
             reminder_obat_id: data.reminderObatId || null,
             reminder_local_id: data.reminderLocalId || null,
@@ -205,6 +221,31 @@ export default function AppNavigator() {
   const handleLogout = async () => {
     await logout();
     setSelectedRole(null);
+  };
+
+  const consumePatientReminderStock = async ({ reminderObatId, reminderLocalId }) => {
+    const queue = await getPatientReminderObatQueue();
+    const target = queue.find((item) => {
+      if (reminderLocalId && item.local_id === reminderLocalId) return true;
+      if (reminderObatId && item.server_id && Number(item.server_id) === Number(reminderObatId)) return true;
+      return false;
+    });
+
+    if (!target) return;
+
+    const perDose = Math.max(1, Number(target.jumlah_per_minum || 1));
+    const currentStock = Math.max(0, Number(target.jumlah_obat || 0));
+    const nextStock = Math.max(0, currentStock - perDose);
+    const alarmIds = Array.isArray(target.alarm_notification_ids) ? target.alarm_notification_ids : [];
+
+    if (nextStock === 0 && alarmIds.length > 0) {
+      await cancelReminderObatAlarms(alarmIds);
+      await updatePatientReminderObatAlarmIds(target.local_id, []);
+    }
+
+    await updatePatientReminderObatItem(target.local_id, {
+      jumlah_obat: nextStock,
+    });
   };
 
   const handlePatientSubmit = async (profile) => {

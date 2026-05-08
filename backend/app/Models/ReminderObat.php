@@ -16,6 +16,7 @@ class ReminderObat extends Model
         'dosis',
         'sediaan',
         'jumlah_obat',
+        'jumlah_per_minum',
         'waktu_konsumsi_id',
     ];
 

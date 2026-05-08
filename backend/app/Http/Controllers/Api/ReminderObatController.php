@@ -31,8 +31,13 @@ class ReminderObatController extends Controller
             'dosis'            => ['required', 'string', 'max:100'],
             'sediaan'          => ['required', 'string', 'max:100'],
             'jumlah_obat'      => ['required', 'integer', 'min:1'],
+            'jumlah_per_minum' => ['nullable', 'integer', 'min:1'],
             'waktu_konsumsi_id' => ['required', 'integer', 'exists:waktu_konsumsi,id'],
         ]);
+
+        if (!array_key_exists('jumlah_per_minum', $validated) || $validated['jumlah_per_minum'] === null) {
+            $validated['jumlah_per_minum'] = 1;
+        }
 
         $reminder = ReminderObat::query()->create($validated);
 
@@ -58,8 +63,17 @@ class ReminderObatController extends Controller
             'dosis'            => ['sometimes', 'string', 'max:100'],
             'sediaan'          => ['sometimes', 'string', 'max:100'],
             'jumlah_obat'      => ['sometimes', 'integer', 'min:1'],
+            'jumlah_per_minum' => ['sometimes', 'nullable', 'integer', 'min:1'],
             'waktu_konsumsi_id' => ['sometimes', 'integer', 'exists:waktu_konsumsi,id'],
         ]);
+
+        if (array_key_exists('jumlah_per_minum', $validated) && $validated['jumlah_per_minum'] === null) {
+            $validated['jumlah_per_minum'] = 1;
+        }
+
+        if (!array_key_exists('jumlah_per_minum', $validated)) {
+            $validated['jumlah_per_minum'] = $reminder->jumlah_per_minum ?? 1;
+        }
 
         $reminder->update($validated);
 

@@ -74,6 +74,12 @@ class MonitoringController extends Controller
             'status' => 'required|in:diminum,terlewat'
         ]);
 
+        $existingLog = LogKonsumsiObat::query()->where([
+            'reminder_obat_id' => $validated['reminder_obat_id'],
+            'tanggal' => $validated['tanggal'],
+            'waktu' => $validated['waktu'],
+        ])->first();
+
         $log = LogKonsumsiObat::updateOrCreate(
             [
                 'reminder_obat_id' => $validated['reminder_obat_id'],
@@ -86,6 +92,13 @@ class MonitoringController extends Controller
                 'skor' => $validated['status'] === 'diminum' ? 1 : 0,
             ]
         );
+
+        if ($validated['status'] === 'diminum' && (!$existingLog || $existingLog->status !== 'diminum')) {
+            $reminder = \App\Models\ReminderObat::query()->findOrFail($validated['reminder_obat_id']);
+            $perDose = max(1, (int) ($reminder->jumlah_per_minum ?? 1));
+            $reminder->jumlah_obat = max(0, (int) $reminder->jumlah_obat - $perDose);
+            $reminder->save();
+        }
 
         return response()->json([
             'message' => 'Log berhasil disimpan',
@@ -113,11 +126,11 @@ class MonitoringController extends Controller
         // Find all weeks in this month
         $weeks = [];
         $currentDate = $startOfMonth->copy();
-        
+
         while ($currentDate->lte($endOfMonth)) {
             $weekStart = $currentDate->copy();
             $weekEnd = $currentDate->copy()->addDays(6);
-            
+
             // OBAT Stats
             $logsObat = LogKonsumsiObat::where('pasien_id', $pasienId)
                 ->whereBetween('tanggal', [$weekStart->toDateString(), $weekEnd->toDateString()])
@@ -165,7 +178,7 @@ class MonitoringController extends Controller
         // 1. Reminder Stats Today (Medicine)
         $totalReminders = DB::table('reminder_obat')->count();
         $logsToday = LogKonsumsiObat::where('tanggal', $today)->get();
-        
+
         $takenCount = $logsToday->where('status', 'diminum')->count();
         $missedCount = $logsToday->where('status', 'terlewat')->count();
         $notYetCount = max(0, $totalReminders - $logsToday->count());
@@ -184,7 +197,7 @@ class MonitoringController extends Controller
             ->pluck('pasien_id');
 
         $allAlertPatientIds = $problematicPatientIds->merge($criticalPatientIds)->unique();
-        
+
         $problematicPatients = Pasien::whereIn('id', $allAlertPatientIds)
             ->with(['logsObat' => function($q) use ($today) {
                 $q->where('tanggal', $today)->latest();

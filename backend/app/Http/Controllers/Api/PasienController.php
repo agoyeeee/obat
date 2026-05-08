@@ -52,6 +52,7 @@ class PasienController extends Controller
             'reminders.*.dosis' => ['required', 'string', 'max:100'],
             'reminders.*.sediaan' => ['required', 'string', 'max:100'],
             'reminders.*.jumlah_obat' => ['required', 'integer', 'min:1'],
+            'reminders.*.jumlah_per_minum' => ['nullable', 'integer', 'min:1'],
             'reminders.*.frekuensi' => ['required', 'integer', 'min:1', 'max:24'],
             'reminders.*.waktu_konsumsi' => ['required', 'string', 'max:255'],
             'reminders.*.aturan_minum' => ['required', 'string', 'max:255'],
@@ -101,6 +102,7 @@ class PasienController extends Controller
                     'dosis' => $item['dosis'],
                     'sediaan' => $item['sediaan'],
                     'jumlah_obat' => (int) $item['jumlah_obat'],
+                    'jumlah_per_minum' => (int) ($item['jumlah_per_minum'] ?? 1),
                     'waktu_konsumsi_id' => $waktu->id,
                 ];
 
@@ -157,9 +159,20 @@ class PasienController extends Controller
         $waktu = $validated['waktu'] ?? $loggedAt->format('H:i:s');
         $alarmWaktu = $validated['alarm_waktu'] ?? null;
         $skor = $this->calculateSkorFromAlarmTime($tanggal, $waktu, $alarmWaktu);
+        $existingLog = LogKonsumsiObat::query()->where([
+            'reminder_obat_id' => $reminder->id,
+            'tanggal' => $tanggal,
+            'waktu' => $waktu,
+        ])->first();
 
         if ($alarmWaktu && $status === 'diminum' && $skor === 0) {
             $status = 'terlewat';
+        }
+
+        if ($status === 'diminum' && (!$existingLog || $existingLog->status !== 'diminum')) {
+            $perDose = max(1, (int) ($reminder->jumlah_per_minum ?? 1));
+            $reminder->jumlah_obat = max(0, (int) $reminder->jumlah_obat - $perDose);
+            $reminder->save();
         }
 
         $log = LogKonsumsiObat::query()->updateOrCreate(

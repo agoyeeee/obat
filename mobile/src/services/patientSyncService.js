@@ -32,6 +32,7 @@ export const syncPendingReminderObat = async (profile) => {
         dosis: item.dosis,
         sediaan: item.sediaan,
         jumlah_obat: item.jumlah_obat,
+        jumlah_per_minum: item.jumlah_per_minum || 1,
         frekuensi: item.frekuensi,
         waktu_konsumsi: item.waktu_konsumsi,
         aturan_minum: item.aturan_minum,

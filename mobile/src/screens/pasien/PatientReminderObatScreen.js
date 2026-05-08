@@ -138,6 +138,7 @@ export default function PatientReminderObatScreen({ onBack, profile, onOpenDetai
   const [jamCustom, setJamCustom] = useState('');
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [jumlahObat, setJumlahObat] = useState('');
+  const [jumlahPerMinum, setJumlahPerMinum] = useState('');
   const [aturanMinum, setAturanMinum] = useState('');
   const [editingReminder, setEditingReminder] = useState(null);
 
@@ -218,11 +219,11 @@ export default function PatientReminderObatScreen({ onBack, profile, onOpenDetai
   const isFrekuensiOne = frekuensiNumber === 1;
 
   const canSubmit = useMemo(() => {
-    if (!selectedObatId || !dosis || !sediaan || !jumlahObat || !aturanMinum) return false;
+    if (!selectedObatId || !dosis || !sediaan || !jumlahObat || !jumlahPerMinum || !aturanMinum) return false;
     if (isFrekuensiOne && !jamCustom.trim()) return false;
     if (!isFrekuensiOne && !waktuKonsumsi) return false;
     return true;
-  }, [selectedObatId, dosis, sediaan, jumlahObat, aturanMinum, isFrekuensiOne, jamCustom, waktuKonsumsi]);
+  }, [selectedObatId, dosis, sediaan, jumlahObat, jumlahPerMinum, aturanMinum, isFrekuensiOne, jamCustom, waktuKonsumsi]);
 
   useEffect(() => {
     if (!selectedObat) {
@@ -260,6 +261,7 @@ export default function PatientReminderObatScreen({ onBack, profile, onOpenDetai
     setWaktuKonsumsi('');
     setJamCustom('');
     setJumlahObat('');
+    setJumlahPerMinum('');
     setAturanMinum('');
     setSelectModal({ visible: false, label: '', options: [], onSelect: null });
     setEditingReminder(null);
@@ -279,6 +281,7 @@ export default function PatientReminderObatScreen({ onBack, profile, onOpenDetai
     setWaktuKonsumsi(item.waktu_konsumsi || '');
     setJamCustom(item.frekuensi === 1 ? (item.waktu_konsumsi || '') : '');
     setJumlahObat(String(item.jumlah_obat || ''));
+    setJumlahPerMinum(String(item.jumlah_per_minum || ''));
     setSelectModal({ visible: false, label: '', options: [], onSelect: null });
     setIsAddModalOpen(true);
   };
@@ -286,7 +289,7 @@ export default function PatientReminderObatScreen({ onBack, profile, onOpenDetai
   const autoScheduleAlarms = useCallback(async (items) => {
     if (isAutoSchedulingAlarm) return;
     const candidates = (items || []).filter(
-      (item) => item.sync_status === 'synced' && item.server_id &&
+      (item) => item.sync_status === 'synced' && item.server_id && Number(item.jumlah_obat || 0) > 0 &&
         (!Array.isArray(item.alarm_notification_ids) || item.alarm_notification_ids.length === 0)
     );
     if (candidates.length === 0) return;
@@ -319,6 +322,7 @@ export default function PatientReminderObatScreen({ onBack, profile, onOpenDetai
       frekuensi: Number(frekuensi),
       waktu_konsumsi: isFrekuensiOne ? jamCustom.trim() : waktuKonsumsi,
       jumlah_obat: Number(jumlahObat),
+      jumlah_per_minum: Number(jumlahPerMinum),
       aturan_minum: aturanMinum,
     };
     try {
@@ -587,6 +591,7 @@ export default function PatientReminderObatScreen({ onBack, profile, onOpenDetai
             reminderItems.map((item) => {
               const isSynced = item.sync_status === 'synced';
               const isAlarmActive = Array.isArray(item.alarm_notification_ids) && item.alarm_notification_ids.length > 0;
+              const isStockEmpty = Number(item.jumlah_obat || 0) === 0;
 
               return (
                 <View key={item.local_id} style={{
@@ -637,6 +642,8 @@ export default function PatientReminderObatScreen({ onBack, profile, onOpenDetai
                   {/* Info rows */}
                   {[
                     { label: 'Dosis', value: `${item.dosis} · ${item.frekuensi}x per hari` },
+                    { label: 'Sisa', value: `${item.jumlah_obat || 0} pcs` },
+                    { label: '1x Minum', value: `${item.jumlah_per_minum || 1} pcs` },
                     { label: 'Waktu', value: item.waktu_konsumsi },
                     { label: 'Aturan', value: item.aturan_minum },
                   ].map((row, i) => (
@@ -649,17 +656,19 @@ export default function PatientReminderObatScreen({ onBack, profile, onOpenDetai
                   {/* Alarm status */}
                   <View style={{
                     marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 6,
-                    backgroundColor: isAlarmActive ? '#F0FDF4' : '#F8FAFC',
+                    backgroundColor: isStockEmpty ? '#F1F5F9' : (isAlarmActive ? '#F0FDF4' : '#F8FAFC'),
                     paddingHorizontal: 10, paddingVertical: 7, borderRadius: 10,
                   }}>
-                    <Bell size={12} color={isAlarmActive ? '#059669' : '#CBD5E1'} />
+                    <Bell size={12} color={isStockEmpty ? '#CBD5E1' : (isAlarmActive ? '#059669' : '#CBD5E1')} />
                     <Text style={{
                       fontSize: 11, fontWeight: '700',
-                      color: isAlarmActive ? '#059669' : '#94A3B8',
+                      color: isStockEmpty ? '#94A3B8' : (isAlarmActive ? '#059669' : '#94A3B8'),
                     }}>
-                      {isAlarmActive
-                        ? 'Alarm Aktif Otomatis'
-                        : isSynced ? 'Menyiapkan Alarm...' : 'Alarm Menunggu Sync'}
+                      {isStockEmpty
+                        ? 'Alarm nonaktif'
+                        : (isAlarmActive
+                          ? 'Alarm Aktif Otomatis'
+                          : isSynced ? 'Menyiapkan Alarm...' : 'Alarm Menunggu Sync')}
                     </Text>
                   </View>
 
@@ -908,6 +917,25 @@ export default function PatientReminderObatScreen({ onBack, profile, onOpenDetai
                   keyboardType="numeric"
                   value={jumlahObat}
                   onChangeText={(text) => setJumlahObat(text.replace(/[^0-9]/g, ''))}
+                />
+              </View>
+
+              <View style={{ marginBottom: 16 }}>
+                <Text style={{ fontSize: 10, fontWeight: '700', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 6 }}>
+                  Sekali Minum (Pcs)
+                </Text>
+                <TextInput
+                  style={{
+                    borderWidth: 1.5, borderColor: '#E2E8F0', borderRadius: 14,
+                    paddingHorizontal: 16, paddingVertical: 14,
+                    backgroundColor: '#fff', color: '#1E293B',
+                    fontWeight: '500', fontSize: 14,
+                  }}
+                  placeholder="Masukkan jumlah pcs per minum"
+                  placeholderTextColor="#94A3B8"
+                  keyboardType="numeric"
+                  value={jumlahPerMinum}
+                  onChangeText={(text) => setJumlahPerMinum(text.replace(/[^0-9]/g, ''))}
                 />
               </View>
 
