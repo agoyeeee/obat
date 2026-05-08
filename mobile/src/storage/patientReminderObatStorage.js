@@ -100,7 +100,9 @@ export const updatePatientReminderObatItem = async (localId, patch = {}) => {
   });
 
   await storePatientReminderObatQueue(updated);
-  return updated;
+  // Return the updated item object for convenience to callers
+  const found = updated.find((it) => it.local_id === localId);
+  return found || null;
 };
 
 export const deletePatientReminderObatItem = async (localId) => {

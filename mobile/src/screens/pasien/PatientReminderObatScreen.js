@@ -9,6 +9,8 @@ import {
   ArrowLeft, Pill, CloudUpload, CircleCheck, Clock3,
   Plus, X, Bell, ChevronDown, Pencil, Trash2, AlertCircle, ChevronRight,
 } from 'lucide-react-native';
+import { HelpCircle } from 'lucide-react-native';
+import PatientInformasiObatDetailScreen from './PatientInformasiObatDetailScreen';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { fetchPublicObatList } from '../../services/patientService';
 import { syncPendingReminderObat } from '../../services/patientSyncService';
@@ -99,7 +101,7 @@ const renderLabel = (label) => (
 );
 
 // ── SELECT FIELD ──────────────────────────────────────────────
-const renderSelectField = (label, value, options, onChangeText, setSelectModal) => (
+const renderSelectField = (label, value, options, onChangeText, setSelectModal, rightElement) => (
   <View style={{ marginBottom: 16 }}>
     {renderLabel(label)}
     <TouchableOpacity
@@ -119,13 +121,13 @@ const renderSelectField = (label, value, options, onChangeText, setSelectModal) 
       <Text style={{ color: value ? '#1E293B' : '#94A3B8', fontWeight: value ? '600' : '400', fontSize: 14, flex: 1 }}>
         {value || 'Pilih opsi...'}
       </Text>
-      <ChevronRight color={value ? '#14B8A6' : '#CBD5E1'} size={18} />
+      {rightElement ? rightElement : <ChevronRight color={value ? '#14B8A6' : '#CBD5E1'} size={18} />}
     </TouchableOpacity>
   </View>
 );
 
 // ── MAIN SCREEN ───────────────────────────────────────────────
-export default function PatientReminderObatScreen({ onBack, profile }) {
+export default function PatientReminderObatScreen({ onBack, profile, onOpenDetail }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -137,6 +139,7 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isAutoSchedulingAlarm, setIsAutoSchedulingAlarm] = useState(false);
   const [selectModal, setSelectModal] = useState({ visible: false, label: '', options: [], onSelect: null });
+  const [showObatInfoModal, setShowObatInfoModal] = useState(false);
 
   const [selectedObatId, setSelectedObatId] = useState('');
   const [dosis, setDosis] = useState('');
@@ -340,6 +343,13 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
           last_error: null,
         });
 
+        try {
+          const notificationIds = await scheduleReminderObatAlarms(updatedLocalItem);
+          await updatePatientReminderObatAlarmIds(updatedLocalItem.local_id, notificationIds);
+        } catch (alarmError) {
+          console.error('Failed to schedule alarm after edit:', alarmError?.message || alarmError);
+        }
+
         let syncWarning = '';
 
         if (isSyncedReminder) {
@@ -353,22 +363,9 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
           if (syncResult?.error) {
             syncWarning = syncResult.error;
           }
-
-          await loadQueueStats();
-          const latestQueue = await getPatientReminderObatQueue();
-          const updatedAfterSync = latestQueue.find((item) => item.local_id === editingReminder.local_id);
-          if (updatedAfterSync?.sync_status === 'synced' && updatedAfterSync.server_id) {
-            try {
-              const notificationIds = await scheduleReminderObatAlarms(updatedAfterSync);
-              await updatePatientReminderObatAlarmIds(updatedAfterSync.local_id, notificationIds);
-              await loadQueueStats();
-            } catch (alarmError) {
-              console.error('Failed to schedule alarm after edit:', alarmError?.message || alarmError);
-            }
-          }
-        } else {
-          await loadQueueStats();
         }
+
+        await loadQueueStats();
         setIsAddModalOpen(false);
         resetForm();
         Alert.alert(
@@ -383,19 +380,16 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
         return updatedLocalItem;
       }
       const createdItem = await addPatientReminderObat(payload);
+
+      try {
+        const notificationIds = await scheduleReminderObatAlarms(createdItem);
+        await updatePatientReminderObatAlarmIds(createdItem.local_id, notificationIds);
+      } catch (alarmError) {
+        console.error('Failed to schedule alarm after submit:', alarmError?.message || alarmError);
+      }
+
       const syncResult = await syncPendingReminderObat(profile);
       await loadQueueStats();
-      const latestQueue = await getPatientReminderObatQueue();
-      const createdAfterSync = latestQueue.find((item) => item.local_id === createdItem.local_id);
-      if (createdAfterSync?.sync_status === 'synced' && createdAfterSync.server_id) {
-        try {
-          const notificationIds = await scheduleReminderObatAlarms(createdAfterSync);
-          await updatePatientReminderObatAlarmIds(createdAfterSync.local_id, notificationIds);
-          await loadQueueStats();
-        } catch (alarmError) {
-          console.error('Failed to auto activate alarm after submit:', alarmError?.message || alarmError);
-        }
-      }
       setIsAddModalOpen(false);
       resetForm();
       Alert.alert(
@@ -781,7 +775,27 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
               shadowRadius: 16,
               elevation: 6,
             }}>
-              {renderSelectField('Nama Obat', selectedObat?.nama_obat || '', obatOptions, handleSelectObat, setSelectModal)}
+              {renderSelectField(
+                'Nama Obat',
+                selectedObat?.nama_obat || '',
+                obatOptions,
+                handleSelectObat,
+                setSelectModal,
+                selectedObat ? (
+                    <Pressable
+                      onPress={() => {
+                        if (!selectedObat) {
+                          Alert.alert('Pilih obat terlebih dahulu');
+                          return;
+                        }
+                        setShowObatInfoModal(true);
+                      }}
+                      style={{ padding: 6, marginRight: 6 }}
+                    >
+                      <HelpCircle color={selectedObat ? '#6366F1' : '#CBD5E1'} size={18} />
+                    </Pressable>
+                ) : null
+              )}
 
               
 
@@ -1048,6 +1062,16 @@ export default function PatientReminderObatScreen({ onBack, profile }) {
             </Pressable>
           </View>
         </SafeAreaView>
+      </Modal>
+      <Modal
+        visible={showObatInfoModal}
+        animationType="slide"
+        onRequestClose={() => setShowObatInfoModal(false)}
+      >
+        <PatientInformasiObatDetailScreen
+          obat={selectedObat}
+          onBack={() => setShowObatInfoModal(false)}
+        />
       </Modal>
     </View>
   );

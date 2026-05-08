@@ -1,5 +1,6 @@
 import * as Notifications from 'expo-notifications';
 import { Audio } from 'expo-av';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => {
@@ -9,15 +10,126 @@ Notifications.setNotificationHandler({
       console.log('Error playing alarm sound:', error);
     }
     return {
-      shouldShowAlert: true,
-      shouldPlaySound: true,
-      shouldSetBadge: false,
     };
   },
 });
 
 const CATEGORY_ID = 'REMINDER_OBAT_ACTIONS';
 const STOP_ACTION_ID = 'STOP_REMINDER_OBAT';
+const ALARM_MISS_TIMEOUT_MS = 5 * 60 * 1000;
+const PATIENT_ALARM_OCCURRENCES_KEY = '@patient_alarm_occurrences';
+
+const activeAlarmTimers = new Map();
+
+const buildAlarmOccurrenceKey = ({ reminderObatId, reminderLocalId, tanggal, alarmWaktu }) => {
+  const identifier = reminderObatId || reminderLocalId || 'unknown';
+  return `${identifier}:${tanggal}:${alarmWaktu || 'unknown'}`;
+};
+
+const readAlarmOccurrences = async () => {
+  try {
+    const raw = await AsyncStorage.getItem(PATIENT_ALARM_OCCURRENCES_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch (error) {
+    console.log('Error reading alarm occurrences:', error);
+    return {};
+  }
+};
+
+const storeAlarmOccurrences = async (items) => {
+  try {
+    await AsyncStorage.setItem(PATIENT_ALARM_OCCURRENCES_KEY, JSON.stringify(items));
+  } catch (error) {
+    console.log('Error storing alarm occurrences:', error);
+  }
+};
+
+const pruneOldAlarmOccurrences = async () => {
+  const occurrences = await readAlarmOccurrences();
+  const today = new Date();
+  const currentDateKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const filtered = Object.fromEntries(
+    Object.entries(occurrences).filter(([, value]) => value?.tanggal === currentDateKey)
+  );
+
+  if (Object.keys(filtered).length !== Object.keys(occurrences).length) {
+    await storeAlarmOccurrences(filtered);
+  }
+
+  return filtered;
+};
+
+const markAlarmOccurrenceProcessed = async (key, payload) => {
+  const occurrences = await pruneOldAlarmOccurrences();
+  occurrences[key] = {
+    ...payload,
+    processed_at: new Date().toISOString(),
+  };
+  await storeAlarmOccurrences(occurrences);
+};
+
+const isAlarmOccurrenceProcessed = async (key) => {
+  const occurrences = await pruneOldAlarmOccurrences();
+  return Boolean(occurrences[key]);
+};
+
+const clearAlarmOccurrenceTimer = (key) => {
+  const timer = activeAlarmTimers.get(key);
+  if (timer) {
+    clearTimeout(timer);
+    activeAlarmTimers.delete(key);
+  }
+};
+
+const startAlarmOccurrenceTimer = async (payload, onMissedAlarm) => {
+  const now = new Date();
+  const pad = (value) => String(value).padStart(2, '0');
+  const tanggal = payload.tanggal || `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  const key = buildAlarmOccurrenceKey({
+    reminderObatId: payload.reminderObatId,
+    reminderLocalId: payload.reminderLocalId,
+    tanggal,
+    alarmWaktu: payload.alarmWaktu || null,
+  });
+
+  clearAlarmOccurrenceTimer(key);
+
+  if (await isAlarmOccurrenceProcessed(key)) {
+    return key;
+  }
+
+  const timer = setTimeout(async () => {
+    activeAlarmTimers.delete(key);
+    if (await isAlarmOccurrenceProcessed(key)) {
+      return;
+    }
+
+    const missNow = new Date();
+    const missTanggal = `${missNow.getFullYear()}-${pad(missNow.getMonth() + 1)}-${pad(missNow.getDate())}`;
+    const missWaktu = `${pad(missNow.getHours())}:${pad(missNow.getMinutes())}:${pad(missNow.getSeconds())}`;
+
+    await markAlarmOccurrenceProcessed(key, {
+      ...payload,
+      tanggal: tanggal || missTanggal,
+      waktu: missWaktu,
+      status: 'terlewat',
+      logged_at: missNow.toISOString(),
+    });
+
+    if (typeof onMissedAlarm === 'function') {
+      await onMissedAlarm({
+        ...payload,
+        tanggal: tanggal || missTanggal,
+        waktu: missWaktu,
+        status: 'terlewat',
+        loggedAt: missNow.toISOString(),
+      });
+    }
+  }, ALARM_MISS_TIMEOUT_MS);
+
+  activeAlarmTimers.set(key, timer);
+  return key;
+};
 
 // Play alarm sound saat notif diterima
 export const playAlarmSound = async () => {
@@ -82,16 +194,6 @@ export const initializeReminderAlarmNotifications = async () => {
     }
   }
 
-  await Notifications.setNotificationCategoryAsync(CATEGORY_ID, [
-    {
-      identifier: STOP_ACTION_ID,
-      buttonTitle: 'Matikan Alarm',
-      options: {
-        opensAppToForeground: true,
-      },
-    },
-  ]);
-
   // Create Android notification channel with custom sound name (requires resource in android/app/src/main/res/raw)
   try {
     await Notifications.setNotificationChannelAsync('reminder_obat_channel', {
@@ -114,8 +216,8 @@ export const scheduleReminderObatAlarms = async (reminderItem) => {
     throw new Error('Izin notifikasi belum diberikan.');
   }
 
-  if (!reminderItem?.server_id) {
-    throw new Error('Reminder belum tersinkron ke server.');
+  if (!reminderItem?.local_id) {
+    throw new Error('Reminder belum valid.');
   }
 
   const times = parseTimes(reminderItem.waktu_konsumsi);
@@ -123,39 +225,36 @@ export const scheduleReminderObatAlarms = async (reminderItem) => {
     throw new Error('Format waktu konsumsi tidak valid untuk alarm.');
   }
 
+  const [time] = times;
+
   if (Array.isArray(reminderItem.alarm_notification_ids) && reminderItem.alarm_notification_ids.length > 0) {
     await Promise.all(
       reminderItem.alarm_notification_ids.map((id) => Notifications.cancelScheduledNotificationAsync(id))
     );
   }
 
-  const scheduledIds = [];
-  for (const time of times) {
-    const alarmWaktu = `${String(time.hour).padStart(2, '0')}:${String(time.minute).padStart(2, '0')}:00`;
-    const notificationId = await Notifications.scheduleNotificationAsync({
-      content: {
-        title: `Waktunya minum ${reminderItem.nama_obat}`,
-        body: `Dosis ${reminderItem.dosis} | Tap Matikan Alarm setelah diminum`,
-        sound: true,
-        channelId: 'reminder_obat_channel',
-        categoryIdentifier: CATEGORY_ID,
-        data: {
-          reminder_obat_id: reminderItem.server_id,
-          local_id: reminderItem.local_id,
-          alarm_waktu: alarmWaktu,
-        },
+  const alarmWaktu = `${String(time.hour).padStart(2, '0')}:${String(time.minute).padStart(2, '0')}:00`;
+  const notificationId = await Notifications.scheduleNotificationAsync({
+    content: {
+      title: `Waktunya minum ${reminderItem.nama_obat}`,
+      body: `Dosis ${reminderItem.dosis} | Tap notifikasi untuk matikan alarm`,
+      sound: true,
+      channelId: 'reminder_obat_channel',
+      data: {
+        reminder_obat_id: reminderItem.server_id || null,
+        reminder_local_id: reminderItem.local_id,
+        local_id: reminderItem.local_id,
+        alarm_waktu: alarmWaktu,
       },
-      trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.DAILY,
-        hour: time.hour,
-        minute: time.minute,
-      },
-    });
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DAILY,
+      hour: time.hour,
+      minute: time.minute,
+    },
+  });
 
-    scheduledIds.push(notificationId);
-  }
-
-  return scheduledIds;
+  return [notificationId];
 };
 
 export const cancelReminderObatAlarms = async (notificationIds = []) => {
@@ -168,16 +267,12 @@ export const cancelReminderObatAlarms = async (notificationIds = []) => {
   );
 };
 
-export const addReminderAlarmResponseListener = (onStopAlarm) => {
-  return Notifications.addNotificationResponseReceivedListener((response) => {
-    const actionId = response.actionIdentifier;
-    if (actionId !== STOP_ACTION_ID) {
-      return;
-    }
-
-    const reminderId = response.notification.request.content.data?.reminder_obat_id;
-    const alarmWaktu = response.notification.request.content.data?.alarm_waktu;
-    if (!reminderId) {
+export const addReminderAlarmDeliveryListener = (onAlarmDelivered) => {
+  return Notifications.addNotificationReceivedListener((notification) => {
+    const reminderObatId = notification.request.content.data?.reminder_obat_id;
+    const reminderLocalId = notification.request.content.data?.reminder_local_id;
+    const alarmWaktu = notification.request.content.data?.alarm_waktu;
+    if (!reminderObatId && !reminderLocalId) {
       return;
     }
 
@@ -186,12 +281,70 @@ export const addReminderAlarmResponseListener = (onStopAlarm) => {
     const tanggal = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
     const waktu = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
 
-    onStopAlarm({
-      reminderObatId: Number(reminderId),
-      loggedAt: now.toISOString(),
+    startAlarmOccurrenceTimer(
+      {
+        reminderObatId: reminderObatId ? Number(reminderObatId) : null,
+        reminderLocalId: reminderLocalId || null,
+        alarmWaktu: alarmWaktu || null,
+        tanggal,
+        waktu,
+      },
+      onAlarmDelivered
+    ).catch((error) => {
+      console.log('Failed to start alarm timeout:', error);
+    });
+  });
+};
+
+export const addReminderAlarmResponseListener = (onStopAlarm) => {
+  return Notifications.addNotificationResponseReceivedListener((response) => {
+    const reminderId = response.notification.request.content.data?.reminder_obat_id;
+    const reminderLocalId = response.notification.request.content.data?.reminder_local_id;
+    const alarmWaktu = response.notification.request.content.data?.alarm_waktu;
+    if (!reminderId && !reminderLocalId) {
+      return;
+    }
+
+    const now = new Date();
+    const pad = (value) => String(value).padStart(2, '0');
+    const tanggal = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+    const waktu = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    const key = buildAlarmOccurrenceKey({
+      reminderObatId: reminderId ? Number(reminderId) : null,
+      reminderLocalId: reminderLocalId || null,
       tanggal,
-      waktu,
       alarmWaktu: alarmWaktu || null,
     });
+
+    clearAlarmOccurrenceTimer(key);
+
+    isAlarmOccurrenceProcessed(key)
+      .then(async (processed) => {
+        if (processed) {
+          return;
+        }
+
+        await markAlarmOccurrenceProcessed(key, {
+          reminder_obat_id: reminderId ? Number(reminderId) : null,
+          reminder_local_id: reminderLocalId || null,
+          alarm_waktu: alarmWaktu || null,
+          tanggal,
+          waktu,
+          status: 'diminum',
+          logged_at: now.toISOString(),
+        });
+
+        onStopAlarm({
+          reminderObatId: reminderId ? Number(reminderId) : null,
+          reminderLocalId: reminderLocalId || null,
+          loggedAt: now.toISOString(),
+          tanggal,
+          waktu,
+          alarmWaktu: alarmWaktu || null,
+        });
+      })
+      .catch((error) => {
+        console.log('Failed to process alarm response:', error);
+      });
   });
 };

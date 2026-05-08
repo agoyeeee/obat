@@ -30,7 +30,8 @@ export const enqueuePatientAlarmLog = async (payload) => {
   const item = {
     local_id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     entity_type: payload.entity_type || 'obat',
-    reminder_obat_id: Number(payload.reminder_obat_id),
+    reminder_obat_id: payload.reminder_obat_id ? Number(payload.reminder_obat_id) : null,
+    reminder_local_id: payload.reminder_local_id || null,
     reminder_cairan_id: payload.reminder_cairan_id ? Number(payload.reminder_cairan_id) : null,
     status: payload.status || 'diminum',
     logged_at: payload.logged_at || new Date().toISOString(),

@@ -4,6 +4,7 @@ import {
   markPatientAlarmLogQueueError,
   removePatientAlarmLogQueueItems,
 } from '../storage/patientAlarmLogStorage';
+import { getPatientReminderObatQueue } from '../storage/patientReminderObatStorage';
 
 export const syncPendingAlarmLogs = async () => {
   const queue = await getPatientAlarmLogQueue();
@@ -11,8 +12,16 @@ export const syncPendingAlarmLogs = async () => {
     return { syncedCount: 0, skipped: true };
   }
 
+  const reminderQueue = await getPatientReminderObatQueue();
+  const reminderServerIdMap = new Map(
+    reminderQueue
+      .filter((item) => item.local_id && item.server_id)
+      .map((item) => [item.local_id, item.server_id])
+  );
+
   const syncedIds = [];
   const failedIds = [];
+  const deferredIds = [];
   let lastError = null;
 
   for (const item of queue) {
@@ -26,8 +35,14 @@ export const syncPendingAlarmLogs = async () => {
           waktu: item.waktu,
         });
       } else {
+        const resolvedReminderId = item.reminder_obat_id || reminderServerIdMap.get(item.reminder_local_id);
+        if (!resolvedReminderId) {
+          deferredIds.push(item.local_id);
+          continue;
+        }
+
         await publicLogKonsumsiObat({
-          reminder_obat_id: item.reminder_obat_id,
+          reminder_obat_id: resolvedReminderId,
           status: item.status,
           logged_at: item.logged_at,
           tanggal: item.tanggal,
@@ -53,6 +68,7 @@ export const syncPendingAlarmLogs = async () => {
   return {
     syncedCount: syncedIds.length,
     failedCount: failedIds.length,
+    deferredCount: deferredIds.length,
     skipped: false,
   };
 };

@@ -32,7 +32,6 @@ const TAHAP_1_FIELDS = {
 
 const TAHAP_2_FIELDS = {
   diagnosis: { label: 'Diagnosis Gagal Jantung', type: 'text', required: true, readonly: true },
-  waktu_diagnosis: { label: 'Waktu Diagnosis Gagal Jantung', type: 'text', required: true, readonly: true },
   penyakit_penyerta: { label: 'Penyakit Penyerta', type: 'select', required: true, options: ['Tidak', 'Ya'], subfield: 'alasan_penyakit' },
   herbal: { label: 'Menggunakan Obat Herbal', type: 'select', required: true, options: ['Tidak', 'Ya'], subfield: 'detail_herbal' },
   obat_jantung: { label: 'Obat Gagal Jantung yang Digunakan', type: 'repeat', fields: ['nama_obat', 'dosis', 'frekuensi', 'keterangan'] },
@@ -503,7 +502,6 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
         {currentTahap === 2 && (
           <View>
             {renderTextField('Diagnosis Gagal Jantung', formatDisplayDate(patientProfile?.tgl_diagnosa || ''), () => {}, true)}
-            {renderTextField('Waktu Diagnosis', formatDisplayDate(patientProfile?.tgl_diagnosa || ''), () => {}, true)}
             {renderSelectField('Penyakit Penyerta', tahap2Data.penyakit_penyerta, ['Tidak', 'Ya'], (v) => handleUpdateTahap2('penyakit_penyerta', v))}
             {tahap2Data.penyakit_penyerta === 'Ya' && renderTextField('Alasan Penyakit', tahap2Data.alasan_penyakit || '', (v) => handleUpdateTahap2('alasan_penyakit', v))}
             {renderSelectField('Menggunakan Obat Herbal', tahap2Data.herbal, ['Tidak', 'Ya'], (v) => handleUpdateTahap2('herbal', v))}

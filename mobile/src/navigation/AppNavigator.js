@@ -43,6 +43,7 @@ import {
 
 import {
   addReminderAlarmResponseListener,
+  addReminderAlarmDeliveryListener,
   initializeReminderAlarmNotifications,
 } from '../services/reminderAlarmService';
 
@@ -114,6 +115,10 @@ export default function AppNavigator() {
     const responseSubscription =
       addReminderAlarmResponseListener(async (data) => {
         try {
+          if (!data.reminderObatId) {
+            throw new Error('Reminder obat belum tersinkron.');
+          }
+
           await publicLogKonsumsiObat({
             reminder_obat_id: data.reminderObatId,
             status: 'diminum',
@@ -124,8 +129,46 @@ export default function AppNavigator() {
           });
         } catch (error) {
           await enqueuePatientAlarmLog({
-            reminder_obat_id: data.reminderObatId,
+            reminder_obat_id: data.reminderObatId || null,
+            reminder_local_id: data.reminderLocalId || null,
             status: 'diminum',
+            logged_at: data.loggedAt,
+            tanggal: data.tanggal,
+            waktu: data.waktu,
+            alarm_waktu: data.alarmWaktu,
+          });
+        }
+      });
+
+    const deliverySubscription =
+      addReminderAlarmDeliveryListener(async (data) => {
+        try {
+          if (data.reminderObatId) {
+            await publicLogKonsumsiObat({
+              reminder_obat_id: data.reminderObatId,
+              status: 'terlewat',
+              logged_at: data.loggedAt,
+              tanggal: data.tanggal,
+              waktu: data.waktu,
+              alarm_waktu: data.alarmWaktu,
+            });
+            return;
+          }
+
+          await enqueuePatientAlarmLog({
+            reminder_obat_id: null,
+            reminder_local_id: data.reminderLocalId || null,
+            status: 'terlewat',
+            logged_at: data.loggedAt,
+            tanggal: data.tanggal,
+            waktu: data.waktu,
+            alarm_waktu: data.alarmWaktu,
+          });
+        } catch (error) {
+          await enqueuePatientAlarmLog({
+            reminder_obat_id: data.reminderObatId || null,
+            reminder_local_id: data.reminderLocalId || null,
+            status: 'terlewat',
             logged_at: data.loggedAt,
             tanggal: data.tanggal,
             waktu: data.waktu,
@@ -154,6 +197,7 @@ export default function AppNavigator() {
       unsubscribeNetInfo();
       appStateSub.remove();
       responseSubscription.remove();
+      deliverySubscription.remove();
     };
   }, [patientProfile]);
 
@@ -258,6 +302,7 @@ export default function AppNavigator() {
                   {...props}
                   profile={patientProfile}
                   onBack={handleBackToDashboard}
+                  onOpenDetail={handleOpenObatInfoDetail}
                 />
               )}
             </Stack.Screen>

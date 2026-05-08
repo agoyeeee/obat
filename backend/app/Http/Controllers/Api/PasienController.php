@@ -149,6 +149,10 @@ class PasienController extends Controller
         $alarmWaktu = $validated['alarm_waktu'] ?? null;
         $skor = $this->calculateSkorFromAlarmTime($tanggal, $waktu, $alarmWaktu);
 
+        if ($alarmWaktu && $status === 'diminum' && $skor === 0) {
+            $status = 'terlewat';
+        }
+
         $log = LogKonsumsiObat::query()->updateOrCreate(
             [
                 'reminder_obat_id' => $reminder->id,
@@ -413,7 +417,7 @@ class PasienController extends Controller
             return 0;
         }
 
-        return $diffMinutes <= 15 ? 1 : 0;
+        return $diffMinutes <= 5 ? 1 : 0;
     }
 
     public function index(Request $request): JsonResponse
