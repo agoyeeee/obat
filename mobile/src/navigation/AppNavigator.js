@@ -268,7 +268,7 @@ export default function AppNavigator() {
       setSelectedObatInfo(null);
       return setSelectedRole('pasien-informasi-obat');
     }
-    if (menuKey === 'tanya-apoteker') {
+    if (menuKey === 'tanya' || menuKey === 'tanya-apoteker') {
       await openRandomApotekerWhatsApp(patientProfile);
       return;
     }
