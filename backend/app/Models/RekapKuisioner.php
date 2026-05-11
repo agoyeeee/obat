@@ -17,6 +17,11 @@ class RekapKuisioner extends Model
         'tahap_1_identitas',
         'tahap_2_riwayat',
         'tahap_3_efek_samping',
+        'tahap_4_kepatuhan',
+        'tahap_5_efikasi',
+        'tahap_6_pengetahuan',
+        'tahap_7_kualitas_hidup',
+        'tahap_8_kccq',
     ];
 
     protected function casts(): array
@@ -26,6 +31,11 @@ class RekapKuisioner extends Model
             'tahap_1_identitas' => 'array',
             'tahap_2_riwayat' => 'array',
             'tahap_3_efek_samping' => 'array',
+            'tahap_4_kepatuhan' => 'array',
+            'tahap_5_efikasi' => 'array',
+            'tahap_6_pengetahuan' => 'array',
+            'tahap_7_kualitas_hidup' => 'array',
+            'tahap_8_kccq' => 'array',
         ];
     }
 
