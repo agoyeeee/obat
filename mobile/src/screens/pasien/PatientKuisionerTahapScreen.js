@@ -49,7 +49,26 @@ const EFFECT_INFO = {
   'Gangguan ginjal': 'Gangguan ginjal adalah kondisi saat fungsi ginjal menurun sehingga ginjal tidak dapat menyaring darah dan membuang sisa zat dengan baik.',
 };
 
-const TAHAP_LABELS = ['Identitas Pasien', 'Riwayat Penyakit', 'Efek Samping'];
+const TAHAP_LABELS = ['Identitas Pasien', 'Riwayat Penyakit', 'Efek Samping', 'Kepatuhan Pengobatan'];
+
+const KEPATUHAN_QUESTIONS = [
+  'Saya lupa minum obat',
+  'Saya mengubah dosis minum obat?',
+  'Saya berhenti meminum obat sementara',
+  'Saya memutuskan untuk minum obat dengan dosis lebih kecil',
+  'Saya minum obat kurang dari petunjuk sebenarnya',
+];
+
+const SCALE_OPTIONS = ['Selalu', 'Sering', 'Kadang-kadang', 'Jarang', 'Tidak pernah'];
+
+const SCALE_MAP = {
+  'Selalu': 1,
+  'Sering': 2,
+  'Kadang-kadang': 3,
+  'Kadang kadang': 3,
+  'Jarang': 4,
+  'Tidak pernah': 5,
+};
 
 export default function PatientKuisionerTahapScreen({ route, navigation, onBack }) {
   const { patientProfile } = route.params;
@@ -66,6 +85,7 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
 
   const [tahap2Data, setTahap2Data] = useState({});
   const [tahap3Data, setTahap3Data] = useState({});
+  const [tahap4Data, setTahap4Data] = useState({});
   const [loading, setLoading] = useState(false);
   const [obatList, setObatList] = useState([]);
   const [isAddObatModalOpen, setIsAddObatModalOpen] = useState(false);
@@ -99,6 +119,7 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
   const handleUpdateTahap1 = (field, value) => setTahap1Data(prev => ({ ...prev, [field]: value }));
   const handleUpdateTahap2 = (field, value) => setTahap2Data(prev => ({ ...prev, [field]: value }));
   const handleUpdateTahap3 = (field, value) => setTahap3Data(prev => ({ ...prev, [field]: value }));
+  const handleUpdateTahap4 = (field, value) => setTahap4Data(prev => ({ ...prev, [field]: value }));
 
   const handleAddObat = () => {
     if (!newObat.nama_obat.trim() || !newObat.dosis.trim() || !newObat.frekuensi.trim()) {
@@ -135,6 +156,13 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
       const herbalOk = tahap2Data.herbal !== undefined && tahap2Data.herbal !== '';
       return penyakitOk && herbalOk && obatList.length > 0;
     }
+    if (currentTahap === 4) {
+      // require all kepatuhan questions answered
+      return KEPATUHAN_QUESTIONS.every((q, idx) => {
+        const key = `q_${idx + 1}`;
+        return tahap4Data[key] !== undefined && tahap4Data[key] !== '';
+      });
+    }
     return true;
   };
 
@@ -151,8 +179,19 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
         tahap_2_riwayat: { ...tahap2Data, obat_jantung_list: obatList, obat_herbal_list: herbalList },
         tahap_3_efek_samping: tahap3Data,
       };
-      await submitKuisionerAnswers(storedProfile.id, new Date().toISOString().split('T')[0], allResponses);
-      Alert.alert('Sukses', 'Kuisioner 3-tahap berhasil disimpan!', [
+      // convert tahap4 scale labels to numeric values if present
+      const tahap4_numeric = {};
+      if (tahap4Data && Object.keys(tahap4Data).length > 0) {
+        Object.keys(tahap4Data).forEach((k) => {
+          const v = tahap4Data[k];
+          tahap4_numeric[k] = SCALE_MAP[v] ?? (typeof v === 'number' ? v : null);
+        });
+      }
+
+      const payload = { ...allResponses, tahap_4_kepatuhan: tahap4_numeric };
+
+      await submitKuisionerAnswers(storedProfile.id, new Date().toISOString().split('T')[0], payload);
+      Alert.alert('Sukses', 'Kuisioner 4-tahap berhasil disimpan!', [
         { text: 'OK', onPress: handleExit },
       ]);
     } catch (error) {
@@ -295,7 +334,7 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
     </TouchableOpacity>
   );
 
-  const progressPercent = (currentTahap / 3) * 100;
+  const progressPercent = (currentTahap / 4) * 100;
 
   return (
     <View style={{ flex: 1, backgroundColor: '#F0F4FF', paddingTop: insets.top }}>
@@ -370,7 +409,7 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
               Tahap
             </Text>
             <Text style={{ color: '#1E293B', fontSize: 18, fontWeight: '900', marginTop: 2 }}>
-              {currentTahap} dari 3 — {TAHAP_LABELS[currentTahap - 1]}
+              {currentTahap} dari 4 — {TAHAP_LABELS[currentTahap - 1]}
             </Text>
           </View>
           <View style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: '#FEF3C7', alignItems: 'center', justifyContent: 'center' }}>
@@ -382,7 +421,7 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
 
         {/* Step dots */}
         <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
-          {[1, 2, 3].map((step) => (
+          {[1, 2, 3, 4].map((step) => (
             <View key={step} style={{ flex: 1, alignItems: 'center' }}>
               <View style={{
                 width: 28, height: 28, borderRadius: 14,
@@ -591,6 +630,53 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
             {tahap3Data.tindakan === 'Lainnya' && renderTextField('Tindakan Lainnya', tahap3Data.tindakan_lainnya || '', (v) => handleUpdateTahap3('tindakan_lainnya', v))}
           </View>
         )}
+
+        {currentTahap === 4 && (
+          <View>
+            <View style={{ marginBottom: 16 }}>
+              {renderLabel('KUESIONER KEPATUHAN PENGOBATAN TERHADAP GAGAL JANTUNG')}
+              <Text style={{ color: '#475569', marginBottom: 8 }}>Pilih salah satu skala untuk setiap pernyataan.</Text>
+              <View style={{ backgroundColor: '#fff', borderRadius: 20, borderWidth: 1.5, borderColor: '#FDE68A', overflow: 'hidden', padding: 12 }}>
+                {KEPATUHAN_QUESTIONS.map((q, idx) => {
+                  const key = `q_${idx + 1}`;
+                  return (
+                    <View key={key} style={{ marginBottom: 12 }}>
+                      {renderLabel(`${idx + 1}. ${q}`)}
+                      <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                        {SCALE_OPTIONS.map((opt, optIdx) => {
+                          const selected = tahap4Data[key] === opt;
+                          return (
+                            <TouchableOpacity
+                              key={opt}
+                              onPress={() => handleUpdateTahap4(key, opt)}
+                              style={{
+                                flex: 1,
+                                alignItems: 'center',
+                                paddingVertical: 6,
+                                marginRight: optIdx < SCALE_OPTIONS.length - 1 ? 8 : 0,
+                                flexDirection: 'column',
+                              }}
+                            >
+                              <View style={{
+                                width: 26, height: 26, borderRadius: 13,
+                                borderWidth: 2, borderColor: selected ? '#F59E0B' : '#CBD5E1',
+                                alignItems: 'center', justifyContent: 'center', marginBottom: 6,
+                                backgroundColor: selected ? '#FFFBEB' : 'transparent'
+                              }}>
+                                {selected && <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: '#F59E0B' }} />}
+                              </View>
+                              <Text numberOfLines={2} ellipsizeMode="tail" style={{ color: selected ? '#92400E' : '#475569', fontWeight: selected ? '800' : '600', fontSize: 11, textAlign: 'center' }}>{opt}</Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+          </View>
+        )}
       </ScrollView>
 
       {/* ── NAVIGATION BUTTONS ── */}
@@ -621,7 +707,7 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
           </TouchableOpacity>
         )}
 
-        {currentTahap < 3 ? (
+        {currentTahap < 4 ? (
           <TouchableOpacity
             onPress={() => canProceed() && setCurrentTahap(currentTahap + 1)}
             disabled={!canProceed()}
