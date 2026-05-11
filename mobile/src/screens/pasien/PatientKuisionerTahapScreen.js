@@ -49,7 +49,7 @@ const EFFECT_INFO = {
   'Gangguan ginjal': 'Gangguan ginjal adalah kondisi saat fungsi ginjal menurun sehingga ginjal tidak dapat menyaring darah dan membuang sisa zat dengan baik.',
 };
 
-const TAHAP_LABELS = ['Identitas Pasien', 'Riwayat Penyakit', 'Efek Samping', 'Kepatuhan Pengobatan', 'Efikasi Diri', 'Pengetahuan', 'Kualitas Hidup'];
+const TAHAP_LABELS = ['Identitas Pasien', 'Riwayat Penyakit', 'Efek Samping', 'Kepatuhan Pengobatan', 'Efikasi Diri', 'Pengetahuan', 'Kualitas Hidup', 'Validasi KCCQ'];
 
 const KEPATUHAN_QUESTIONS = [
   'Saya lupa minum obat',
@@ -123,55 +123,109 @@ const QUALITY_OF_LIFE_QUESTIONS = [
     key: 'berjalan',
     question: 'Kemampuan Berjalan',
     options: [
-      { label: 'Tidak Kesulitan', value: 5 },
-      { label: 'Sedikit Kesulitan', value: 4 },
+      { label: 'Tidak Kesulitan', value: 1 },
+      { label: 'Sedikit Kesulitan', value: 2 },
       { label: 'Cukup Kesulitan', value: 3 },
-      { label: 'Sangat Kesulitan', value: 2 },
-      { label: 'Tidak Bisa', value: 1 },
+      { label: 'Sangat Kesulitan', value: 4 },
+      { label: 'Tidak Bisa', value: 5 },
     ],
   },
   {
     key: 'perawatan_diri',
     question: 'Perawatan Diri',
     options: [
-      { label: 'Tidak Kesulitan', value: 5 },
-      { label: 'Sedikit Kesulitan', value: 4 },
+      { label: 'Tidak Kesulitan', value: 1 },
+      { label: 'Sedikit Kesulitan', value: 2 },
       { label: 'Cukup Kesulitan', value: 3 },
-      { label: 'Sangat Kesulitan', value: 2 },
-      { label: 'Tidak Bisa', value: 1 },
+      { label: 'Sangat Kesulitan', value: 4 },
+      { label: 'Tidak Bisa', value: 5 },
     ],
   },
   {
     key: 'kegiatan_biasa',
     question: 'Kegiatan yang Biasa Dilakukan',
     options: [
-      { label: 'Tidak Kesulitan', value: 5 },
-      { label: 'Sedikit Kesulitan', value: 4 },
+      { label: 'Tidak Kesulitan', value: 1 },
+      { label: 'Sedikit Kesulitan', value: 2 },
       { label: 'Cukup Kesulitan', value: 3 },
-      { label: 'Sangat Kesulitan', value: 2 },
-      { label: 'Tidak Bisa', value: 1 },
+      { label: 'Sangat Kesulitan', value: 4 },
+      { label: 'Tidak Bisa', value: 5 },
     ],
   },
   {
     key: 'nyeri_tidak_nyaman',
     question: 'Rasa Nyeri/Tidak Nyaman',
     options: [
-      { label: 'Tidak Kesulitan', value: 5 },
-      { label: 'Sedikit Kesulitan', value: 4 },
+      { label: 'Tidak Kesulitan', value: 1 },
+      { label: 'Sedikit Kesulitan', value: 2 },
       { label: 'Cukup Kesulitan', value: 3 },
-      { label: 'Sangat Kesulitan', value: 2 },
-      { label: 'Tidak Bisa', value: 1 },
+      { label: 'Sangat Kesulitan', value: 4 },
+      { label: 'Tidak Bisa', value: 5 },
     ],
   },
   {
     key: 'cemas_depresi',
     question: 'Rasa Cemas/Depresi (Sedih)',
     options: [
-      { label: 'Tidak Kesulitan', value: 5 },
-      { label: 'Sedikit Kesulitan', value: 4 },
+      { label: 'Tidak Kesulitan', value: 1 },
+      { label: 'Sedikit Kesulitan', value: 2 },
       { label: 'Cukup Kesulitan', value: 3 },
-      { label: 'Sangat Kesulitan', value: 2 },
-      { label: 'Tidak Bisa', value: 1 },
+      { label: 'Sangat Kesulitan', value: 4 },
+      { label: 'Tidak Bisa', value: 5 },
+    ],
+  },
+];
+
+const KCCQ_QUESTIONS = [
+  {
+    key: 'q1_activities',
+    question: 'Seberapa gagal jantung membatasi aktivitas Anda (2 minggu terakhir)?',
+    subitems: [
+      { key: 'berpakaian', label: 'Berpakaian' },
+      { key: 'mandi', label: 'Mandi' },
+      { key: 'jalan_80m', label: 'Jalan 80 meter datar' },
+      { key: 'berkebun', label: 'Berkebun, tugas rumah tangga, berbelanja' },
+      { key: 'naik_tangga', label: 'Naik tangga tanpa berhenti' },
+      { key: 'jalan_cepat', label: 'Jalan cepat (seperti mengejar bus)' },
+    ],
+    options: [
+      'Sangat Terbatas',
+      'Agak Terbatas',
+      'Tidak Terlalu Terbatas',
+      'Sedikit Terbatas',
+      'Tidak Terbatas Sama Sekali',
+      'Terbatas akibat kondisi lain atau tidak melakukan aktivitas tersebut',
+    ],
+  },
+  { key: 'q2_change', question: 'Perubahan gejala dibanding 2 minggu lalu', options: ['Lebih berat', 'Agak berat', 'Tidak berubah', 'Agak membaik', 'Lebih membaik', 'Tidak memiliki gejala selama 2 minggu'] },
+  { key: 'q3_swelling_freq', question: 'Seberapa sering bengkak di kedua kaki saat bangun pagi?', options: ['Tiap pagi', '3 kali atau lebih dalam seminggu tapi tidak tiap hari', '1-2 kali dalam seminggu', 'Kurang dari sekali dalam seminggu', 'Tidak pernah'] },
+  { key: 'q4_swelling_severity', question: 'Seberapa berat bengkak di kaki mengganggu Anda?', options: ['Sangat mengganggu', 'Agak mengganggu', 'Tidak terlalu mengganggu', 'Sedikit mengganggu', 'Tidak mengganggu sama sekali', 'Tidak bengkak sama sekali'] },
+  { key: 'q5_fatigue_freq', question: 'Seberapa sering kelelahan membatasi aktivitas Anda?', options: ['Setiap saat', 'Beberapa kali sehari', 'Setidaknya sekali sehari', '3 atau lebih dalam seminggu, tapi tidak tiap hari', '1-2 kali seminggu', 'Kurang dari sekali seminggu', 'Tidak lelah sama sekali'] },
+  { key: 'q6_fatigue_severity', question: 'Seberapa berat kelelahan ini mengganggu Anda?', options: ['Sangat mengganggu', 'Agak mengganggu', 'Tidak terlalu mengganggu', 'Sedikit mengganggu', 'Tidak mengganggu sama sekali', 'Tidak lelah sama sekali'] },
+  { key: 'q7_dyspnea_freq', question: 'Seberapa sering sesak napas membatasi aktivitas Anda?', options: ['Setiap saat', 'Beberapa kali sehari', 'Setidaknya sekali sehari', '3 atau lebih dalam seminggu, tapi tidak tiap hari', '1-2 kali seminggu', 'Kurang dari sekali seminggu', 'Tidak sesak sama sekali'] },
+  { key: 'q8_dyspnea_severity', question: 'Seberapa berat sesak napas mengganggu Anda?', options: ['Sangat mengganggu', 'Agak mengganggu', 'Tidak terlalu mengganggu', 'Sedikit mengganggu', 'Tidak mengganggu sama sekali', 'Tidak sesak napas sama sekali'] },
+  { key: 'q9_sleep_pos', question: 'Berapa kali Anda terpaksa tidur duduk atau pakai bantal lebih (2 minggu terakhir)?', options: ['Tiap malam', '3 kali atau lebih dalam seminggu tapi tidak tiap hari', '1-2 kali dalam seminggu', 'Kurang dari sekali dalam seminggu', 'Tidak pernah'] },
+  { key: 'q10_confidence', question: 'Seberapa yakin Anda tahu apa yang harus dilakukan jika gejala memburuk?', options: ['Tidak yakin sama sekali', 'Tidak terlalu yakin', 'Sedikit yakin', 'Cukup yakin', 'Yakin sekali'] },
+  { key: 'q11_knowledge', question: 'Apakah Anda tahu hal-hal yang dapat mencegah gejala bertambah parah?', options: ['Tidak yakin sama sekali', 'Tidak terlalu yakin', 'Sedikit yakin', 'Cukup yakin', 'Yakin sekali'] },
+  { key: 'q12_happiness', question: 'Seberapa besar gagal jantung membatasi kebahagiaan hidup Anda?', options: ['Sangat terbatas', 'Agak terbatas', 'Tidak terlalu terbatas', 'Sedikit terbatas', 'Tidak terbatas'] },
+  { key: 'q13_satisfaction', question: 'Bagaimana pendapat Anda jika harus menjalani sisa hidup dengan kondisi ini?', options: ['Sangat tidak puas', 'Tidak puas', 'Sedikit puas', 'Puas', 'Sangat puas'] },
+  { key: 'q14_despondent', question: 'Seberapa sering merasa tidak bersemangat/putus asa (2 minggu terakhir)?', options: ['Setiap hari', 'Sering kali', 'Kadang-kadang', 'Jarang', 'Tidak pernah'] },
+  {
+    key: 'q15_activities',
+    question: 'Seberapa gagal jantung membatasi gaya hidup Anda (2 minggu terakhir)?',
+    subitems: [
+      { key: 'hobi', label: 'Hobi / berekreasi' },
+      { key: 'bekerja', label: 'Bekerja atau melakukan pekerjaan rumah' },
+      { key: 'kunjungan', label: 'Mengunjungi keluarga atau teman' },
+      { key: 'hubungan', label: 'Hubungan suami/istri' },
+    ],
+    options: [
+      'Sangat Terbatas',
+      'Agak Terbatas',
+      'Tidak Terlalu Terbatas',
+      'Sedikit Terbatas',
+      'Tidak Terbatas Sama Sekali',
+      'Terbatas akibat kondisi lain atau tidak melakukan aktivitas tersebut',
     ],
   },
 ];
@@ -195,6 +249,7 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
   const [tahap5Data, setTahap5Data] = useState({});
   const [tahap6Data, setTahap6Data] = useState({});
   const [tahap7Data, setTahap7Data] = useState({});
+  const [tahap8Data, setTahap8Data] = useState({});
   const [loading, setLoading] = useState(false);
   const [obatList, setObatList] = useState([]);
   const [isAddObatModalOpen, setIsAddObatModalOpen] = useState(false);
@@ -232,6 +287,7 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
   const handleUpdateTahap5 = (field, value) => setTahap5Data(prev => ({ ...prev, [field]: value }));
   const handleUpdateTahap6 = (field, value) => setTahap6Data(prev => ({ ...prev, [field]: value }));
   const handleUpdateTahap7 = (field, value) => setTahap7Data(prev => ({ ...prev, [field]: value }));
+  const handleUpdateTahap8 = (field, value) => setTahap8Data(prev => ({ ...prev, [field]: value }));
 
   const handleAddObat = () => {
     if (!newObat.nama_obat.trim() || !newObat.dosis.trim() || !newObat.frekuensi.trim()) {
@@ -294,6 +350,15 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
         return tahap7Data[item.key] !== undefined && tahap7Data[item.key] !== '';
       });
     }
+    if (currentTahap === 8) {
+      // require all KCCQ questions answered (including subitems)
+      return KCCQ_QUESTIONS.every((item) => {
+        if (item.subitems && Array.isArray(item.subitems)) {
+          return item.subitems.every(si => (tahap8Data[si.key] !== undefined && tahap8Data[si.key] !== '' && tahap8Data[si.key] !== null));
+        }
+        return tahap8Data[item.key] !== undefined && tahap8Data[item.key] !== '' && tahap8Data[item.key] !== null;
+      });
+    }
     return true;
   };
 
@@ -344,7 +409,15 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
         });
       }
 
-      const payload = { ...allResponses, tahap_4_kepatuhan: tahap4_numeric, tahap_5_efikasi: tahap5_numeric, tahap_6_pengetahuan: tahap6_numeric, tahap_7_kualitas_hidup: tahap7_numeric };
+      const tahap8_numeric = {};
+      if (tahap8Data && Object.keys(tahap8Data).length > 0) {
+        Object.keys(tahap8Data).forEach((k) => {
+          const v = tahap8Data[k];
+          tahap8_numeric[k] = v === null ? null : (typeof v === 'number' ? v : (Number(v) || null));
+        });
+      }
+
+      const payload = { ...allResponses, tahap_4_kepatuhan: tahap4_numeric, tahap_5_efikasi: tahap5_numeric, tahap_6_pengetahuan: tahap6_numeric, tahap_7_kualitas_hidup: tahap7_numeric, tahap_8_kccq: tahap8_numeric };
 
       await submitKuisionerAnswers(storedProfile.id, new Date().toISOString().split('T')[0], payload);
       Alert.alert('Sukses', 'Kuisioner 7-tahap berhasil disimpan!', [
@@ -490,7 +563,7 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
     </TouchableOpacity>
   );
 
-  const progressPercent = (currentTahap / 7) * 100;
+  const progressPercent = (currentTahap / 8) * 100;
 
   return (
     <View style={{ flex: 1, backgroundColor: '#F0F4FF', paddingTop: insets.top }}>
@@ -577,7 +650,7 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
 
         {/* Step dots */}
         <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
-          {[1, 2, 3, 4, 5, 6, 7].map((step) => (
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((step) => (
             <View key={step} style={{ flex: 1, alignItems: 'center' }}>
               <View style={{
                 width: 28, height: 28, borderRadius: 14,
@@ -779,6 +852,75 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
                     </View>
                   </View>
                 ))}
+              </View>
+            </View>
+          </View>
+        )}
+
+        {currentTahap === 8 && (
+          <View>
+            <View style={{ marginBottom: 16 }}>
+              {renderLabel('VALIDASI KCCQ')}
+              <Text style={{ color: '#475569', marginBottom: 8 }}>Jawab pertanyaan berikut sesuai instruksi pada tiap pertanyaan (2 minggu terakhir).</Text>
+              <View style={{ backgroundColor: '#fff', borderRadius: 20, borderWidth: 1.5, borderColor: '#FDE68A', overflow: 'hidden', padding: 12 }}>
+                {KCCQ_QUESTIONS.map((item, idx) => {
+                  if (item.subitems && Array.isArray(item.subitems)) {
+                    return (
+                      <View key={item.key} style={{ marginBottom: 14 }}>
+                        {renderLabel(`${idx + 1}. ${item.question}`)}
+                        {item.subitems.map((si) => (
+                          <View key={si.key} style={{ marginBottom: 10 }}>
+                            <Text style={{ color: '#475569', marginBottom: 6 }}>{si.label}</Text>
+                            <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                              {item.options.map((opt, optIdx) => {
+                                const mapped = optIdx === item.options.length - 1 ? null : optIdx + 1;
+                                const selected = tahap8Data[si.key] === mapped;
+                                return (
+                                  <TouchableOpacity
+                                    key={`${si.key}-${optIdx}`}
+                                    onPress={() => handleUpdateTahap8(si.key, mapped)}
+                                    style={{ flex: 1, alignItems: 'center', paddingVertical: 6, marginRight: optIdx < item.options.length - 1 ? 8 : 0 }}
+                                  >
+                                    <View style={{ width: 26, height: 26, borderRadius: 13, borderWidth: 2, borderColor: selected ? '#F59E0B' : '#CBD5E1', alignItems: 'center', justifyContent: 'center', marginBottom: 6, backgroundColor: selected ? '#FFFBEB' : 'transparent' }}>
+                                      {selected && <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: '#F59E0B' }} />}
+                                    </View>
+                                    <Text numberOfLines={2} ellipsizeMode="tail" style={{ color: selected ? '#92400E' : '#475569', fontWeight: selected ? '800' : '600', fontSize: 11, textAlign: 'center' }}>{opt}</Text>
+                                  </TouchableOpacity>
+                                );
+                              })}
+                            </View>
+                          </View>
+                        ))}
+                      </View>
+                    );
+                  }
+
+                  // single question
+                  const key = item.key;
+                  return (
+                    <View key={key} style={{ marginBottom: 12 }}>
+                      {renderLabel(`${idx + 1}. ${item.question}`)}
+                      <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                        {item.options.map((opt, optIdx) => {
+                          const mapped = optIdx + 1;
+                          const selected = tahap8Data[key] === mapped;
+                          return (
+                            <TouchableOpacity
+                              key={`${key}-${optIdx}`}
+                              onPress={() => handleUpdateTahap8(key, mapped)}
+                              style={{ flex: 1, alignItems: 'center', paddingVertical: 6, marginRight: optIdx < item.options.length - 1 ? 8 : 0 }}
+                            >
+                              <View style={{ width: 26, height: 26, borderRadius: 13, borderWidth: 2, borderColor: selected ? '#F59E0B' : '#CBD5E1', alignItems: 'center', justifyContent: 'center', marginBottom: 6, backgroundColor: selected ? '#FFFBEB' : 'transparent' }}>
+                                {selected && <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: '#F59E0B' }} />}
+                              </View>
+                              <Text numberOfLines={2} ellipsizeMode="tail" style={{ color: selected ? '#92400E' : '#475569', fontWeight: selected ? '800' : '600', fontSize: 11, textAlign: 'center' }}>{opt}</Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+                    </View>
+                  );
+                })}
               </View>
             </View>
           </View>
@@ -1000,7 +1142,7 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
           </TouchableOpacity>
         )}
 
-        {currentTahap < 7 ? (
+        {currentTahap < 8 ? (
           <TouchableOpacity
             onPress={() => canProceed() && setCurrentTahap(currentTahap + 1)}
             disabled={!canProceed()}
