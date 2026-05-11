@@ -49,7 +49,7 @@ const EFFECT_INFO = {
   'Gangguan ginjal': 'Gangguan ginjal adalah kondisi saat fungsi ginjal menurun sehingga ginjal tidak dapat menyaring darah dan membuang sisa zat dengan baik.',
 };
 
-const TAHAP_LABELS = ['Identitas Pasien', 'Riwayat Penyakit', 'Efek Samping', 'Kepatuhan Pengobatan'];
+const TAHAP_LABELS = ['Identitas Pasien', 'Riwayat Penyakit', 'Efek Samping', 'Kepatuhan Pengobatan', 'Efikasi Diri'];
 
 const KEPATUHAN_QUESTIONS = [
   'Saya lupa minum obat',
@@ -70,6 +70,30 @@ const SCALE_MAP = {
   'Tidak pernah': 5,
 };
 
+const EFIKASI_QUESTIONS = [
+  'Seberapa yakin Anda dapat minum obat dengan benar ketika Anda minum beberapa jenis obat yang berbeda setiap hari?',
+  'Seberapa yakin Anda dapat minum obat dengan benar ketika Anda menghadapi hari yang sibuk (banyak kegiatan/aktivitas)?',
+  'Seberapa yakin Anda dapat minum obat dengan benar ketika Anda tidak berada di rumah?',
+  'Seberapa yakin Anda dapat minum obat dengan benar ketika tidak ada orang yang mengingatkan Anda untuk minum obat?',
+  'Seberapa yakin Anda dapat minum obat dengan benar ketika Anda minum obat lebih dari satu kali sehari?',
+  'Seberapa yakin Anda dapat minum obat dengan benar ketika jadwal minum obat Anda tidak cocok bagi Anda?',
+  'Seberapa yakin Anda dapat minum obat dengan benar ketika rutinitas normal Anda terganggu?',
+  'Seberapa yakin Anda dapat minum obat dengan benar ketika Anda menebus ulang obat Anda dan beberapa obat terlihat berbeda dari yang biasanya?',
+  'Seberapa yakin Anda dapat minum obat dengan benar ketika Anda tidak yakin bagaimana cara minum obatnya?',
+  'Seberapa yakin Anda dapat minum obat dengan benar ketika Anda tidak yakin jam berapa Anda harus minum obat?',
+  'Seberapa yakin Anda dapat minum obat dengan benar ketika dokter mengganti obat Anda?',
+  'Seberapa yakin Anda dapat minum obat dengan benar ketika obat menyebabkan beberapa efek samping?',
+  'Seberapa yakin Anda dapat minum obat dengan benar ketika Anda juga sedang merasa sakit yang lain, seperti sakit pilek atau flu?',
+];
+
+const EFIKASI_SCALE = ['Tidak yakin', 'Agak yakin', 'Sangat yakin'];
+
+const EFIKASI_MAP = {
+  'Tidak yakin': 1,
+  'Agak yakin': 2,
+  'Sangat yakin': 3,
+};
+
 export default function PatientKuisionerTahapScreen({ route, navigation, onBack }) {
   const { patientProfile } = route.params;
   const insets = useSafeAreaInsets();
@@ -86,6 +110,7 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
   const [tahap2Data, setTahap2Data] = useState({});
   const [tahap3Data, setTahap3Data] = useState({});
   const [tahap4Data, setTahap4Data] = useState({});
+  const [tahap5Data, setTahap5Data] = useState({});
   const [loading, setLoading] = useState(false);
   const [obatList, setObatList] = useState([]);
   const [isAddObatModalOpen, setIsAddObatModalOpen] = useState(false);
@@ -120,6 +145,7 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
   const handleUpdateTahap2 = (field, value) => setTahap2Data(prev => ({ ...prev, [field]: value }));
   const handleUpdateTahap3 = (field, value) => setTahap3Data(prev => ({ ...prev, [field]: value }));
   const handleUpdateTahap4 = (field, value) => setTahap4Data(prev => ({ ...prev, [field]: value }));
+  const handleUpdateTahap5 = (field, value) => setTahap5Data(prev => ({ ...prev, [field]: value }));
 
   const handleAddObat = () => {
     if (!newObat.nama_obat.trim() || !newObat.dosis.trim() || !newObat.frekuensi.trim()) {
@@ -163,6 +189,13 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
         return tahap4Data[key] !== undefined && tahap4Data[key] !== '';
       });
     }
+    if (currentTahap === 5) {
+      // require all efikasi questions answered
+      return EFIKASI_QUESTIONS.every((q, idx) => {
+        const key = `e_${idx + 1}`;
+        return tahap5Data[key] !== undefined && tahap5Data[key] !== '';
+      });
+    }
     return true;
   };
 
@@ -188,10 +221,19 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
         });
       }
 
-      const payload = { ...allResponses, tahap_4_kepatuhan: tahap4_numeric };
+      // convert tahap5 efikasi labels to numeric
+      const tahap5_numeric = {};
+      if (tahap5Data && Object.keys(tahap5Data).length > 0) {
+        Object.keys(tahap5Data).forEach((k) => {
+          const v = tahap5Data[k];
+          tahap5_numeric[k] = EFIKASI_MAP[v] ?? (typeof v === 'number' ? v : null);
+        });
+      }
+
+      const payload = { ...allResponses, tahap_4_kepatuhan: tahap4_numeric, tahap_5_efikasi: tahap5_numeric };
 
       await submitKuisionerAnswers(storedProfile.id, new Date().toISOString().split('T')[0], payload);
-      Alert.alert('Sukses', 'Kuisioner 4-tahap berhasil disimpan!', [
+      Alert.alert('Sukses', 'Kuisioner 5-tahap berhasil disimpan!', [
         { text: 'OK', onPress: handleExit },
       ]);
     } catch (error) {
@@ -334,7 +376,7 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
     </TouchableOpacity>
   );
 
-  const progressPercent = (currentTahap / 4) * 100;
+  const progressPercent = (currentTahap / 5) * 100;
 
   return (
     <View style={{ flex: 1, backgroundColor: '#F0F4FF', paddingTop: insets.top }}>
@@ -370,7 +412,7 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
               <ChevronLeft color="#fff" size={18} />
             </TouchableOpacity>
             <View>
-              <Text style={{ color: '#FAE8B6', fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', fontWeight: '700' }}>
+                <Text style={{ color: '#FAE8B6', fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', fontWeight: '700' }}>
                 Evaluasi Pasien
               </Text>
               <Text style={{ color: '#fff', fontSize: 20, fontWeight: '900', marginTop: 2 }}>
@@ -409,7 +451,7 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
               Tahap
             </Text>
             <Text style={{ color: '#1E293B', fontSize: 18, fontWeight: '900', marginTop: 2 }}>
-              {currentTahap} dari 4 — {TAHAP_LABELS[currentTahap - 1]}
+              {currentTahap} dari 5 — {TAHAP_LABELS[currentTahap - 1]}
             </Text>
           </View>
           <View style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: '#FEF3C7', alignItems: 'center', justifyContent: 'center' }}>
@@ -421,7 +463,7 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
 
         {/* Step dots */}
         <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
-          {[1, 2, 3, 4].map((step) => (
+          {[1, 2, 3, 4, 5].map((step) => (
             <View key={step} style={{ flex: 1, alignItems: 'center' }}>
               <View style={{
                 width: 28, height: 28, borderRadius: 14,
@@ -677,6 +719,53 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
             </View>
           </View>
         )}
+
+        {currentTahap === 5 && (
+          <View>
+            <View style={{ marginBottom: 16 }}>
+              {renderLabel('KUESIONER EFIKASI DIRI TERHADAP PENGGUNAAN OBAT')}
+              <Text style={{ color: '#475569', marginBottom: 8 }}>Pilih salah satu skala untuk setiap pernyataan.</Text>
+              <View style={{ backgroundColor: '#fff', borderRadius: 20, borderWidth: 1.5, borderColor: '#FDE68A', overflow: 'hidden', padding: 12 }}>
+                {EFIKASI_QUESTIONS.map((q, idx) => {
+                  const key = `e_${idx + 1}`;
+                  return (
+                    <View key={key} style={{ marginBottom: 12 }}>
+                      {renderLabel(`${idx + 1}. ${q}`)}
+                      <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                        {EFIKASI_SCALE.map((opt, optIdx) => {
+                          const selected = tahap5Data[key] === opt;
+                          return (
+                            <TouchableOpacity
+                              key={opt}
+                              onPress={() => handleUpdateTahap5(key, opt)}
+                              style={{
+                                flex: 1,
+                                alignItems: 'center',
+                                paddingVertical: 6,
+                                marginRight: optIdx < EFIKASI_SCALE.length - 1 ? 8 : 0,
+                                flexDirection: 'column',
+                              }}
+                            >
+                              <View style={{
+                                width: 26, height: 26, borderRadius: 13,
+                                borderWidth: 2, borderColor: selected ? '#F59E0B' : '#CBD5E1',
+                                alignItems: 'center', justifyContent: 'center', marginBottom: 6,
+                                backgroundColor: selected ? '#FFFBEB' : 'transparent'
+                              }}>
+                                {selected && <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: '#F59E0B' }} />}
+                              </View>
+                              <Text numberOfLines={2} ellipsizeMode="tail" style={{ color: selected ? '#92400E' : '#475569', fontWeight: selected ? '800' : '600', fontSize: 11, textAlign: 'center' }}>{opt}</Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+          </View>
+        )}
       </ScrollView>
 
       {/* ── NAVIGATION BUTTONS ── */}
@@ -707,7 +796,7 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
           </TouchableOpacity>
         )}
 
-        {currentTahap < 4 ? (
+        {currentTahap < 5 ? (
           <TouchableOpacity
             onPress={() => canProceed() && setCurrentTahap(currentTahap + 1)}
             disabled={!canProceed()}
