@@ -420,7 +420,7 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
       const payload = { ...allResponses, tahap_4_kepatuhan: tahap4_numeric, tahap_5_efikasi: tahap5_numeric, tahap_6_pengetahuan: tahap6_numeric, tahap_7_kualitas_hidup: tahap7_numeric, tahap_8_kccq: tahap8_numeric };
 
       await submitKuisionerAnswers(storedProfile.id, new Date().toISOString().split('T')[0], payload);
-      Alert.alert('Sukses', 'Kuisioner 7-tahap berhasil disimpan!', [
+      Alert.alert('Sukses', 'Kuisioner 8-tahap berhasil disimpan!', [
         { text: 'OK', onPress: handleExit },
       ]);
     } catch (error) {
@@ -638,7 +638,7 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
               Tahap
             </Text>
             <Text style={{ color: '#1E293B', fontSize: 18, fontWeight: '900', marginTop: 2 }}>
-              {currentTahap} dari 7 — {TAHAP_LABELS[currentTahap - 1]}
+              {currentTahap} dari 8 — {TAHAP_LABELS[currentTahap - 1]}
             </Text>
           </View>
           <View style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: '#FEF3C7', alignItems: 'center', justifyContent: 'center' }}>
@@ -862,16 +862,18 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
             <View style={{ marginBottom: 16 }}>
               {renderLabel('VALIDASI KCCQ')}
               <Text style={{ color: '#475569', marginBottom: 8 }}>Jawab pertanyaan berikut sesuai instruksi pada tiap pertanyaan (2 minggu terakhir).</Text>
-              <View style={{ backgroundColor: '#fff', borderRadius: 20, borderWidth: 1.5, borderColor: '#FDE68A', overflow: 'hidden', padding: 12 }}>
+              <View style={{ backgroundColor: '#fff', borderRadius: 20, borderWidth: 1.5, borderColor: '#FDE68A', overflow: 'hidden' }}>
                 {KCCQ_QUESTIONS.map((item, idx) => {
                   if (item.subitems && Array.isArray(item.subitems)) {
                     return (
-                      <View key={item.key} style={{ marginBottom: 14 }}>
-                        {renderLabel(`${idx + 1}. ${item.question}`)}
-                        {item.subitems.map((si) => (
-                          <View key={si.key} style={{ marginBottom: 10 }}>
-                            <Text style={{ color: '#475569', marginBottom: 6 }}>{si.label}</Text>
-                            <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                      <View key={item.key} style={{ borderBottomWidth: 1, borderBottomColor: '#FEF3C7' }}>
+                        <View style={{ paddingHorizontal: 16, paddingVertical: 12, backgroundColor: '#FFFBEB' }}>
+                          {renderLabel(`${idx + 1}. ${item.question}`)}
+                        </View>
+                        {item.subitems.map((si, siIdx) => (
+                          <View key={si.key}>
+                            <View style={{ paddingHorizontal: 16, paddingVertical: 12, backgroundColor: '#fff' }}>
+                              <Text style={{ color: '#475569', fontWeight: '600', fontSize: 13, marginBottom: 10 }}>{si.label}</Text>
                               {item.options.map((opt, optIdx) => {
                                 const mapped = optIdx === item.options.length - 1 ? null : optIdx + 1;
                                 const selected = tahap8Data[si.key] === mapped;
@@ -879,16 +881,17 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
                                   <TouchableOpacity
                                     key={`${si.key}-${optIdx}`}
                                     onPress={() => handleUpdateTahap8(si.key, mapped)}
-                                    style={{ flex: 1, alignItems: 'center', paddingVertical: 6, marginRight: optIdx < item.options.length - 1 ? 8 : 0 }}
+                                    style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderBottomWidth: optIdx < item.options.length - 1 ? 1 : 0, borderBottomColor: '#FEF3C7' }}
                                   >
-                                    <View style={{ width: 26, height: 26, borderRadius: 13, borderWidth: 2, borderColor: selected ? '#F59E0B' : '#CBD5E1', alignItems: 'center', justifyContent: 'center', marginBottom: 6, backgroundColor: selected ? '#FFFBEB' : 'transparent' }}>
-                                      {selected && <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: '#F59E0B' }} />}
+                                    <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: selected ? '#F59E0B' : '#CBD5E1', backgroundColor: selected ? '#F59E0B' : 'transparent', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
+                                      {selected && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#fff' }} />}
                                     </View>
-                                    <Text numberOfLines={2} ellipsizeMode="tail" style={{ color: selected ? '#92400E' : '#475569', fontWeight: selected ? '800' : '600', fontSize: 11, textAlign: 'center' }}>{opt}</Text>
+                                    <Text style={{ color: selected ? '#92400E' : '#475569', fontWeight: selected ? '700' : '500', fontSize: 13, flex: 1 }}>{opt}</Text>
                                   </TouchableOpacity>
                                 );
                               })}
                             </View>
+                            {siIdx < item.subitems.length - 1 && <View style={{ height: 1, backgroundColor: '#FEF3C7' }} />}
                           </View>
                         ))}
                       </View>
@@ -898,9 +901,11 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
                   // single question
                   const key = item.key;
                   return (
-                    <View key={key} style={{ marginBottom: 12 }}>
-                      {renderLabel(`${idx + 1}. ${item.question}`)}
-                      <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                    <View key={key} style={{ borderBottomWidth: 1, borderBottomColor: '#FEF3C7' }}>
+                      <View style={{ paddingHorizontal: 16, paddingVertical: 12, backgroundColor: '#FFFBEB' }}>
+                        {renderLabel(`${idx + 1}. ${item.question}`)}
+                      </View>
+                      <View style={{ paddingHorizontal: 16, paddingVertical: 12, backgroundColor: '#fff' }}>
                         {item.options.map((opt, optIdx) => {
                           const mapped = optIdx + 1;
                           const selected = tahap8Data[key] === mapped;
@@ -908,12 +913,12 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
                             <TouchableOpacity
                               key={`${key}-${optIdx}`}
                               onPress={() => handleUpdateTahap8(key, mapped)}
-                              style={{ flex: 1, alignItems: 'center', paddingVertical: 6, marginRight: optIdx < item.options.length - 1 ? 8 : 0 }}
+                              style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderBottomWidth: optIdx < item.options.length - 1 ? 1 : 0, borderBottomColor: '#FEF3C7' }}
                             >
-                              <View style={{ width: 26, height: 26, borderRadius: 13, borderWidth: 2, borderColor: selected ? '#F59E0B' : '#CBD5E1', alignItems: 'center', justifyContent: 'center', marginBottom: 6, backgroundColor: selected ? '#FFFBEB' : 'transparent' }}>
-                                {selected && <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: '#F59E0B' }} />}
+                              <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: selected ? '#F59E0B' : '#CBD5E1', backgroundColor: selected ? '#F59E0B' : 'transparent', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
+                                {selected && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#fff' }} />}
                               </View>
-                              <Text numberOfLines={2} ellipsizeMode="tail" style={{ color: selected ? '#92400E' : '#475569', fontWeight: selected ? '800' : '600', fontSize: 11, textAlign: 'center' }}>{opt}</Text>
+                              <Text style={{ color: selected ? '#92400E' : '#475569', fontWeight: selected ? '700' : '500', fontSize: 13, flex: 1 }}>{opt}</Text>
                             </TouchableOpacity>
                           );
                         })}
