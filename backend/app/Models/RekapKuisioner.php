@@ -19,9 +19,8 @@ class RekapKuisioner extends Model
         'tahap_3_efek_samping',
         'tahap_4_kepatuhan',
         'tahap_5_efikasi',
-        'tahap_6_pengetahuan',
-        'tahap_7_kualitas_hidup',
-        'tahap_8_kccq',
+        'tahap_6_kualitas_hidup',
+        'tahap_7_kccq',
     ];
 
     protected function casts(): array
@@ -33,9 +32,8 @@ class RekapKuisioner extends Model
             'tahap_3_efek_samping' => 'array',
             'tahap_4_kepatuhan' => 'array',
             'tahap_5_efikasi' => 'array',
-            'tahap_6_pengetahuan' => 'array',
-            'tahap_7_kualitas_hidup' => 'array',
-            'tahap_8_kccq' => 'array',
+            'tahap_6_kualitas_hidup' => 'array',
+            'tahap_7_kccq' => 'array',
         ];
     }
 

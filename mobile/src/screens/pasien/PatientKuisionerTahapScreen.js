@@ -49,7 +49,7 @@ const EFFECT_INFO = {
   'Gangguan ginjal': 'Gangguan ginjal adalah kondisi saat fungsi ginjal menurun sehingga ginjal tidak dapat menyaring darah dan membuang sisa zat dengan baik.',
 };
 
-const TAHAP_LABELS = ['Identitas Pasien', 'Riwayat Penyakit', 'Efek Samping', 'Kepatuhan Pengobatan', 'Efikasi Diri', 'Pengetahuan', 'Kualitas Hidup', 'Validasi KCCQ'];
+const TAHAP_LABELS = ['Identitas Pasien', 'Riwayat Penyakit', 'Efek Samping', 'Kepatuhan Pengobatan', 'Efikasi Diri', 'Kualitas Hidup', 'Validasi KCCQ'];
 
 const KEPATUHAN_QUESTIONS = [
   'Saya lupa minum obat',
@@ -94,29 +94,7 @@ const EFIKASI_MAP = {
   'Sangat yakin': 3,
 };
 
-const KNOWLEDGE_QUESTIONS = [
-  'Saya mengetahui penggunaan obat gagal jantung.',
-  'Saya mengetahui nama obat gagal jantung yang saya minum sehari-hari.',
-  'Saya mengetahui kegunaan obat gagal jantung yang saya minum sehari-hari.',
-  'Saya mengetahui dosis obat gagal jantung yang saya minum bahwa obat gagal jantung diminum tidak boleh melebihi dosis yang diberikan.',
-  'Saya mengetahui waktu yang tepat untuk meminum obat gagal jantung dan saya tidak boleh melewatkan waktu minum obat.',
-  'Saya mengetahui cara penggunaan obat gagal jantung yang saya minum bahwa obat gagal jantung diminum per-oral (ditelan).',
-  'Saya mengetahui cara kerja obat gagal jantung di dalam tubuh.',
-  'Saya mengetahui jumlah obat gagal jantung yang saya minum bahwa obat gagal jantung diminum sesuai dengan petunjuk dokter atau apoteker.',
-  'Saya mengetahui bahwa obat gagal jantung harus diminum setiap hari dan saya tidak boleh lupa meminum obat.',
-  'Saya mengetahui akibat apabila tidak meminum obat gagal jantung secara rutin.',
-  'Saya mengetahui apa yang harus saya lakukan apabila lupa meminum obat gagal jantung bahwa tidak boleh meminum obat dengan dosis dua kali lipat.',
-  'Saya mengetahui cara penyimpanan obat gagal jantung.',
-];
 
-const KNOWLEDGE_SCALE = ['Tidak setuju', 'Kurang setuju', 'Setuju', 'Sangat setuju'];
-
-const KNOWLEDGE_MAP = {
-  'Tidak setuju': 1,
-  'Kurang setuju': 2,
-  'Setuju': 3,
-  'Sangat setuju': 4,
-};
 
 const QUALITY_OF_LIFE_QUESTIONS = [
   {
@@ -249,7 +227,6 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
   const [tahap5Data, setTahap5Data] = useState({});
   const [tahap6Data, setTahap6Data] = useState({});
   const [tahap7Data, setTahap7Data] = useState({});
-  const [tahap8Data, setTahap8Data] = useState({});
   const [loading, setLoading] = useState(false);
   const [obatList, setObatList] = useState([]);
   const [isAddObatModalOpen, setIsAddObatModalOpen] = useState(false);
@@ -287,7 +264,6 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
   const handleUpdateTahap5 = (field, value) => setTahap5Data(prev => ({ ...prev, [field]: value }));
   const handleUpdateTahap6 = (field, value) => setTahap6Data(prev => ({ ...prev, [field]: value }));
   const handleUpdateTahap7 = (field, value) => setTahap7Data(prev => ({ ...prev, [field]: value }));
-  const handleUpdateTahap8 = (field, value) => setTahap8Data(prev => ({ ...prev, [field]: value }));
 
   const handleAddObat = () => {
     if (!newObat.nama_obat.trim() || !newObat.dosis.trim() || !newObat.frekuensi.trim()) {
@@ -339,24 +315,17 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
       });
     }
     if (currentTahap === 6) {
-      // require all knowledge questions answered
-      return KNOWLEDGE_QUESTIONS.every((q, idx) => {
-        const key = `k_${idx + 1}`;
-        return tahap6Data[key] !== undefined && tahap6Data[key] !== '';
-      });
-    }
-    if (currentTahap === 7) {
       return QUALITY_OF_LIFE_QUESTIONS.every((item) => {
         return tahap7Data[item.key] !== undefined && tahap7Data[item.key] !== '';
       });
     }
-    if (currentTahap === 8) {
+    if (currentTahap === 7) {
       // require all KCCQ questions answered (including subitems)
       return KCCQ_QUESTIONS.every((item) => {
         if (item.subitems && Array.isArray(item.subitems)) {
-          return item.subitems.every(si => (tahap8Data[si.key] !== undefined && tahap8Data[si.key] !== '' && tahap8Data[si.key] !== null));
+          return item.subitems.every(si => (tahap7Data[si.key] !== undefined && tahap7Data[si.key] !== '' && tahap7Data[si.key] !== null));
         }
-        return tahap8Data[item.key] !== undefined && tahap8Data[item.key] !== '' && tahap8Data[item.key] !== null;
+        return tahap7Data[item.key] !== undefined && tahap7Data[item.key] !== '' && tahap7Data[item.key] !== null;
       });
     }
     return true;
@@ -397,27 +366,19 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
       const tahap6_numeric = {};
       if (tahap6Data && Object.keys(tahap6Data).length > 0) {
         Object.keys(tahap6Data).forEach((k) => {
-          const v = tahap6Data[k];
-          tahap6_numeric[k] = KNOWLEDGE_MAP[v] ?? (typeof v === 'number' ? v : null);
+          tahap6_numeric[k] = typeof tahap6Data[k] === 'number' ? tahap6Data[k] : Number(tahap6Data[k]);
         });
       }
 
       const tahap7_numeric = {};
       if (tahap7Data && Object.keys(tahap7Data).length > 0) {
         Object.keys(tahap7Data).forEach((k) => {
-          tahap7_numeric[k] = typeof tahap7Data[k] === 'number' ? tahap7Data[k] : Number(tahap7Data[k]);
+          const v = tahap7Data[k];
+          tahap7_numeric[k] = v === null ? null : (typeof v === 'number' ? v : (Number(v) || null));
         });
       }
 
-      const tahap8_numeric = {};
-      if (tahap8Data && Object.keys(tahap8Data).length > 0) {
-        Object.keys(tahap8Data).forEach((k) => {
-          const v = tahap8Data[k];
-          tahap8_numeric[k] = v === null ? null : (typeof v === 'number' ? v : (Number(v) || null));
-        });
-      }
-
-      const payload = { ...allResponses, tahap_4_kepatuhan: tahap4_numeric, tahap_5_efikasi: tahap5_numeric, tahap_6_pengetahuan: tahap6_numeric, tahap_7_kualitas_hidup: tahap7_numeric, tahap_8_kccq: tahap8_numeric };
+      const payload = { ...allResponses, tahap_4_kepatuhan: tahap4_numeric, tahap_5_efikasi: tahap5_numeric, tahap_6_kualitas_hidup: tahap6_numeric, tahap_7_kccq: tahap7_numeric };
 
       await submitKuisionerAnswers(storedProfile.id, new Date().toISOString().split('T')[0], payload);
       Alert.alert('Sukses', 'Kuisioner 8-tahap berhasil disimpan!', [
@@ -563,7 +524,7 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
     </TouchableOpacity>
   );
 
-  const progressPercent = (currentTahap / 8) * 100;
+  const progressPercent = (currentTahap / 7) * 100;
 
   return (
     <View style={{ flex: 1, backgroundColor: '#F0F4FF', paddingTop: insets.top }}>
@@ -638,7 +599,7 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
               Tahap
             </Text>
             <Text style={{ color: '#1E293B', fontSize: 18, fontWeight: '900', marginTop: 2 }}>
-              {currentTahap} dari 8 — {TAHAP_LABELS[currentTahap - 1]}
+              {currentTahap} dari 7 — {TAHAP_LABELS[currentTahap - 1]}
             </Text>
           </View>
           <View style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: '#FEF3C7', alignItems: 'center', justifyContent: 'center' }}>
@@ -650,7 +611,7 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
 
         {/* Step dots */}
         <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
-          {[1, 2, 3, 4, 5, 6, 7, 8].map((step) => (
+          {[1, 2, 3, 4, 5, 6, 7].map((step) => (
             <View key={step} style={{ flex: 1, alignItems: 'center' }}>
               <View style={{
                 width: 28, height: 28, borderRadius: 14,
@@ -766,54 +727,8 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
             {renderSelectField('Pendapatan', tahap1Data.pendapatan, TAHAP_1_FIELDS.pendapatan.options, (v) => handleUpdateTahap1('pendapatan', v))}
           </View>
         )}
-        {currentTahap === 6 && (
-          <View>
-            <View style={{ marginBottom: 16 }}>
-              {renderLabel('KUESIONER PENGETAHUAN TENTANG PENGGUNAAN OBAT')}
-              <Text style={{ color: '#475569', marginBottom: 8 }}>Pilih salah satu skala untuk setiap pernyataan.</Text>
-              <View style={{ backgroundColor: '#fff', borderRadius: 20, borderWidth: 1.5, borderColor: '#FDE68A', overflow: 'hidden', padding: 12 }}>
-                {KNOWLEDGE_QUESTIONS.map((q, idx) => {
-                  const key = `k_${idx + 1}`;
-                  return (
-                    <View key={key} style={{ marginBottom: 12 }}>
-                      {renderLabel(`${idx + 1}. ${q}`)}
-                      <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-                        {KNOWLEDGE_SCALE.map((opt, optIdx) => {
-                          const selected = tahap6Data[key] === opt;
-                          return (
-                            <TouchableOpacity
-                              key={opt}
-                              onPress={() => handleUpdateTahap6(key, opt)}
-                              style={{
-                                flex: 1,
-                                alignItems: 'center',
-                                paddingVertical: 6,
-                                marginRight: optIdx < KNOWLEDGE_SCALE.length - 1 ? 8 : 0,
-                                flexDirection: 'column',
-                              }}
-                            >
-                              <View style={{
-                                width: 26, height: 26, borderRadius: 13,
-                                borderWidth: 2, borderColor: selected ? '#F59E0B' : '#CBD5E1',
-                                alignItems: 'center', justifyContent: 'center', marginBottom: 6,
-                                backgroundColor: selected ? '#FFFBEB' : 'transparent'
-                              }}>
-                                {selected && <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: '#F59E0B' }} />}
-                              </View>
-                              <Text numberOfLines={2} ellipsizeMode="tail" style={{ color: selected ? '#92400E' : '#475569', fontWeight: selected ? '800' : '600', fontSize: 11, textAlign: 'center' }}>{opt}</Text>
-                            </TouchableOpacity>
-                          );
-                        })}
-                      </View>
-                    </View>
-                  );
-                })}
-              </View>
-            </View>
-          </View>
-        )}
 
-        {currentTahap === 7 && (
+        {currentTahap === 6 && (
           <View>
             <View style={{ marginBottom: 16 }}>
               {renderLabel('KUESIONER KUALITAS HIDUP')}
@@ -857,7 +772,7 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
           </View>
         )}
 
-        {currentTahap === 8 && (
+        {currentTahap === 7 && (
           <View>
             <View style={{ marginBottom: 16 }}>
               {renderLabel('VALIDASI KCCQ')}
@@ -876,11 +791,11 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
                               <Text style={{ color: '#475569', fontWeight: '600', fontSize: 13, marginBottom: 10 }}>{si.label}</Text>
                               {item.options.map((opt, optIdx) => {
                                 const mapped = optIdx === item.options.length - 1 ? null : optIdx + 1;
-                                const selected = tahap8Data[si.key] === mapped;
+                                const selected = tahap7Data[si.key] === mapped;
                                 return (
                                   <TouchableOpacity
                                     key={`${si.key}-${optIdx}`}
-                                    onPress={() => handleUpdateTahap8(si.key, mapped)}
+                                    onPress={() => handleUpdateTahap7(si.key, mapped)}
                                     style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderBottomWidth: optIdx < item.options.length - 1 ? 1 : 0, borderBottomColor: '#FEF3C7' }}
                                   >
                                     <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: selected ? '#F59E0B' : '#CBD5E1', backgroundColor: selected ? '#F59E0B' : 'transparent', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
@@ -908,11 +823,11 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
                       <View style={{ paddingHorizontal: 16, paddingVertical: 12, backgroundColor: '#fff' }}>
                         {item.options.map((opt, optIdx) => {
                           const mapped = optIdx + 1;
-                          const selected = tahap8Data[key] === mapped;
+                          const selected = tahap7Data[key] === mapped;
                           return (
                             <TouchableOpacity
                               key={`${key}-${optIdx}`}
-                              onPress={() => handleUpdateTahap8(key, mapped)}
+                              onPress={() => handleUpdateTahap7(key, mapped)}
                               style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderBottomWidth: optIdx < item.options.length - 1 ? 1 : 0, borderBottomColor: '#FEF3C7' }}
                             >
                               <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: selected ? '#F59E0B' : '#CBD5E1', backgroundColor: selected ? '#F59E0B' : 'transparent', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
@@ -1147,7 +1062,7 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
           </TouchableOpacity>
         )}
 
-        {currentTahap < 8 ? (
+        {currentTahap < 7 ? (
           <TouchableOpacity
             onPress={() => canProceed() && setCurrentTahap(currentTahap + 1)}
             disabled={!canProceed()}

@@ -38,9 +38,8 @@ class RekapKuisionerController extends Controller
             'jawaban.tahap_3_efek_samping' => ['required', 'array'],
             'jawaban.tahap_4_kepatuhan' => ['nullable', 'array'],
             'jawaban.tahap_5_efikasi' => ['nullable', 'array'],
-            'jawaban.tahap_6_pengetahuan' => ['nullable', 'array'],
-            'jawaban.tahap_7_kualitas_hidup' => ['nullable', 'array'],
-            'jawaban.tahap_8_kccq' => ['nullable', 'array'],
+            'jawaban.tahap_6_kualitas_hidup' => ['nullable', 'array'],
+            'jawaban.tahap_7_kccq' => ['nullable', 'array'],
         ]);
 
         $rekap = DB::transaction(function () use ($validated) {
@@ -49,9 +48,8 @@ class RekapKuisionerController extends Controller
             $tahap3 = $validated['jawaban']['tahap_3_efek_samping'];
             $tahap4 = $validated['jawaban']['tahap_4_kepatuhan'] ?? null;
             $tahap5 = $validated['jawaban']['tahap_5_efikasi'] ?? null;
-            $tahap6 = $validated['jawaban']['tahap_6_pengetahuan'] ?? null;
-            $tahap7 = $validated['jawaban']['tahap_7_kualitas_hidup'] ?? null;
-            $tahap8 = $validated['jawaban']['tahap_8_kccq'] ?? null;
+            $tahap6 = $validated['jawaban']['tahap_6_kualitas_hidup'] ?? null;
+            $tahap7 = $validated['jawaban']['tahap_7_kccq'] ?? null;
 
             $pasien = Pasien::query()->findOrFail((int) $validated['pasien_id']);
             $pasien->update([
@@ -78,9 +76,8 @@ class RekapKuisionerController extends Controller
                 'tahap_3_efek_samping' => $tahap3,
                 'tahap_4_kepatuhan' => $tahap4,
                 'tahap_5_efikasi' => $tahap5,
-                'tahap_6_pengetahuan' => $tahap6,
-                'tahap_7_kualitas_hidup' => $tahap7,
-                'tahap_8_kccq' => $tahap8,
+                'tahap_6_kualitas_hidup' => $tahap6,
+                'tahap_7_kccq' => $tahap7,
             ]);
         });
 
@@ -127,9 +124,8 @@ class RekapKuisionerController extends Controller
             'jawaban.tahap_3_efek_samping' => ['required', 'array'],
             'jawaban.tahap_4_kepatuhan' => ['nullable', 'array'],
             'jawaban.tahap_5_efikasi' => ['nullable', 'array'],
-            'jawaban.tahap_6_pengetahuan' => ['nullable', 'array'],
-            'jawaban.tahap_7_kualitas_hidup' => ['nullable', 'array'],
-            'jawaban.tahap_8_kccq' => ['nullable', 'array'],
+            'jawaban.tahap_6_kualitas_hidup' => ['nullable', 'array'],
+            'jawaban.tahap_7_kccq' => ['nullable', 'array'],
         ]);
 
         $rekap = DB::transaction(function () use ($validated) {
@@ -138,9 +134,8 @@ class RekapKuisionerController extends Controller
             $tahap3 = $validated['jawaban']['tahap_3_efek_samping'];
             $tahap4 = $validated['jawaban']['tahap_4_kepatuhan'] ?? null;
             $tahap5 = $validated['jawaban']['tahap_5_efikasi'] ?? null;
-            $tahap6 = $validated['jawaban']['tahap_6_pengetahuan'] ?? null;
-            $tahap7 = $validated['jawaban']['tahap_7_kualitas_hidup'] ?? null;
-            $tahap8 = $validated['jawaban']['tahap_8_kccq'] ?? null;
+            $tahap6 = $validated['jawaban']['tahap_6_kualitas_hidup'] ?? null;
+            $tahap7 = $validated['jawaban']['tahap_7_kccq'] ?? null;
 
             $pasien = Pasien::query()->findOrFail((int) $validated['pasien_id']);
             $pasien->update([
@@ -167,9 +162,8 @@ class RekapKuisionerController extends Controller
                 'tahap_3_efek_samping' => $tahap3,
                 'tahap_4_kepatuhan' => $tahap4,
                 'tahap_5_efikasi' => $tahap5,
-                'tahap_6_pengetahuan' => $tahap6,
-                'tahap_7_kualitas_hidup' => $tahap7,
-                'tahap_8_kccq' => $tahap8,
+                'tahap_6_kualitas_hidup' => $tahap6,
+                'tahap_7_kccq' => $tahap7,
             ]);
         });
 
