@@ -316,7 +316,7 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
     }
     if (currentTahap === 6) {
       return QUALITY_OF_LIFE_QUESTIONS.every((item) => {
-        return tahap7Data[item.key] !== undefined && tahap7Data[item.key] !== '';
+        return tahap6Data[item.key] !== undefined && tahap6Data[item.key] !== '';
       });
     }
     if (currentTahap === 7) {
@@ -381,7 +381,7 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
       const payload = { ...allResponses, tahap_4_kepatuhan: tahap4_numeric, tahap_5_efikasi: tahap5_numeric, tahap_6_kualitas_hidup: tahap6_numeric, tahap_7_kccq: tahap7_numeric };
 
       await submitKuisionerAnswers(storedProfile.id, new Date().toISOString().split('T')[0], payload);
-      Alert.alert('Sukses', 'Kuisioner 8-tahap berhasil disimpan!', [
+      Alert.alert('Sukses', 'Kuisioner 7-tahap berhasil disimpan!', [
         { text: 'OK', onPress: handleExit },
       ]);
     } catch (error) {
@@ -739,11 +739,11 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
                     {renderLabel(item.question)}
                     <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
                       {item.options.map((opt, optIdx) => {
-                        const selected = tahap7Data[item.key] === opt.value;
+                        const selected = tahap6Data[item.key] === opt.value;
                         return (
                           <TouchableOpacity
                             key={`${item.key}-${opt.value}`}
-                            onPress={() => handleUpdateTahap7(item.key, opt.value)}
+                            onPress={() => handleUpdateTahap6(item.key, opt.value)}
                             style={{
                               flex: 1,
                               alignItems: 'center',

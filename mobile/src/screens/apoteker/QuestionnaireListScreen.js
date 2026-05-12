@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, Modal, TextInput } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { ClipboardList, MessageSquareText, FileText, Clock3, UserRound, ChevronRight, Search, X } from 'lucide-react-native';
+import { ClipboardList, MessageSquareText, FileText, Clock3, UserRound, ChevronRight, ChevronDown, Search, X } from 'lucide-react-native';
 import { fetchApotekerKuisionerRekaps } from '../../services/patientService';
 import { formatDateDDMMYY } from '../../utils/date';
 
@@ -29,6 +29,126 @@ const prettyLabel = (key) => {
 };
 
 const isDiagnosisField = (key) => /diagnosis|tgl_diagnosa/i.test(String(key || ''));
+
+const formatScaleValue = (value, labels) => {
+  if (value === null || value === undefined || value === '') return '-';
+  if (typeof value !== 'number') return formatValue(value);
+  const label = labels?.[value - 1] || labels?.[value] || String(value);
+  return `${label} (${value})`;
+};
+
+const makeScaleFormatter = (scaleMap, defaultLabels) => (path, key, value) => {
+  if (typeof value !== 'number') return formatValue(value);
+  const lookupKey = path?.[0] || key;
+  const labels = scaleMap?.[lookupKey] || defaultLabels;
+  return formatScaleValue(value, labels);
+};
+
+// Scoring helper functions for stages 4-7
+const calculateKepatuhan = (data) => {
+  if (!data || typeof data !== 'object') return { score: 0, label: '-', count: 0 };
+  const values = Object.values(data).filter(v => typeof v === 'number');
+  const score = values.reduce((sum, v) => sum + v, 0);
+  const count = values.length;
+  const label = score < 25 ? 'Tidak Patuh' : 'Patuh';
+  return { score, label, count };
+};
+
+const calculateEfikasi = (data) => {
+  if (!data || typeof data !== 'object') return { score: 0, label: '-', count: 0 };
+  const values = Object.values(data).filter(v => typeof v === 'number');
+  const score = values.reduce((sum, v) => sum + v, 0);
+  const count = values.length;
+  const label = score >= 30 ? 'Efikasi Tinggi' : 'Efikasi Rendah';
+  return { score, label, count };
+};
+
+const formatKualitasHidup = (data) => {
+  if (!data || typeof data !== 'object') return { display: '-', count: 0 };
+  const items = [
+    { key: 'berjalan', label: 'Kemampuan Berjalan' },
+    { key: 'perawatan_diri', label: 'Perawatan Diri' },
+    { key: 'kegiatan_biasa', label: 'Kegiatan yang Biasa Dilakukan' },
+    { key: 'nyeri_tidak_nyaman', label: 'Rasa Nyeri/Tidak Nyaman' },
+    { key: 'cemas_depresi', label: 'Rasa Cemas/Depresi (Sedih)' },
+  ];
+  const answers = items.map((item) => ({
+    ...item,
+    value: data[item.key],
+    display: formatScaleValue(data[item.key], QUALITY_OF_LIFE_SCALE),
+  }));
+  const display = items.map((item) => data[item.key] ?? '').filter((value) => value !== '').join('');
+  const filledCount = answers.filter((item) => item.value !== undefined && item.value !== '').length;
+  return { answers, display: display || '-', count: filledCount };
+};
+
+const calculateKCCQ = (data) => {
+  if (!data || typeof data !== 'object') return { score: 0, label: '-', count: 0 };
+  const values = Object.values(data).filter(v => typeof v === 'number');
+  const score = values.reduce((sum, v) => sum + v, 0);
+  const count = values.length;
+  let label = '-';
+  if (score >= 75) label = 'Baik';
+  else if (score >= 50) label = 'Cukup';
+  else if (score > 0) label = 'Rendah';
+  return { score, label, count };
+};
+
+const KEPATUHAN_SCALE = ['Selalu', 'Sering', 'Kadang-kadang', 'Jarang', 'Tidak pernah'];
+const EFIKASI_SCALE = ['Tidak yakin', 'Agak yakin', 'Sangat yakin'];
+const QUALITY_OF_LIFE_SCALE = ['Tidak Kesulitan', 'Sedikit Kesulitan', 'Cukup Kesulitan', 'Sangat Kesulitan', 'Tidak Bisa'];
+
+const KCCQ_SCALE_MAP = {
+  q1_activities: ['Sangat Terbatas', 'Agak Terbatas', 'Tidak Terlalu Terbatas', 'Sedikit Terbatas', 'Tidak Terbatas Sama Sekali', 'Terbatas akibat kondisi lain atau tidak melakukan aktivitas tersebut'],
+  q2_change: ['Lebih berat', 'Agak berat', 'Tidak berubah', 'Agak membaik', 'Lebih membaik', 'Tidak memiliki gejala selama 2 minggu'],
+  q3_swelling_freq: ['Tiap pagi', '3 kali atau lebih dalam seminggu tapi tidak tiap hari', '1-2 kali dalam seminggu', 'Kurang dari sekali dalam seminggu', 'Tidak pernah'],
+  q4_swelling_severity: ['Sangat mengganggu', 'Agak mengganggu', 'Tidak terlalu mengganggu', 'Sedikit mengganggu', 'Tidak mengganggu sama sekali', 'Tidak bengkak sama sekali'],
+  q5_fatigue_freq: ['Setiap saat', 'Beberapa kali sehari', 'Setidaknya sekali sehari', '3 atau lebih dalam seminggu, tapi tidak tiap hari', '1-2 kali seminggu', 'Kurang dari sekali seminggu', 'Tidak lelah sama sekali'],
+  q6_fatigue_severity: ['Sangat mengganggu', 'Agak mengganggu', 'Tidak terlalu mengganggu', 'Sedikit mengganggu', 'Tidak mengganggu sama sekali', 'Tidak lelah sama sekali'],
+  q7_dyspnea_freq: ['Setiap saat', 'Beberapa kali sehari', 'Setidaknya sekali sehari', '3 atau lebih dalam seminggu, tapi tidak tiap hari', '1-2 kali seminggu', 'Kurang dari sekali seminggu', 'Tidak sesak sama sekali'],
+  q8_dyspnea_severity: ['Sangat mengganggu', 'Agak mengganggu', 'Tidak terlalu mengganggu', 'Sedikit mengganggu', 'Tidak mengganggu sama sekali', 'Tidak sesak napas sama sekali'],
+  q9_sleep_pos: ['Tiap malam', '3 kali atau lebih dalam seminggu tapi tidak tiap hari', '1-2 kali dalam seminggu', 'Kurang dari sekali dalam seminggu', 'Tidak pernah'],
+  q10_confidence: ['Tidak yakin sama sekali', 'Tidak terlalu yakin', 'Sedikit yakin', 'Cukup yakin', 'Yakin sekali'],
+  q11_knowledge: ['Tidak yakin sama sekali', 'Tidak terlalu yakin', 'Sedikit yakin', 'Cukup yakin', 'Yakin sekali'],
+  q12_happiness: ['Sangat terbatas', 'Agak terbatas', 'Tidak terlalu terbatas', 'Sedikit terbatas', 'Tidak terbatas'],
+  q13_satisfaction: ['Sangat tidak puas', 'Tidak puas', 'Sedikit puas', 'Puas', 'Sangat puas'],
+  q14_despondent: ['Setiap hari', 'Sering kali', 'Kadang-kadang', 'Jarang', 'Tidak pernah'],
+  q15_activities: ['Sangat Terbatas', 'Agak Terbatas', 'Tidak Terlalu Terbatas', 'Sedikit Terbatas', 'Tidak Terbatas Sama Sekali', 'Terbatas akibat kondisi lain atau tidak melakukan aktivitas tersebut'],
+};
+
+const formatKepatuhanValue = makeScaleFormatter({
+  q_1: KEPATUHAN_SCALE,
+  q_2: KEPATUHAN_SCALE,
+  q_3: KEPATUHAN_SCALE,
+  q_4: KEPATUHAN_SCALE,
+  q_5: KEPATUHAN_SCALE,
+}, KEPATUHAN_SCALE);
+
+const formatEfikasiValue = makeScaleFormatter({
+  e_1: EFIKASI_SCALE,
+  e_2: EFIKASI_SCALE,
+  e_3: EFIKASI_SCALE,
+  e_4: EFIKASI_SCALE,
+  e_5: EFIKASI_SCALE,
+  e_6: EFIKASI_SCALE,
+  e_7: EFIKASI_SCALE,
+  e_8: EFIKASI_SCALE,
+  e_9: EFIKASI_SCALE,
+  e_10: EFIKASI_SCALE,
+  e_11: EFIKASI_SCALE,
+  e_12: EFIKASI_SCALE,
+  e_13: EFIKASI_SCALE,
+}, EFIKASI_SCALE);
+
+const formatKualitasHidupValue = makeScaleFormatter({
+  berjalan: QUALITY_OF_LIFE_SCALE,
+  perawatan_diri: QUALITY_OF_LIFE_SCALE,
+  kegiatan_biasa: QUALITY_OF_LIFE_SCALE,
+  nyeri_tidak_nyaman: QUALITY_OF_LIFE_SCALE,
+  cemas_depresi: QUALITY_OF_LIFE_SCALE,
+}, QUALITY_OF_LIFE_SCALE);
+
+const formatKCCQValue = makeScaleFormatter(KCCQ_SCALE_MAP, []);
 
 const listLabels = {
   obat_herbal_list: 'Obat Herbal',
@@ -105,7 +225,7 @@ const renderListSection = (key, items) => {
   );
 };
 
-const renderObjectRows = (data) => {
+const renderObjectRows = (data, valueFormatter = (path, key, value) => formatValue(value), path = []) => {
   if (!data || typeof data !== 'object') {
     return (
       <View style={{ backgroundColor: '#F8FAFA', borderRadius: 18, padding: 16 }}>
@@ -151,7 +271,7 @@ const renderObjectRows = (data) => {
           <Text style={{ color: '#64748B', fontSize: 12, fontWeight: '800', textTransform: 'uppercase', marginBottom: 6 }}>
             {prettyLabel(key)}
           </Text>
-          {renderObjectRows(value)}
+          {renderObjectRows(value, valueFormatter, [...path, key])}
         </View>
       );
     }
@@ -162,17 +282,17 @@ const renderObjectRows = (data) => {
           {prettyLabel(key)}
         </Text>
         <Text style={{ color: '#1A2820', fontSize: 14, fontWeight: '700', lineHeight: 20 }}>
-          {isDiagnosisField(key) ? formatDateDDMMYYYY(value) : formatValue(value)}
+          {isDiagnosisField(key) ? formatDateDDMMYYYY(value) : valueFormatter([...path, key], key, value)}
         </Text>
       </View>
     );
   });
 };
 
-const renderSection = (title, data) => (
+const renderSection = (title, data, valueFormatter) => (
   <View style={{ marginBottom: 16 }}>
     <Text style={{ color: '#1A2820', fontSize: 16, fontWeight: '900', marginBottom: 10 }}>{title}</Text>
-    {renderObjectRows(data)}
+    {renderObjectRows(data, valueFormatter)}
   </View>
 );
 
@@ -180,7 +300,23 @@ export default function QuestionnaireListScreen() {
   const [loading, setLoading] = useState(true);
   const [rekaps, setRekaps] = useState([]);
   const [selectedRekap, setSelectedRekap] = useState(null);
+  const [expandedSections, setExpandedSections] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
+
+  const toggleSection = (key) => setExpandedSections(prev => ({ ...prev, [key]: !prev[key] }));
+
+  const renderCollapsible = (title, key, content) => {
+    const open = !!expandedSections[key];
+    return (
+      <View style={{ marginBottom: 16 }} key={key}>
+        <Pressable onPress={() => toggleSection(key)} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8 }}>
+          <Text style={{ color: '#1A2820', fontSize: 16, fontWeight: '900' }}>{title}</Text>
+          {open ? <ChevronDown color="#64748B" size={18} /> : <ChevronRight color="#64748B" size={18} />}
+        </Pressable>
+        {open ? content : null}
+      </View>
+    );
+  };
 
   const loadData = async () => {
     try {
@@ -304,7 +440,7 @@ export default function QuestionnaireListScreen() {
                 <Text style={{ color: '#4338CA', fontWeight: '800', fontSize: 12 }}>Usia: {rekap.pasien?.usia ?? '-'}</Text>
               </View>
               <View style={{ backgroundColor: '#F8FAFA', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6, marginBottom: 8 }}>
-                <Text style={{ color: '#64748B', fontWeight: '800', fontSize: 12 }}>Tahap 1 / 2 / 3</Text>
+                <Text style={{ color: '#64748B', fontWeight: '800', fontSize: 12 }}>Tahap 1-7</Text>
               </View>
             </View>
 
@@ -359,9 +495,128 @@ export default function QuestionnaireListScreen() {
                 </Text>
               </View>
 
-              {renderSection('Tahap 1 - Identitas Pasien', selectedRekap.tahap_1_identitas)}
-              {renderSection('Tahap 2 - Riwayat', selectedRekap.tahap_2_riwayat)}
-              {renderSection('Tahap 3 - Efek Samping', selectedRekap.tahap_3_efek_samping)}
+              {renderCollapsible('Tahap 1 - Identitas Pasien', 'tahap_1_identitas', renderSection('Tahap 1 - Identitas Pasien', selectedRekap.tahap_1_identitas))}
+              {renderCollapsible('Tahap 2 - Riwayat', 'tahap_2_riwayat', renderSection('Tahap 2 - Riwayat', selectedRekap.tahap_2_riwayat))}
+              {renderCollapsible('Tahap 3 - Efek Samping', 'tahap_3_efek_samping', renderSection('Tahap 3 - Efek Samping', selectedRekap.tahap_3_efek_samping))}
+
+              {/* Tahap 4 - Kepatuhan Pengobatan */}
+              {selectedRekap.tahap_4_kepatuhan && renderCollapsible(
+                'Tahap 4 - Kepatuhan Pengobatan',
+                'tahap_4_kepatuhan',
+                (
+                  <View>
+                    {(() => {
+                      const kepatuhan = calculateKepatuhan(selectedRekap.tahap_4_kepatuhan);
+                      return (
+                        <>
+                          <View style={{ backgroundColor: '#FFFFFF', borderRadius: 18, padding: 14, borderWidth: 1.5, borderColor: '#EEF0EF', marginBottom: 10 }}>
+                            <Text style={{ color: '#64748B', fontSize: 12, fontWeight: '800', textTransform: 'uppercase', marginBottom: 6 }}>Jumlah Soal Terjawab</Text>
+                            <Text style={{ color: '#1A2820', fontSize: 16, fontWeight: '900' }}>{kepatuhan.count} dari 5</Text>
+                          </View>
+                          <View style={{ backgroundColor: '#FFFFFF', borderRadius: 18, padding: 14, borderWidth: 1.5, borderColor: '#EEF0EF', marginBottom: 10 }}>
+                            <Text style={{ color: '#64748B', fontSize: 12, fontWeight: '800', textTransform: 'uppercase', marginBottom: 6 }}>Skor</Text>
+                            <Text style={{ color: '#1A2820', fontSize: 16, fontWeight: '900' }}>{kepatuhan.score}</Text>
+                          </View>
+                          <View style={{ backgroundColor: kepatuhan.label === 'Patuh' ? '#E8F8F3' : '#FEE2E2', borderRadius: 18, padding: 14, borderWidth: 1.5, borderColor: kepatuhan.label === 'Patuh' ? '#0D7A6A' : '#DC2626', marginBottom: 10 }}>
+                            <Text style={{ color: '#64748B', fontSize: 12, fontWeight: '800', textTransform: 'uppercase', marginBottom: 6 }}>Keterangan</Text>
+                            <Text style={{ color: kepatuhan.label === 'Patuh' ? '#0D7A6A' : '#DC2626', fontSize: 14, fontWeight: '900' }}>{kepatuhan.label}</Text>
+                          </View>
+                          {renderObjectRows(selectedRekap.tahap_4_kepatuhan, formatKepatuhanValue)}
+                        </>
+                      );
+                    })()}
+                  </View>
+                )
+              )}
+
+              {/* Tahap 5 - Efikasi Diri */}
+              {selectedRekap.tahap_5_efikasi && renderCollapsible(
+                'Tahap 5 - Efikasi Diri',
+                'tahap_5_efikasi',
+                (
+                  <View>
+                    {(() => {
+                      const efikasi = calculateEfikasi(selectedRekap.tahap_5_efikasi);
+                      return (
+                        <>
+                          <View style={{ backgroundColor: '#FFFFFF', borderRadius: 18, padding: 14, borderWidth: 1.5, borderColor: '#EEF0EF', marginBottom: 10 }}>
+                            <Text style={{ color: '#64748B', fontSize: 12, fontWeight: '800', textTransform: 'uppercase', marginBottom: 6 }}>Jumlah Soal Terjawab</Text>
+                            <Text style={{ color: '#1A2820', fontSize: 16, fontWeight: '900' }}>{efikasi.count} dari 13</Text>
+                          </View>
+                          <View style={{ backgroundColor: '#FFFFFF', borderRadius: 18, padding: 14, borderWidth: 1.5, borderColor: '#EEF0EF', marginBottom: 10 }}>
+                            <Text style={{ color: '#64748B', fontSize: 12, fontWeight: '800', textTransform: 'uppercase', marginBottom: 6 }}>Skor</Text>
+                            <Text style={{ color: '#1A2820', fontSize: 16, fontWeight: '900' }}>{efikasi.score}</Text>
+                          </View>
+                          <View style={{ backgroundColor: efikasi.label === 'Efikasi Tinggi' ? '#E8F8F3' : '#FEF3C7', borderRadius: 18, padding: 14, borderWidth: 1.5, borderColor: efikasi.label === 'Efikasi Tinggi' ? '#0D7A6A' : '#D97706', marginBottom: 10 }}>
+                            <Text style={{ color: '#64748B', fontSize: 12, fontWeight: '800', textTransform: 'uppercase', marginBottom: 6 }}>Keterangan</Text>
+                            <Text style={{ color: efikasi.label === 'Efikasi Tinggi' ? '#0D7A6A' : '#D97706', fontSize: 14, fontWeight: '900' }}>{efikasi.label}</Text>
+                          </View>
+                          {renderObjectRows(selectedRekap.tahap_5_efikasi, formatEfikasiValue)}
+                        </>
+                      );
+                    })()}
+                  </View>
+                )
+              )}
+
+              {/* Tahap 6 - Kualitas Hidup */}
+              {selectedRekap.tahap_6_kualitas_hidup && renderCollapsible(
+                'Tahap 6 - Kualitas Hidup',
+                'tahap_6_kualitas_hidup',
+                (
+                  <View>
+                    {(() => {
+                      const qol = formatKualitasHidup(selectedRekap.tahap_6_kualitas_hidup);
+                      return (
+                        <>
+                          <View style={{ backgroundColor: '#FFFFFF', borderRadius: 18, padding: 14, borderWidth: 1.5, borderColor: '#EEF0EF', marginBottom: 10 }}>
+                            <Text style={{ color: '#64748B', fontSize: 12, fontWeight: '800', textTransform: 'uppercase', marginBottom: 6 }}>Jumlah Soal Terjawab</Text>
+                            <Text style={{ color: '#1A2820', fontSize: 16, fontWeight: '900' }}>{qol.count} dari 5</Text>
+                          </View>
+                          <View style={{ backgroundColor: '#EEF2FF', borderRadius: 18, padding: 14, borderWidth: 1.5, borderColor: '#C7D2FE', marginBottom: 10 }}>
+                            <Text style={{ color: '#64748B', fontSize: 12, fontWeight: '800', textTransform: 'uppercase', marginBottom: 10 }}>Jawaban Skala</Text>
+                            <Text style={{ color: '#4338CA', fontSize: 20, fontWeight: '900', fontFamily: 'monospace', letterSpacing: 4 }}>{qol.display}</Text>
+                          </View>
+                          {renderObjectRows(selectedRekap.tahap_6_kualitas_hidup, formatKualitasHidupValue)}
+                        </>
+                      );
+                    })()}
+                  </View>
+                )
+              )}
+
+              {/* Tahap 7 - Validasi KCCQ */}
+              {selectedRekap.tahap_7_kccq && renderCollapsible(
+                'Tahap 7 - Validasi KCCQ',
+                'tahap_7_kccq',
+                (
+                  <View>
+                    {(() => {
+                      const kccq = calculateKCCQ(selectedRekap.tahap_7_kccq);
+                      const bgColor = kccq.label === 'Baik' ? '#E8F8F3' : kccq.label === 'Cukup' ? '#FEF3C7' : '#FEE2E2';
+                      const borderColor = kccq.label === 'Baik' ? '#0D7A6A' : kccq.label === 'Cukup' ? '#D97706' : '#DC2626';
+                      const textColor = kccq.label === 'Baik' ? '#0D7A6A' : kccq.label === 'Cukup' ? '#D97706' : '#DC2626';
+                      return (
+                        <>
+                          <View style={{ backgroundColor: '#FFFFFF', borderRadius: 18, padding: 14, borderWidth: 1.5, borderColor: '#EEF0EF', marginBottom: 10 }}>
+                            <Text style={{ color: '#64748B', fontSize: 12, fontWeight: '800', textTransform: 'uppercase', marginBottom: 6 }}>Jumlah Soal Terjawab</Text>
+                            <Text style={{ color: '#1A2820', fontSize: 16, fontWeight: '900' }}>{kccq.count} dari 15</Text>
+                          </View>
+                          <View style={{ backgroundColor: '#FFFFFF', borderRadius: 18, padding: 14, borderWidth: 1.5, borderColor: '#EEF0EF', marginBottom: 10 }}>
+                            <Text style={{ color: '#64748B', fontSize: 12, fontWeight: '800', textTransform: 'uppercase', marginBottom: 6 }}>Skor</Text>
+                            <Text style={{ color: '#1A2820', fontSize: 16, fontWeight: '900' }}>{kccq.score}</Text>
+                          </View>
+                          <View style={{ backgroundColor: bgColor, borderRadius: 18, padding: 14, borderWidth: 1.5, borderColor: borderColor, marginBottom: 10 }}>
+                            <Text style={{ color: '#64748B', fontSize: 12, fontWeight: '800', textTransform: 'uppercase', marginBottom: 6 }}>Keterangan</Text>
+                            <Text style={{ color: textColor, fontSize: 14, fontWeight: '900' }}>{kccq.label}</Text>
+                          </View>
+                          {renderObjectRows(selectedRekap.tahap_7_kccq, formatKCCQValue)}
+                        </>
+                      );
+                    })()}
+                  </View>
+                )
+              )}
             </ScrollView>
           </View>
         </View>
