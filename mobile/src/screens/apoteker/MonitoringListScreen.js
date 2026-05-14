@@ -2,32 +2,48 @@ import { useState, useEffect, useMemo } from 'react';
 import { View, Text, Pressable, ScrollView, TextInput, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { usePatients } from '../../hooks/usePatients';
-import { Activity, Users, CheckCircle, XCircle, Search, ChevronRight, Calendar } from 'lucide-react-native';
+import { useMonitoring } from '../../hooks/useMonitoring';
+import { Activity, Users, CheckCircle, XCircle, Search, ChevronRight, Calendar, Droplets } from 'lucide-react-native';
 
 export default function MonitoringListScreen({ navigation }) {
   const { patients, isLoading, fetchPatients } = usePatients();
+  const { todayData, fetchTodaySummary } = useMonitoring();
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     fetchPatients();
-  }, [fetchPatients]);
+    fetchTodaySummary();
+  }, [fetchPatients, fetchTodaySummary]);
 
-  const { totalPatients, patuhCount, tidakPatuhCount } = useMemo(() => {
+  const { totalPatients, patuhCount, tidakPatuhCount, patuhCairanCount, tidakPatuhCairanCount } = useMemo(() => {
     let patuh = 0;
     let tidakPatuh = 0;
-    
+    let patuhCairan = 0;
+    let tidakPatuhCairan = 0;
+
     patients.forEach(p => {
       const status = p.rekapan_obat?.[0]?.status_kepatuhan;
       if (status === 'PATUH') patuh++;
       else if (status === 'TIDAK_PATUH') tidakPatuh++;
+
+      const statusCairan = p.rekapan_cairan?.[0]?.status_kepatuhan;
+      if (statusCairan === 'PATUH') patuhCairan++;
+      else if (statusCairan === 'TIDAK_PATUH') tidakPatuhCairan++;
     });
 
     return {
       totalPatients: patients.length,
       patuhCount: patuh,
       tidakPatuhCount: tidakPatuh,
+      patuhCairanCount: patuhCairan,
+      tidakPatuhCairanCount: tidakPatuhCairan,
     };
   }, [patients]);
+
+  // Get alert count from today's monitoring data
+  const alertCount = useMemo(() => {
+    return todayData?.alerts?.count ?? 0;
+  }, [todayData]);
 
   const filteredPatients = useMemo(() => {
     if (!searchQuery) return patients;
@@ -66,7 +82,7 @@ export default function MonitoringListScreen({ navigation }) {
             </View>
           </View>
           
-          <View className="flex-row space-x-4">
+            <View className="flex-row space-x-4">
             <View className="flex-1 bg-white rounded-3xl p-5 border-[1.5px] border-[#EEF0EF] items-center mr-2">
               <View className="w-12 h-12 rounded-2xl bg-emerald-50 items-center justify-center mb-3">
                 <CheckCircle color="#10B981" size={24} />
@@ -83,6 +99,25 @@ export default function MonitoringListScreen({ navigation }) {
               <Text className="text-xs font-extrabold text-[#9DB0AA] uppercase tracking-wider mt-1 text-center">Tidak Patuh</Text>
             </View>
           </View>
+          
+          {/* Cairan summary */}
+          <View className="flex-row space-x-4 mt-4">
+            <View className="flex-1 bg-white rounded-3xl p-5 border-[1.5px] border-[#EEF0EF] items-center mr-2">
+              <View className="w-12 h-12 rounded-2xl bg-sky-50 items-center justify-center mb-3">
+                <Droplets color="#06B6D4" size={24} />
+              </View>
+              <Text className="text-3xl font-black text-sky-500 text-center">{patuhCairanCount}</Text>
+              <Text className="text-xs font-extrabold text-[#9DB0AA] uppercase tracking-wider mt-1 text-center">Cairan Patuh</Text>
+            </View>
+
+            <View className="flex-1 bg-white rounded-3xl p-5 border-[1.5px] border-[#EEF0EF] items-center ml-2">
+              <View className="w-12 h-12 rounded-2xl bg-rose-50 items-center justify-center mb-3">
+                <XCircle color="#F43F5E" size={24} />
+              </View>
+              <Text className="text-3xl font-black text-rose-500 text-center">{tidakPatuhCairanCount}</Text>
+              <Text className="text-xs font-extrabold text-[#9DB0AA] uppercase tracking-wider mt-1 text-center">Cairan Tidak Patuh</Text>
+            </View>
+          </View>
         </View>
 
         {/* SEARCH BAR */}
@@ -96,6 +131,23 @@ export default function MonitoringListScreen({ navigation }) {
             onChangeText={setSearchQuery}
           />
         </View>
+
+        {/* ALERTS SECTION */}
+        {alertCount > 0 && (
+          <View className="bg-rose-50 border-2 border-rose-200 rounded-3xl p-5 mb-5">
+            <View className="flex-row items-center">
+              <View className="w-12 h-12 rounded-2xl bg-rose-100 items-center justify-center mr-3">
+                <XCircle color="#F43F5E" size={24} />
+              </View>
+              <View className="flex-1">
+                <Text className="text-lg font-black text-[#1A2820]">Perlu Perhatian</Text>
+                <Text className="text-sm font-bold text-[#F43F5E] mt-1">
+                  {alertCount} pasien tidak patuh hari ini
+                </Text>
+              </View>
+            </View>
+          </View>
+        )}
 
         {isLoading ? (
           <ActivityIndicator size="large" color="#0D7A6A" className="mt-10" />
@@ -118,13 +170,6 @@ export default function MonitoringListScreen({ navigation }) {
                     <Text className="text-lg font-extrabold text-[#1A2820]" numberOfLines={1} ellipsizeMode="tail">
                       {item.nama}
                     </Text>
-                    {status ? (
-                      <View className={`self-start px-3 py-1.5 rounded-full mt-2 ${isPatuh ? 'bg-[#E8F8F3]' : 'bg-[#FFF0F2]'}`}>
-                        <Text className={`text-xs font-black uppercase ${isPatuh ? 'text-[#0D7A6A]' : 'text-[#F43F5E]'}`}>
-                          {status === 'TIDAK_PATUH' ? 'TIDAK PATUH' : status}
-                        </Text>
-                      </View>
-                    ) : null}
                   </View>
                   <ChevronRight color="#CBD5E1" size={24} />
                 </Pressable>

@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\KontakPasienController;
 use App\Http\Controllers\Api\KuisionerController;
 use App\Http\Controllers\Api\ObatController;
 use App\Http\Controllers\Api\PasienController;
@@ -54,11 +53,6 @@ Route::middleware('auth:sanctum')->group(function (): void {
     // Pasien
     Route::apiResource('pasien', PasienController::class);
 
-    // Kontak Pasien
-    Route::get('/kontak-pasien', [KontakPasienController::class, 'index']);
-    Route::post('/kontak-pasien', [KontakPasienController::class, 'store']);
-    Route::delete('/kontak-pasien/{id}', [KontakPasienController::class, 'destroy']);
-
     // Reminder Obat
     Route::apiResource('reminder-obat', ReminderObatController::class);
 
@@ -69,4 +63,8 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/rekap-kuisioner', [RekapKuisionerController::class, 'index']);
     Route::post('/rekap-kuisioner', [RekapKuisionerController::class, 'store']);
     Route::get('/rekap-kuisioner/{id}', [RekapKuisionerController::class, 'show']);
+
+    // Rekapan Cairan
+    Route::get('/rekapan-cairan', [RekapanCairanController::class, 'index']);
+    Route::get('/rekapan-cairan/{id}', [RekapanCairanController::class, 'show'])->where('id', '[0-9]+');
 });
