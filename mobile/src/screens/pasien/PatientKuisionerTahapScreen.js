@@ -245,6 +245,7 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isRulerDragging, setIsRulerDragging] = useState(false);
   const [rulerDragValue, setRulerDragValue] = useState(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const pad = (v) => String(v).padStart(2, '0');
   const formatDisplayDate = (iso) => {
@@ -392,9 +393,7 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
       const payload = { ...allResponses, tahap_4_kepatuhan: tahap4_numeric, tahap_5_efikasi: tahap5_numeric, tahap_6_kualitas_hidup: tahap6_numeric, tahap_7_kccq: tahap7_numeric };
 
       await submitKuisionerAnswers(storedProfile.id, new Date().toISOString().split('T')[0], payload);
-      Alert.alert('Sukses', 'Kuisioner 7-tahap berhasil disimpan!', [
-        { text: 'OK', onPress: handleExit },
-      ]);
+      setShowSuccessModal(true);
     } catch (error) {
       console.error('Error submitting kuisioner:', error);
       Alert.alert('Error', 'Gagal menyimpan kuisioner. Silakan coba lagi.');
@@ -1369,6 +1368,31 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
                 style={{ borderRadius: 16, paddingVertical: 14, alignItems: 'center' }}
               >
                 <Text style={{ color: '#92400E', fontWeight: '800', fontSize: 15 }}>Simpan Herbal</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── SUCCESS MODAL ── */}
+      <Modal visible={showSuccessModal} transparent animationType="fade">
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'center', padding: 24 }}>
+          <View style={{ backgroundColor: '#fff', borderRadius: 24, padding: 20 }}>
+            <Text style={{ fontSize: 16, fontWeight: '900', color: '#1E293B', marginBottom: 6 }}>Sukses</Text>
+            <Text style={{ color: '#475569', marginBottom: 16 }}>Kuisioner 7-tahap berhasil disimpan!</Text>
+            <TouchableOpacity
+              onPress={() => {
+                setShowSuccessModal(false);
+                handleExit();
+              }}
+              activeOpacity={0.85}
+            >
+              <LinearGradient
+                colors={['#F59E0B', '#FCD34D']}
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                style={{ borderRadius: 16, paddingVertical: 12, alignItems: 'center' }}
+              >
+                <Text style={{ color: '#92400E', fontWeight: '800', fontSize: 14 }}>OK</Text>
               </LinearGradient>
             </TouchableOpacity>
           </View>
