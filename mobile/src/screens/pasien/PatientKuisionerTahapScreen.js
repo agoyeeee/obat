@@ -11,6 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import Slider from '@react-native-community/slider';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, ChevronRight, Info, Plus, X, ClipboardList } from 'lucide-react-native';
@@ -154,6 +155,12 @@ const QUALITY_OF_LIFE_QUESTIONS = [
   },
 ];
 
+const RULER_QUESTION = {
+  key: 'skala_kesehatan',
+  label: 'Skala Kesehatan Keseluruhan',
+  helper: 'Geser/pilih nilai 0 (sangat buruk) sampai 100 (sangat baik).',
+};
+
 const KCCQ_QUESTIONS = [
   {
     key: 'q1_activities',
@@ -236,6 +243,8 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
   const [isAddHerbalModalOpen, setIsAddHerbalModalOpen] = useState(false);
   const [newHerbal, setNewHerbal] = useState({ nama_obat: '', dosis: '', frekuensi: '', keterangan: '' });
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [isRulerDragging, setIsRulerDragging] = useState(false);
+  const [rulerDragValue, setRulerDragValue] = useState(null);
 
   const pad = (v) => String(v).padStart(2, '0');
   const formatDisplayDate = (iso) => {
@@ -315,9 +324,11 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
       });
     }
     if (currentTahap === 6) {
-      return QUALITY_OF_LIFE_QUESTIONS.every((item) => {
+      const qolOk = QUALITY_OF_LIFE_QUESTIONS.every((item) => {
         return tahap6Data[item.key] !== undefined && tahap6Data[item.key] !== '';
       });
+      const rulerOk = tahap6Data[RULER_QUESTION.key] !== undefined && tahap6Data[RULER_QUESTION.key] !== '' && tahap6Data[RULER_QUESTION.key] !== null;
+      return qolOk && rulerOk;
     }
     if (currentTahap === 7) {
       // require all KCCQ questions answered (including subitems)
@@ -416,6 +427,88 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
   const showEffectInfo = (efek) => {
     Alert.alert(efek, EFFECT_INFO[efek] || 'Tidak ada penjelasan tambahan untuk pilihan ini.');
   };
+
+  const fillDummyForTahap = () => {
+    if (currentTahap === 1) {
+      setTahap1Data((prev) => ({
+        ...prev,
+        tanggal_lahir: prev.tanggal_lahir || '2000-01-01',
+        status: prev.status || 'Menikah',
+        suku: prev.suku || 'Jawa',
+        pendidikan: prev.pendidikan || 'SMA',
+        pekerjaan: prev.pekerjaan || 'Bekerja: PNS / Karyawan BUMN / Swasta / Wirausaha',
+        nomor_hp: prev.nomor_hp || '081234567890',
+        pendapatan: prev.pendapatan || '1.000.000 – 5.000.000',
+      }));
+      return;
+    }
+
+    if (currentTahap === 2) {
+      setTahap2Data({
+        penyakit_penyerta: 'Tidak',
+        herbal: 'Tidak',
+        obat_lain: 'Tidak',
+      });
+      setObatList([
+        { id: Date.now(), nama_obat: 'Furosemide', dosis: '40 mg', frekuensi: '1x sehari', keterangan: '' },
+      ]);
+      setHerbalList([]);
+      return;
+    }
+
+    if (currentTahap === 3) {
+      setTahap3Data({
+        pelaporan: 'Dokter',
+        efek_samping: ['Batuk'],
+        tindakan: 'Membiarkan',
+      });
+      return;
+    }
+
+    if (currentTahap === 4) {
+      const data = {};
+      KEPATUHAN_QUESTIONS.forEach((_, idx) => {
+        data[`q_${idx + 1}`] = 'Jarang';
+      });
+      setTahap4Data(data);
+      return;
+    }
+
+    if (currentTahap === 5) {
+      const data = {};
+      EFIKASI_QUESTIONS.forEach((_, idx) => {
+        data[`e_${idx + 1}`] = 'Agak yakin';
+      });
+      setTahap5Data(data);
+      return;
+    }
+
+    if (currentTahap === 6) {
+      const data = {};
+      QUALITY_OF_LIFE_QUESTIONS.forEach((item) => {
+        data[item.key] = 2;
+      });
+      data[RULER_QUESTION.key] = 75;
+      setTahap6Data(data);
+      return;
+    }
+
+    if (currentTahap === 7) {
+      const data = {};
+      KCCQ_QUESTIONS.forEach((item) => {
+        if (item.subitems && Array.isArray(item.subitems)) {
+          item.subitems.forEach((si) => {
+            data[si.key] = 2;
+          });
+        } else {
+          data[item.key] = 2;
+        }
+      });
+      setTahap7Data(data);
+    }
+  };
+
+  const currentRulerValue = typeof tahap6Data[RULER_QUESTION.key] === 'number' ? tahap6Data[RULER_QUESTION.key] : 0;
 
   // ── STYLED FIELD RENDERERS ──
 
@@ -769,6 +862,46 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
                 ))}
               </View>
             </View>
+
+            <View style={{ marginBottom: 16 }}>
+              {renderLabel(RULER_QUESTION.label)}
+              <Text style={{ color: '#475569', marginBottom: 8 }}>{RULER_QUESTION.helper}</Text>
+              <View style={{ backgroundColor: '#fff', borderRadius: 20, borderWidth: 1.5, borderColor: '#FDE68A', padding: 12 }}>
+                <View style={{ position: 'relative' }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '700' }}>0</Text>
+                    <Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '700' }}>100</Text>
+                  </View>
+                  <Slider
+                    minimumValue={0}
+                    maximumValue={100}
+                    step={1}
+                    value={currentRulerValue}
+                    minimumTrackTintColor="#F59E0B"
+                    maximumTrackTintColor="#E2E8F0"
+                    thumbTintColor="#F59E0B"
+                    onSlidingStart={() => {
+                      setIsRulerDragging(true);
+                      setRulerDragValue(currentRulerValue);
+                    }}
+                    onValueChange={(value) => {
+                      const rounded = Math.round(value);
+                      setRulerDragValue(rounded);
+                      handleUpdateTahap6(RULER_QUESTION.key, rounded);
+                    }}
+                    onSlidingComplete={() => setIsRulerDragging(false)}
+                  />
+                  {isRulerDragging && rulerDragValue !== null && (
+                    <View style={{ position: 'absolute', top: -28, right: 0, backgroundColor: '#F59E0B', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10 }}>
+                      <Text style={{ color: '#fff', fontWeight: '800', fontSize: 11 }}>{rulerDragValue}</Text>
+                    </View>
+                  )}
+                </View>
+                <Text style={{ color: '#92400E', fontWeight: '800', fontSize: 13, textAlign: 'right' }}>
+                  Nilai: {tahap6Data[RULER_QUESTION.key] ?? '-'}
+                </Text>
+              </View>
+            </View>
           </View>
         )}
 
@@ -1042,9 +1175,25 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
         paddingBottom: insets.bottom + 16,
         borderTopWidth: 1,
         borderTopColor: '#FEF3C7',
-        flexDirection: 'row',
         gap: 12,
       }}>
+        {__DEV__ && (
+          <TouchableOpacity
+            onPress={fillDummyForTahap}
+            style={{
+              borderWidth: 1,
+              borderColor: '#F59E0B',
+              borderRadius: 12,
+              paddingVertical: 8,
+              alignItems: 'center',
+              backgroundColor: '#FFFBEB',
+            }}
+          >
+            <Text style={{ color: '#92400E', fontWeight: '800', fontSize: 12 }}>Debug: Isi Tahap</Text>
+          </TouchableOpacity>
+        )}
+
+        <View style={{ flexDirection: 'row', gap: 12 }}>
         {currentTahap > 1 && (
           <TouchableOpacity
             onPress={() => setCurrentTahap(currentTahap - 1)}
@@ -1129,6 +1278,7 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
             </LinearGradient>
           </TouchableOpacity>
         )}
+        </View>
       </View>
 
       {/* ── SELECT MODAL ── */}
