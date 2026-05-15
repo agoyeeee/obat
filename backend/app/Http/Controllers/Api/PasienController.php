@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\LogKonsumsiCairan;
 use App\Models\LogKonsumsiObat;
 use App\Models\Pasien;
+use App\Models\RekapanCairan;
 use App\Models\ReminderCairan;
 use App\Models\ReminderObat;
 use App\Models\Obat;
@@ -194,21 +195,19 @@ class PasienController extends Controller
             $reminder->save();
         }
 
-        $log = LogKonsumsiObat::query()->updateOrCreate(
-            [
-                'reminder_obat_id' => $reminder->id,
-                'tanggal' => $tanggal,
-                'waktu' => $waktu,
-            ],
-            [
-                'pasien_id' => $reminder->pasien_id,
-                'status' => $status,
-                'skor' => $skor,
-            ]
-        );
+        $log = RekapanCairan::query()->create([
+            'pasien_id' => $reminder->pasien_id,
+            'minggu_mulai' => Carbon::parse($tanggal)->startOfWeek()->toDateString(),
+            'tanggal' => $tanggal,
+            'waktu' => $waktu,
+            'minuman' => $reminder->minuman,
+            'jumlah_ml' => $reminder->jumlah_ml,
+            'catatan_asupan' => $reminder->catatan_asupan,
+            'status_kepatuhan' => null,
+        ]);
 
         return response()->json([
-            'message' => 'Log konsumsi obat berhasil disimpan.',
+            'message' => 'Log konsumsi cairan dari alarm berhasil disimpan.',
             'data' => $log,
         ]);
     }
@@ -250,30 +249,20 @@ class PasienController extends Controller
                 'berat_badan' => $patientData['berat_badan'],
             ]);
 
-            $reminder = ReminderCairan::query()->create([
+            $rekapan = RekapanCairan::query()->create([
                 'pasien_id' => $pasien->id,
-                'jumlah_ml' => (int) $validated['jumlah_ml'],
-                'waktu' => $validated['waktu'],
-                'minuman' => $validated['minuman'],
-                'catatan_asupan' => $validated['catatan_asupan'] ?? null,
-            ]);
-
-            $log = LogKonsumsiCairan::query()->create([
-                'reminder_cairan_id' => $reminder->id,
-                'pasien_id' => $pasien->id,
+                'minggu_mulai' => Carbon::parse($validated['tanggal'])->startOfWeek()->toDateString(),
                 'tanggal' => $validated['tanggal'],
                 'waktu' => $validated['waktu'],
-                'status' => 'diminum',
-                'skor' => 1,
                 'minuman' => $validated['minuman'],
                 'catatan_asupan' => $validated['catatan_asupan'] ?? null,
                 'jumlah_ml' => (int) $validated['jumlah_ml'],
+                'status_kepatuhan' => null,
             ]);
 
             return [
                 'pasien_id' => $pasien->id,
-                'reminder' => $reminder,
-                'log' => $log,
+                'rekapan' => $rekapan,
             ];
         });
 
@@ -342,6 +331,21 @@ class PasienController extends Controller
                     $reminder = ReminderCairan::query()->create($reminderData);
                 }
 
+                RekapanCairan::query()->updateOrCreate(
+                    [
+                        'pasien_id' => $pasien->id,
+                        'tanggal' => $item['tanggal'],
+                        'waktu' => $item['waktu'],
+                    ],
+                    [
+                        'minggu_mulai' => Carbon::parse($item['tanggal'])->startOfWeek()->toDateString(),
+                        'minuman' => $item['minuman'],
+                        'jumlah_ml' => (int) $item['jumlah_ml'],
+                        'catatan_asupan' => $item['catatan_asupan'] ?? null,
+                        'status_kepatuhan' => null,
+                    ]
+                );
+
                 $synced[] = $item['local_id'];
                 $serverMap[$item['local_id']] = $reminder->id;
             }
@@ -379,10 +383,9 @@ class PasienController extends Controller
             return response()->json([]);
         }
 
-        $logs = LogKonsumsiCairan::query()
-            ->with('reminderCairan')
+        $logs = RekapanCairan::query()
             ->where('pasien_id', $pasien->id)
-            ->orderByDesc('tanggal')
+            ->orderByDesc('created_at')
             ->orderByDesc('waktu')
             ->limit(100)
             ->get();
@@ -409,21 +412,16 @@ class PasienController extends Controller
         $tanggal = $validated['tanggal'] ?? $loggedAt->toDateString();
         $waktu = $validated['waktu'] ?? $loggedAt->format('H:i:s');
 
-        $log = LogKonsumsiCairan::query()->updateOrCreate(
-            [
-                'reminder_cairan_id' => $reminder->id,
-                'tanggal' => $tanggal,
-                'waktu' => $waktu,
-            ],
-            [
-                'pasien_id' => $reminder->pasien_id,
-                'status' => $status,
-                'skor' => $status === 'diminum' ? 1 : 0,
-                'minuman' => $reminder->minuman,
-                'jumlah_ml' => $reminder->jumlah_ml,
-                'catatan_asupan' => $reminder->catatan_asupan,
-            ]
-        );
+        $log = RekapanCairan::query()->create([
+            'pasien_id' => $reminder->pasien_id,
+            'minggu_mulai' => Carbon::parse($tanggal)->startOfWeek()->toDateString(),
+            'tanggal' => $tanggal,
+            'waktu' => $waktu,
+            'minuman' => $reminder->minuman,
+            'jumlah_ml' => $reminder->jumlah_ml,
+            'catatan_asupan' => $reminder->catatan_asupan,
+            'status_kepatuhan' => null,
+        ]);
 
         return response()->json([
             'message' => 'Log konsumsi cairan dari alarm berhasil disimpan.',
@@ -463,19 +461,18 @@ class PasienController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $apoteker = $request->user();
         $startDate = now()->startOfWeek();
         $endDate = now()->endOfWeek();
 
-        // Tampilkan pasien yang terhubung dengan apoteker ini
-        $pasiens = $apoteker->pasiens()
+        // Tampilkan semua pasien agar apoteker melihat seluruh data monitoring
+        $pasiens = Pasien::query()
             ->with(['logsObat' => function($q) use ($startDate, $endDate) {
                 $q->whereBetween('tanggal', [$startDate->toDateString(), $endDate->toDateString()]);
             }])
             ->withCount('reminderObat')
             ->orderBy('nama')
             ->get()
-            ->map(function($pasien) {
+            ->map(function($pasien) use ($startDate, $endDate) {
                 // Kalkulasi kepatuhan mingguan secara dinamis untuk dashboard
                 $totalScore = $pasien->logsObat->sum('skor');
                 $totalLogs = $pasien->logsObat->count();
@@ -483,9 +480,32 @@ class PasienController extends Controller
                 $percentage = $totalLogs > 0 ? ($totalScore / $totalLogs) * 100 : 0;
                 $status = ($totalLogs > 0 && $percentage >= 80) ? 'PATUH' : ($totalLogs > 0 ? 'TIDAK_PATUH' : 'BELUM_ADA_DATA');
 
-                // Format agar kompatibel dengan frontend yang lama (rekapan_obat[0])
+                // Format agar kompatibel dengan frontend yang lama (rekapan_obat[0] / rekapan_cairan[0])
                 $pasien->rekapan_obat = [
                     ['status_kepatuhan' => $status]
+                ];
+
+                $cairanLogs = RekapanCairan::query()
+                    ->where('pasien_id', $pasien->id)
+                    ->get();
+
+                $cairanLogs = $cairanLogs->filter(function (RekapanCairan $item) use ($startDate, $endDate) {
+                    $entryDate = Carbon::parse($item->tanggal ?? $item->created_at);
+
+                    return $entryDate->betweenIncluded($startDate->copy()->startOfDay(), $endDate->copy()->endOfDay());
+                });
+
+                $totalMlCairan = $cairanLogs->sum('jumlah_ml');
+                $statusCairan = $cairanLogs->count() > 0
+                    ? ($totalMlCairan >= 900 ? 'PATUH' : 'TIDAK_PATUH')
+                    : 'BELUM_ADA_DATA';
+
+                $pasien->rekapan_cairan = [
+                    [
+                        'status_kepatuhan' => $statusCairan,
+                        'total_ml' => $totalMlCairan,
+                        'target_ml' => 900,
+                    ]
                 ];
                 return $pasien;
             });
@@ -504,9 +524,6 @@ class PasienController extends Controller
         ]);
 
         $pasien = Pasien::query()->create($validated);
-
-        // Otomatis hubungkan pasien dengan apoteker yang membuat
-        $request->user()->pasiens()->attach($pasien->id);
 
         return response()->json($pasien, 201);
     }

@@ -10,6 +10,11 @@ Notifications.setNotificationHandler({
       console.log('Error playing alarm sound:', error);
     }
     return {
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+      shouldShowBanner: true,
+      shouldShowList: true,
     };
   },
 });

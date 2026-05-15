@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import api from '../../services/api';
+import { useMonitoring } from '../../hooks/useMonitoring';
 import {
   AlertTriangle,
   Activity,
@@ -89,24 +89,17 @@ function ActivityItem({ activity, isLast }) {
 
 export default function DashboardHomeScreen({ route, navigation }) {
   const { user, onLogout } = route.params || {};
-  const [data, setData] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { todayData, isLoading, fetchTodaySummary } = useMonitoring();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const fetchData = useCallback(async () => {
-    try {
-      const res = await api.get('/monitoring/today-summary');
-      setData(res.data);
-    } catch (error) {
-      console.error('Error fetching today summary:', error);
-    } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
-    }
-  }, []);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
-  const onRefresh = () => { setIsRefreshing(true); fetchData(); };
+  useEffect(() => { 
+    fetchTodaySummary(); 
+  }, [fetchTodaySummary]);
+  
+  const onRefresh = () => { 
+    setIsRefreshing(true); 
+    fetchTodaySummary().finally(() => setIsRefreshing(false));
+  };
 
   if (isLoading) {
     return (
@@ -116,9 +109,9 @@ export default function DashboardHomeScreen({ route, navigation }) {
     );
   }
 
-  const today = data?.today || {};
-  const alerts = data?.alerts || {};
-  const activities = data?.recent_activity || [];
+  const today = todayData?.today || {};
+  const alerts = todayData?.alerts || {};
+  const activities = todayData?.recent_activity || [];
 
   return (
     <View className="flex-1 bg-[#F0F4F3]">
@@ -148,6 +141,7 @@ export default function DashboardHomeScreen({ route, navigation }) {
         className="flex-1"
         contentContainerStyle={{ padding: 22, paddingBottom: 64 }}
         showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
       >
         {/* MAIN CARD */}
         <View className="bg-[#0D7A6A] rounded-[32px] p-7 shadow-lg shadow-[#0D7A6A]/30 relative overflow-hidden">

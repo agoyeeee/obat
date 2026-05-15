@@ -1,4 +1,4 @@
-import { View, Text, Pressable, SafeAreaView } from 'react-native';
+import { View, Text, Pressable, SafeAreaView, Image } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { ShieldCheck, UserRound } from 'lucide-react-native';
 
@@ -8,11 +8,11 @@ export default function EntryScreen({ onSelectApoteker, onSelectPasien }) {
       <StatusBar style="dark" />
       <View className="flex-1 px-6 justify-center">
         <View className="items-center mb-10">
-          <View className="w-18 h-18 rounded-[28px] bg-teal-100 items-center justify-center mb-4">
-            <Text className="text-4xl">💊</Text>
-          </View>
-          <Text className="text-3xl font-extrabold text-slate-900 tracking-tight text-center">MedReminder</Text>
-          <Text className="text-base font-semibold text-teal-600 mt-2 text-center">Pilih mode akses</Text>
+          <Image
+            source={require('../../assets/logo myhearth.png')}
+            style={{ width: 450, height: 160, borderRadius: 16, marginBottom: 1 }}
+            resizeMode="contain"
+          />
         </View>
 
         <View className="bg-white p-5 rounded-3xl shadow-lg shadow-slate-900/5 border border-slate-100 mb-4">

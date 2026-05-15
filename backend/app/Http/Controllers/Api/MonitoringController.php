@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Pasien;
 use App\Models\LogKonsumsiObat;
+use App\Models\RekapanCairan;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -28,16 +29,21 @@ class MonitoringController extends Controller
         $endDate = $startDate->copy()->addDays(6)->endOfDay();
 
         // 2. OBAT Logs
-        $logsObat = LogKonsumsiObat::with('reminderObat.obat', 'reminderObat.merk')
+        $logsObat = LogKonsumsiObat::with('reminderObat.obat', 'reminderObat.merk', 'reminderObat.waktuKonsumsi')
             ->where('pasien_id', $pasienId)
             ->whereBetween('tanggal', [$startDate->toDateString(), $endDate->toDateString()])
             ->get();
 
         // 3. CAIRAN Logs
-        $logsCairan = \App\Models\LogKonsumsiCairan::with('reminderCairan')
+        $logsCairan = RekapanCairan::query()
             ->where('pasien_id', $pasienId)
-            ->whereBetween('tanggal', [$startDate->toDateString(), $endDate->toDateString()])
             ->get();
+
+        $logsCairan = $logsCairan->filter(function (RekapanCairan $item) use ($startDate, $endDate) {
+            $entryDate = Carbon::parse($item->tanggal ?? $item->created_at);
+
+            return $entryDate->betweenIncluded($startDate->copy()->startOfDay(), $endDate->copy()->endOfDay());
+        })->values();
 
         return response()->json([
             'minggu_mulai' => $startDate->toDateString(),
@@ -53,9 +59,10 @@ class MonitoringController extends Controller
             'cairan' => [
                 'logs' => $logsCairan->groupBy(fn($log) => Carbon::parse($log->tanggal)->format('Y-m-d')),
                 'summary' => [
-                    'total_skor' => $logsCairan->sum('skor'),
+                    'total_ml' => $logsCairan->sum('jumlah_ml'),
                     'total_logs' => $logsCairan->count(),
-                    'persentase' => $logsCairan->count() > 0 ? ($logsCairan->sum('skor') / $logsCairan->count()) * 100 : 0
+                    'target_ml' => 900,
+                    'persentase' => $logsCairan->count() > 0 ? min(100, ($logsCairan->sum('jumlah_ml') / 900) * 100) : 0
                 ]
             ]
         ]);
@@ -139,13 +146,17 @@ class MonitoringController extends Controller
             $countObat = $logsObat->count();
             $percentageObat = $countObat > 0 ? round(($scoreObat / $countObat) * 100, 2) : 0;
 
-            // CAIRAN Stats
-            $logsCairan = \App\Models\LogKonsumsiCairan::where('pasien_id', $pasienId)
-                ->whereBetween('tanggal', [$weekStart->toDateString(), $weekEnd->toDateString()])
+            // CAIRAN Stats - based on total ml (>= 900 is PATUH)
+            $logsCairan = RekapanCairan::where('pasien_id', $pasienId)
                 ->get();
-            $scoreCairan = $logsCairan->sum('skor');
+            $logsCairan = $logsCairan->filter(function (RekapanCairan $item) use ($weekStart, $weekEnd) {
+                $entryDate = Carbon::parse($item->tanggal ?? $item->created_at);
+
+                return $entryDate->betweenIncluded($weekStart->copy()->startOfDay(), $weekEnd->copy()->endOfDay());
+            });
+            $totalMlCairan = $logsCairan->sum('jumlah_ml');
             $countCairan = $logsCairan->count();
-            $percentageCairan = $countCairan > 0 ? round(($scoreCairan / $countCairan) * 100, 2) : 0;
+            $statusCairan = $countCairan > 0 && $totalMlCairan >= 900 ? 'PATUH' : ($countCairan > 0 ? 'TIDAK_PATUH' : 'BELUM_ADA_DATA');
 
             $weeks[] = [
                 'minggu_mulai' => $weekStart->toDateString(),
@@ -155,8 +166,9 @@ class MonitoringController extends Controller
                     'persentase' => $percentageObat,
                 ],
                 'cairan' => [
-                    'status_kepatuhan' => ($countCairan > 0 && $percentageCairan >= 80) ? 'PATUH' : ($countCairan > 0 ? 'TIDAK_PATUH' : 'BELUM_ADA_DATA'),
-                    'persentase' => $percentageCairan,
+                    'status_kepatuhan' => $statusCairan,
+                    'total_ml' => $totalMlCairan,
+                    'target_ml' => 900,
                 ]
             ];
 

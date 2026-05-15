@@ -12,6 +12,11 @@ class RekapanCairan extends Model
     protected $fillable = [
         'pasien_id',
         'minggu_mulai',
+        'tanggal',
+        'waktu',
+        'minuman',
+        'jumlah_ml',
+        'catatan_asupan',
         'status_kepatuhan',
     ];
 
@@ -19,6 +24,8 @@ class RekapanCairan extends Model
     {
         return [
             'minggu_mulai' => 'date',
+            'tanggal' => 'date',
+            'jumlah_ml' => 'integer',
         ];
     }
 

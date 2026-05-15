@@ -21,8 +21,6 @@ class DatabaseSeeder extends Seeder
             WaktuKonsumsiSeeder::class,
             KuisionerSeeder::class,
 
-            // Tabel relasi (bergantung pada tabel master)
-            KontakPasienSeeder::class,
             MerkSeeder::class,
 
             // Tabel transaksi (bergantung pada tabel relasi)

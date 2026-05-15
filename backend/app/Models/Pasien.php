@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Pasien extends Model
 {
@@ -32,16 +31,6 @@ class Pasien extends Model
             'tgl_diagnosa' => 'date',
             'tgl_lahir'    => 'date',
         ];
-    }
-
-    public function kontakPasien(): HasMany
-    {
-        return $this->hasMany(KontakPasien::class);
-    }
-
-    public function apotekers(): BelongsToMany
-    {
-        return $this->belongsToMany(Apoteker::class, 'kontak_pasien');
     }
 
     public function reminderObat(): HasMany
