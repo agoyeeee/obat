@@ -157,8 +157,7 @@ const QUALITY_OF_LIFE_QUESTIONS = [
 
 const RULER_QUESTION = {
   key: 'skala_kesehatan',
-  label: 'Skala Kesehatan Keseluruhan',
-  helper: 'Geser/pilih nilai 0 (sangat buruk) sampai 100 (sangat baik).',
+  label: 'Visual Analogue Scale (VAS)',
 };
 
 const KCCQ_QUESTIONS = [
@@ -864,7 +863,13 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
 
             <View style={{ marginBottom: 16 }}>
               {renderLabel(RULER_QUESTION.label)}
-              <Text style={{ color: '#475569', marginBottom: 8 }}>{RULER_QUESTION.helper}</Text>
+              <View style={{ marginBottom: 8 }}>
+                <Text style={{ color: '#475569', marginBottom: 6 }}>Kami ingin mengetahui seberapa baik atau buruk kesehatan Anda HARI INI.</Text>
+                <Text style={{ color: '#475569', marginBottom: 4 }}>- Skala ini memiliki angka dari 0 hingga 100.</Text>
+                <Text style={{ color: '#475569', marginBottom: 4 }}>- 100 berarti kesehatan terbaik yang dapat Anda bayangkan.</Text>
+                <Text style={{ color: '#475569', marginBottom: 4 }}>- 0 berarti kesehatan terburuk yang dapat Anda bayangkan.</Text>
+                <Text style={{ color: '#475569', marginBottom: 4 }}>- Geser penanda pada skala untuk menunjukkan kesehatan Anda HARI INI.</Text>
+              </View>
               <View style={{ backgroundColor: '#fff', borderRadius: 20, borderWidth: 1.5, borderColor: '#FDE68A', padding: 12 }}>
                 <View style={{ position: 'relative' }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
@@ -896,9 +901,22 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
                     </View>
                   )}
                 </View>
-                <Text style={{ color: '#92400E', fontWeight: '800', fontSize: 13, textAlign: 'right' }}>
-                  Nilai: {tahap6Data[RULER_QUESTION.key] ?? '-'}
-                </Text>
+                <View style={{ alignItems: 'flex-end', marginTop: 8 }}>
+                  <View style={{
+                    minWidth: 72,
+                    paddingVertical: 6,
+                    paddingHorizontal: 10,
+                    borderWidth: 1.5,
+                    borderColor: '#FDE68A',
+                    borderRadius: 10,
+                    backgroundColor: '#FFFBEB',
+                    alignItems: 'center',
+                  }}>
+                    <Text style={{ color: '#92400E', fontWeight: '800', fontSize: 13 }}>
+                      {tahap6Data[RULER_QUESTION.key] ?? '-'}
+                    </Text>
+                  </View>
+                </View>
               </View>
             </View>
           </View>
