@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Route;
 Route::post('/auth/login', [AuthController::class, 'login']);
 Route::get('/apoteker/public-contacts', [AuthController::class, 'publicApotekerContacts']);
 Route::post('/pasien/public-register', [PasienController::class, 'publicStore']);
+Route::put('/pasien/public-update/{id}', [PasienController::class, 'publicUpdate'])->where('id', '[0-9]+');
 Route::post('/pasien/public-sync-reminder-obat', [PasienController::class, 'publicSyncReminderObat']);
 Route::post('/pasien/public-log-konsumsi-obat', [PasienController::class, 'publicLogKonsumsiObat']);
 Route::post('/pasien/public-log-konsumsi-cairan', [PasienController::class, 'publicLogKonsumsiCairan']);

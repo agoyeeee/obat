@@ -35,6 +35,25 @@ class PasienController extends Controller
         ], 201);
     }
 
+    public function publicUpdate(Request $request, int $id): JsonResponse
+    {
+        $validated = $request->validate([
+            'nama'          => ['required', 'string', 'max:100'],
+            'usia'          => ['required', 'integer', 'min:0'],
+            'jenis_kelamin' => ['required', 'in:L,P'],
+            'berat_badan'   => ['required', 'numeric', 'min:0'],
+            'tgl_diagnosa'  => ['required', 'date'],
+        ]);
+
+        $pasien = Pasien::query()->findOrFail($id);
+        $pasien->update($validated);
+
+        return response()->json([
+            'message' => 'Biodata pasien berhasil diperbarui.',
+            'data' => $pasien,
+        ]);
+    }
+
     public function publicSyncReminderObat(Request $request): JsonResponse
     {
         $validated = $request->validate([

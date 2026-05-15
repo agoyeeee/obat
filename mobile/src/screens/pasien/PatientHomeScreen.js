@@ -3,7 +3,7 @@ import { View, Text, Pressable, ScrollView, TextInput, Alert, Platform, RefreshC
 import { StatusBar } from 'expo-status-bar';
 import { ArrowLeft, UserRound } from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { publicRegisterPatient } from '../../services/patientService';
+import { publicRegisterPatient, publicUpdatePatient } from '../../services/patientService';
 
 
 export default function PatientHomeScreen({ onBack, onSubmitSuccess, existingProfile }) {
@@ -106,9 +106,14 @@ export default function PatientHomeScreen({ onBack, onSubmitSuccess, existingPro
         tgl_diagnosa: normalizedTanggalDiagnosa,
       };
 
-      // Call backend to register patient and get ID
-      console.log('[PatientHomeScreen] Registering patient with:', profile);
-      const apiResponse = await publicRegisterPatient(profile);
+      let apiResponse;
+      if (existingProfile?.id) {
+        console.log('[PatientHomeScreen] Updating patient with:', profile);
+        apiResponse = await publicUpdatePatient(existingProfile.id, profile);
+      } else {
+        console.log('[PatientHomeScreen] Registering patient with:', profile);
+        apiResponse = await publicRegisterPatient(profile);
+      }
       console.log('[PatientHomeScreen] API response:', apiResponse);
 
       // Extract patient data from API response (includes ID) and merge with local data

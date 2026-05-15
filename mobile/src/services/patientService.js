@@ -27,6 +27,11 @@ export const publicRegisterPatient = async (payload) => {
   return response.data;
 };
 
+export const publicUpdatePatient = async (patientId, payload) => {
+  const response = await api.put(`/pasien/public-update/${patientId}`, payload);
+  return response.data;
+};
+
 export const fetchPublicObatList = async () => {
   try {
     const response = await api.get('/obat/public-list');
