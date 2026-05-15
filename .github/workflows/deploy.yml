@@ -22,7 +22,7 @@ jobs:
           port: ${{ secrets.PORT }}
           script: |
             set -e
-            APP_DIR="$HOME/domains/myheart.id/backend"
+            APP_DIR="$HOME/domains/myheart.id/obat/backend"
             cd "$APP_DIR"
             git fetch --all
             git reset --hard origin/main
