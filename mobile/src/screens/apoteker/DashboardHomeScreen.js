@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useMonitoring } from '../../hooks/useMonitoring';
 import {
   AlertTriangle,
@@ -18,12 +19,12 @@ import { formatDateDDMMYY } from '../../utils/date';
 function SectionHeader({ title, onPressAll }) {
   return (
     <View className="flex-row items-center justify-between mb-4">
-      <Text className="text-xl font-black text-[#1A2820] tracking-tight">
+      <Text className="text-xl font-black text-[#1E293B] tracking-tight">
         {title}
       </Text>
       {onPressAll && (
         <Pressable onPress={onPressAll} className="py-2 pl-3">
-          <Text className="text-sm font-bold text-[#0D9488]">Lihat Semua →</Text>
+          <Text className="text-sm font-bold text-[#6366F1]">Lihat Semua →</Text>
         </Pressable>
       )}
     </View>
@@ -32,12 +33,12 @@ function SectionHeader({ title, onPressAll }) {
 
 function MetricCard({ icon, iconBg, value, label, badge }) {
   return (
-    <View className="bg-white rounded-3xl border-[1.5px] border-[#EEF0EF] flex-1 shadow-sm shadow-black/5 p-5 items-center">
+    <View className="bg-white rounded-3xl border-[1.5px] border-[#E2E8F0] flex-1 shadow-sm shadow-black/5 p-5 items-center">
       <View className={`w-14 h-14 rounded-2xl ${iconBg} items-center justify-center mb-4`}>
         {icon}
       </View>
-      <Text className="text-3xl font-black text-[#1A2820] leading-[38px] text-center">{value ?? 0}</Text>
-      <Text className="text-xs font-extrabold text-[#9DB0AA] uppercase tracking-wider mt-2 text-center">
+      <Text className="text-3xl font-black text-[#1E293B] leading-[38px] text-center">{value ?? 0}</Text>
+      <Text className="text-xs font-extrabold text-[#94A3B8] uppercase tracking-wider mt-2 text-center">
         {label}
       </Text>
       {badge && (
@@ -53,19 +54,19 @@ function PatientRow({ patient, onPress }) {
   return (
     <Pressable
       onPress={onPress}
-      className="bg-white rounded-[24px] rounded-tl-none rounded-bl-none p-5 flex-row items-center mb-3 border-[1.5px] border-[#EEF0EF] border-l-[8px] border-l-rose-500 shadow-sm shadow-black/5 active:bg-rose-50"
+      className="bg-white rounded-[24px] rounded-tl-none rounded-bl-none p-5 flex-row items-center mb-3 border-[1.5px] border-[#E2E8F0] border-l-[8px] border-l-rose-500 shadow-sm shadow-black/5 active:bg-rose-50"
     >
       <View className="w-16 h-16 rounded-[20px] bg-rose-50 border-[1.5px] border-rose-100 items-center justify-center mr-4">
         <UserMinus color="#F43F5E" size={32} />
       </View>
       <View className="flex-1">
-        <Text className="text-lg font-black text-[#1A2820]">{patient.nama}</Text>
+        <Text className="text-lg font-black text-[#1E293B]">{patient.nama}</Text>
         <Text className="text-sm font-extrabold text-rose-500 uppercase tracking-widest mt-1.5">
           ● {patient.last_status}
         </Text>
       </View>
-      <View className="w-11 h-11 rounded-2xl bg-[#F4F6F5] items-center justify-center">
-        <ChevronRight color="#9DB0AA" size={24} />
+      <View className="w-11 h-11 rounded-2xl bg-[#F1F5F9] items-center justify-center">
+        <ChevronRight color="#94A3B8" size={24} />
       </View>
     </Pressable>
   );
@@ -73,13 +74,13 @@ function PatientRow({ patient, onPress }) {
 
 function ActivityItem({ activity, isLast }) {
   return (
-    <View className={`flex-row items-center p-5 ${isLast ? '' : 'border-b-[1.5px] border-[#F4F6F5]'}`}>
-      <View className={`w-14 h-14 rounded-2xl items-center justify-center mr-4 ${activity.type === 'new_patient' ? 'bg-[#E8F8F3]' : 'bg-[#F4F6F5]'}`}>
-        {activity.type === 'new_patient' ? <UserPlus color="#0D7A6A" size={28} /> : <Clock color="#64748B" size={28} />}
+    <View className={`flex-row items-center p-5 ${isLast ? '' : 'border-b-[1.5px] border-[#F1F5F9]'}`}>
+      <View className={`w-14 h-14 rounded-2xl items-center justify-center mr-4 ${activity.type === 'new_patient' ? 'bg-teal-50' : 'bg-[#F1F5F9]'}`}>
+        {activity.type === 'new_patient' ? <UserPlus color="#0D9488" size={28} /> : <Clock color="#64748B" size={28} />}
       </View>
       <View className="flex-1">
-        <Text className="text-base font-bold text-[#1A2820]">{activity.title}</Text>
-        <Text className="text-xs font-bold text-[#9DB0AA] uppercase tracking-widest mt-1">
+        <Text className="text-base font-bold text-[#1E293B]">{activity.title}</Text>
+        <Text className="text-xs font-bold text-[#94A3B8] uppercase tracking-widest mt-1">
           {activity.time}
         </Text>
       </View>
@@ -103,8 +104,8 @@ export default function DashboardHomeScreen({ route, navigation }) {
 
   if (isLoading) {
     return (
-      <View className="flex-1 bg-[#F0F4F3] justify-center items-center">
-        <ActivityIndicator size="large" color="#0D7A6A" />
+      <View className="flex-1 bg-[#F0F4FF] justify-center items-center">
+        <ActivityIndicator size="large" color="#6366F1" />
       </View>
     );
   }
@@ -114,28 +115,39 @@ export default function DashboardHomeScreen({ route, navigation }) {
   const activities = todayData?.recent_activity || [];
 
   return (
-    <View className="flex-1 bg-[#F0F4F3]">
+    <View className="flex-1 bg-[#F0F4FF]">
       <StatusBar style="dark" />
 
       {/* HEADER */}
-      <View className="bg-white pt-16 pb-7 px-6 border-b-[1.5px] border-[#EEF0EF]">
+      <LinearGradient
+        colors={['#0D9488', '#14B8A6', '#3B82F6']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        className="pt-16 pb-7 px-6 rounded-b-[36px]"
+      >
+        <View className="absolute -top-10 -right-10 w-[180px] h-[180px] rounded-full bg-white/10" />
+        <View className="absolute top-8 right-16 w-20 h-20 rounded-full bg-white/10" />
         <View className="flex-row items-start justify-between">
           <View>
-            <Text className="text-sm font-bold text-[#9DB0AA] uppercase tracking-[1.5px]">
+            <Text className="text-sm font-semibold text-[#C7D2FE] uppercase tracking-[1.5px]">
               {formatDateDDMMYY(new Date())}
             </Text>
-            <Text className="text-2xl font-black text-[#1A2820] tracking-tight mt-1">
+            <Text className="text-2xl font-black text-white tracking-tight mt-1">
               Halo, {user?.nama?.split(' ')[0] || 'Apoteker'} 👋
             </Text>
           </View>
           <Pressable
             onPress={onLogout}
-            className="w-14 h-14 rounded-[18px] bg-rose-50 items-center justify-center border-[1.5px] border-rose-100 active:bg-rose-100"
+            className="w-12 h-12 rounded-[14px] bg-white/20 items-center justify-center border border-white/30 active:opacity-70"
           >
-            <LogOut color="#F43F5E" size={24} />
+            <LogOut color="#fff" size={20} />
           </Pressable>
         </View>
-      </View>
+        <View className="mt-4 self-start flex-row items-center gap-2 bg-white/20 border border-white/30 rounded-full px-4 py-2">
+          <Activity color="#fff" size={14} />
+          <Text className="text-white text-xs font-bold">Status: Terpantau Aktif</Text>
+        </View>
+      </LinearGradient>
 
       <ScrollView
         className="flex-1"
@@ -144,7 +156,12 @@ export default function DashboardHomeScreen({ route, navigation }) {
         refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
       >
         {/* MAIN CARD */}
-        <View className="bg-[#0D7A6A] rounded-[32px] p-7 shadow-lg shadow-[#0D7A6A]/30 relative overflow-hidden">
+        <LinearGradient
+          colors={['#0D9488', '#14B8A6', '#3B82F6']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          className="rounded-[32px] p-7 shadow-lg shadow-[#0D9488]/30 relative overflow-hidden"
+        >
           <View className="absolute -top-9 -right-9 w-[140px] h-[140px] rounded-full bg-white/5" />
           <View className="absolute top-7 right-7 w-16 h-16 rounded-[20px] bg-white/15 items-center justify-center">
             <Pill color="#fff" size={32} />
@@ -174,13 +191,13 @@ export default function DashboardHomeScreen({ route, navigation }) {
               </View>
             ))}
           </View>
-        </View>
+        </LinearGradient>
 
         {/* METRIC CARDS */}
         <View className="flex-row mt-5">
           <MetricCard icon={<AlertTriangle color="#F43F5E" size={22} />} iconBg="bg-rose-50" value={alerts.count} label="Perlu Perhatian" badge={alerts.count > 0} />
           <View className="w-3" />
-          <MetricCard icon={<Activity color="#3B82F6" size={22} />} iconBg="bg-blue-50" value={activities.length} label="Update Terbaru" />
+          <MetricCard icon={<Activity color="#6366F1" size={22} />} iconBg="bg-indigo-50" value={activities.length} label="Update Terbaru" />
         </View>
 
         {/* PROBLEM PATIENTS */}
@@ -195,9 +212,9 @@ export default function DashboardHomeScreen({ route, navigation }) {
               />
             ))
           ) : (
-            <View className="bg-[#E8F8F3] border-2 border-[#52C7A0] rounded-[22px] p-8 items-center">
-              <CheckCircle2 color="#0D7A6A" size={40} />
-              <Text className="text-sm font-bold text-[#0D7A6A] text-center mt-3 leading-[20px]">
+            <View className="bg-teal-50 border-2 border-teal-200 rounded-[22px] p-8 items-center">
+              <CheckCircle2 color="#0D9488" size={40} />
+              <Text className="text-sm font-bold text-teal-700 text-center mt-3 leading-[20px]">
                 Luar biasa! Semua pasien patuh hari ini.
               </Text>
             </View>
@@ -208,7 +225,7 @@ export default function DashboardHomeScreen({ route, navigation }) {
         {activities.length > 0 && (
           <View className="mt-6">
             <SectionHeader title="Aktivitas Terbaru" />
-            <View className="bg-white rounded-[22px] border-[1.5px] border-[#EEF0EF] overflow-hidden">
+            <View className="bg-white rounded-[22px] border-[1.5px] border-[#E2E8F0] overflow-hidden">
               {activities.map((activity, idx) => (
                 <ActivityItem key={idx} activity={activity} isLast={idx === activities.length - 1} />
               ))}

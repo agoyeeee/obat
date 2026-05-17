@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, Modal, TextInput } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { LinearGradient } from 'expo-linear-gradient';
 import { ClipboardList, MessageSquareText, FileText, Clock3, UserRound, ChevronRight, ChevronDown, Search, X } from 'lucide-react-native';
 import { fetchApotekerKuisionerRekaps } from '../../services/patientService';
 import { formatDateDDMMYY } from '../../utils/date';
@@ -156,34 +157,34 @@ const listLabels = {
 };
 
 const listCardAccent = {
-  obat_herbal_list: '#0D7A6A',
-  obat_jantung_list: '#4338CA',
+  obat_herbal_list: '#0D9488',
+  obat_jantung_list: '#6366F1',
 };
 
 const renderMedicationCard = (item, accentColor) => {
   if (!item || typeof item !== 'object') {
     return (
-      <View style={{ backgroundColor: '#F8FAFA', borderRadius: 16, padding: 14, marginBottom: 10 }}>
-        <Text style={{ color: '#9DB0AA', fontWeight: '700' }}>{formatValue(item)}</Text>
+      <View style={{ backgroundColor: '#F1F5F9', borderRadius: 16, padding: 14, marginBottom: 10 }}>
+        <Text style={{ color: '#94A3B8', fontWeight: '700' }}>{formatValue(item)}</Text>
       </View>
     );
   }
 
   return (
-    <View style={{ backgroundColor: '#FFFFFF', borderRadius: 18, padding: 14, borderWidth: 1.5, borderColor: '#EEF0EF', marginBottom: 10 }}>
+    <View style={{ backgroundColor: '#FFFFFF', borderRadius: 18, padding: 14, borderWidth: 1.5, borderColor: '#E2E8F0', marginBottom: 10 }}>
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8 }}>
         <View style={{ flex: 1, paddingRight: 12 }}>
-          <Text style={{ color: '#1A2820', fontSize: 16, fontWeight: '900', lineHeight: 22 }} numberOfLines={2}>
+          <Text style={{ color: '#1E293B', fontSize: 16, fontWeight: '900', lineHeight: 22 }} numberOfLines={2}>
             {item.nama_obat || item.nama || 'Nama obat tidak tersedia'}
           </Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 8 }}>
             {item.dosis ? (
-              <View style={{ backgroundColor: '#F8FAFA', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5, marginRight: 8, marginBottom: 6 }}>
+              <View style={{ backgroundColor: '#F1F5F9', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5, marginRight: 8, marginBottom: 6 }}>
                 <Text style={{ color: accentColor, fontWeight: '800', fontSize: 12 }}>Dosis: {formatValue(item.dosis)}</Text>
               </View>
             ) : null}
             {item.frekuensi ? (
-              <View style={{ backgroundColor: '#F8FAFA', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5, marginRight: 8, marginBottom: 6 }}>
+              <View style={{ backgroundColor: '#F1F5F9', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5, marginRight: 8, marginBottom: 6 }}>
                 <Text style={{ color: accentColor, fontWeight: '800', fontSize: 12 }}>Frekuensi: {formatValue(item.frekuensi)}</Text>
               </View>
             ) : null}
@@ -192,9 +193,9 @@ const renderMedicationCard = (item, accentColor) => {
       </View>
 
       {item.keterangan ? (
-        <View style={{ backgroundColor: '#F8FAFA', borderRadius: 14, paddingHorizontal: 12, paddingVertical: 10, borderWidth: 1, borderColor: '#EEF0EF' }}>
+        <View style={{ backgroundColor: '#F1F5F9', borderRadius: 14, paddingHorizontal: 12, paddingVertical: 10, borderWidth: 1, borderColor: '#E2E8F0' }}>
           <Text style={{ color: '#64748B', fontSize: 12, fontWeight: '800', marginBottom: 4 }}>Keterangan</Text>
-          <Text style={{ color: '#1A2820', fontSize: 14, fontWeight: '600', lineHeight: 20 }}>
+          <Text style={{ color: '#1E293B', fontSize: 14, fontWeight: '600', lineHeight: 20 }}>
             {formatValue(item.keterangan)}
           </Text>
         </View>
@@ -204,12 +205,12 @@ const renderMedicationCard = (item, accentColor) => {
 };
 
 const renderListSection = (key, items) => {
-  const accentColor = listCardAccent[key] || '#0D7A6A';
+  const accentColor = listCardAccent[key] || '#0D9488';
   const label = listLabels[key] || prettyLabel(key);
 
   return (
     <View style={{ marginBottom: 16 }}>
-      <Text style={{ color: '#1A2820', fontSize: 16, fontWeight: '900', marginBottom: 10 }}>{label}</Text>
+      <Text style={{ color: '#1E293B', fontSize: 16, fontWeight: '900', marginBottom: 10 }}>{label}</Text>
       {Array.isArray(items) && items.length > 0 ? (
         items.map((item, index) => (
           <View key={`${key}-${index}`}>
@@ -217,8 +218,8 @@ const renderListSection = (key, items) => {
           </View>
         ))
       ) : (
-        <View style={{ backgroundColor: '#F8FAFA', borderRadius: 18, padding: 16 }}>
-          <Text style={{ color: '#9DB0AA', fontWeight: '700' }}>Tidak ada data.</Text>
+        <View style={{ backgroundColor: '#F1F5F9', borderRadius: 18, padding: 16 }}>
+          <Text style={{ color: '#94A3B8', fontWeight: '700' }}>Tidak ada data.</Text>
         </View>
       )}
     </View>
@@ -228,8 +229,8 @@ const renderListSection = (key, items) => {
 const renderObjectRows = (data, valueFormatter = (path, key, value) => formatValue(value), path = []) => {
   if (!data || typeof data !== 'object') {
     return (
-      <View style={{ backgroundColor: '#F8FAFA', borderRadius: 18, padding: 16 }}>
-        <Text style={{ color: '#9DB0AA', fontWeight: '700' }}>Data tidak tersedia.</Text>
+      <View style={{ backgroundColor: '#F1F5F9', borderRadius: 18, padding: 16 }}>
+        <Text style={{ color: '#94A3B8', fontWeight: '700' }}>Data tidak tersedia.</Text>
       </View>
     );
   }
@@ -237,8 +238,8 @@ const renderObjectRows = (data, valueFormatter = (path, key, value) => formatVal
   const entries = Object.entries(data);
   if (entries.length === 0) {
     return (
-      <View style={{ backgroundColor: '#F8FAFA', borderRadius: 18, padding: 16 }}>
-        <Text style={{ color: '#9DB0AA', fontWeight: '700' }}>Data kosong.</Text>
+      <View style={{ backgroundColor: '#F1F5F9', borderRadius: 18, padding: 16 }}>
+        <Text style={{ color: '#94A3B8', fontWeight: '700' }}>Data kosong.</Text>
       </View>
     );
   }
@@ -254,11 +255,11 @@ const renderObjectRows = (data, valueFormatter = (path, key, value) => formatVal
 
     if (Array.isArray(value)) {
       return (
-        <View key={key} style={{ backgroundColor: '#FFFFFF', borderRadius: 18, padding: 14, borderWidth: 1.5, borderColor: '#EEF0EF', marginBottom: 10 }}>
+        <View key={key} style={{ backgroundColor: '#FFFFFF', borderRadius: 18, padding: 14, borderWidth: 1.5, borderColor: '#E2E8F0', marginBottom: 10 }}>
           <Text style={{ color: '#64748B', fontSize: 12, fontWeight: '800', textTransform: 'uppercase', marginBottom: 6 }}>
             {prettyLabel(key)}
           </Text>
-          <Text style={{ color: '#1A2820', fontSize: 14, fontWeight: '700', lineHeight: 20 }}>
+          <Text style={{ color: '#1E293B', fontSize: 14, fontWeight: '700', lineHeight: 20 }}>
             {value.length ? value.map((item) => formatValue(item)).join(', ') : '-'}
           </Text>
         </View>
@@ -277,11 +278,11 @@ const renderObjectRows = (data, valueFormatter = (path, key, value) => formatVal
     }
 
     return (
-      <View key={key} style={{ backgroundColor: '#FFFFFF', borderRadius: 18, padding: 14, borderWidth: 1.5, borderColor: '#EEF0EF', marginBottom: 10 }}>
+      <View key={key} style={{ backgroundColor: '#FFFFFF', borderRadius: 18, padding: 14, borderWidth: 1.5, borderColor: '#E2E8F0', marginBottom: 10 }}>
         <Text style={{ color: '#64748B', fontSize: 12, fontWeight: '800', textTransform: 'uppercase', marginBottom: 6 }}>
           {prettyLabel(key)}
         </Text>
-        <Text style={{ color: '#1A2820', fontSize: 14, fontWeight: '700', lineHeight: 20 }}>
+        <Text style={{ color: '#1E293B', fontSize: 14, fontWeight: '700', lineHeight: 20 }}>
           {isDiagnosisField(key) ? formatDateDDMMYYYY(value) : valueFormatter([...path, key], key, value)}
         </Text>
       </View>
@@ -291,7 +292,7 @@ const renderObjectRows = (data, valueFormatter = (path, key, value) => formatVal
 
 const renderSection = (title, data, valueFormatter) => (
   <View style={{ marginBottom: 16 }}>
-    <Text style={{ color: '#1A2820', fontSize: 16, fontWeight: '900', marginBottom: 10 }}>{title}</Text>
+    <Text style={{ color: '#1E293B', fontSize: 16, fontWeight: '900', marginBottom: 10 }}>{title}</Text>
     {renderObjectRows(data, valueFormatter)}
   </View>
 );
@@ -310,7 +311,7 @@ export default function QuestionnaireListScreen() {
     return (
       <View style={{ marginBottom: 16 }} key={key}>
         <Pressable onPress={() => toggleSection(key)} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8 }}>
-          <Text style={{ color: '#1A2820', fontSize: 16, fontWeight: '900' }}>{title}</Text>
+          <Text style={{ color: '#1E293B', fontSize: 16, fontWeight: '900' }}>{title}</Text>
           {open ? <ChevronDown color="#64748B" size={18} /> : <ChevronRight color="#64748B" size={18} />}
         </Pressable>
         {open ? content : null}
@@ -355,28 +356,43 @@ export default function QuestionnaireListScreen() {
   }, [rekaps, searchQuery]);
 
   const renderHeader = () => (
-    <View style={{ backgroundColor: '#FFFFFF', paddingTop: 64, paddingBottom: 20, paddingHorizontal: 24, borderBottomWidth: 1.5, borderBottomColor: '#EEF0EF' }}>
-      <Text style={{ fontSize: 24, fontWeight: '900', color: '#1A2820', letterSpacing: -0.6 }}>Menu Kuisioner</Text>
-      <Text style={{ fontSize: 14, fontWeight: '700', color: '#9DB0AA', marginTop: 4 }}>Langsung dari tabel rekap_kuisioner</Text>
-
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 18 }}>
-        <View style={{ backgroundColor: '#F8FAFA', borderRadius: 16, paddingHorizontal: 14, paddingVertical: 10, marginRight: 10, marginBottom: 10 }}>
-          <Text style={{ fontSize: 12, fontWeight: '800', color: '#64748B' }}>Total: {summary.total}</Text>
+    <LinearGradient
+      colors={['#0D9488', '#14B8A6', '#3B82F6']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={{ paddingTop: 64, paddingBottom: 24, paddingHorizontal: 24, borderBottomLeftRadius: 36, borderBottomRightRadius: 36, overflow: 'hidden' }}
+    >
+      <View style={{ position: 'absolute', top: -40, right: -40, width: 180, height: 180, borderRadius: 90, backgroundColor: 'rgba(255,255,255,0.10)' }} />
+      <View style={{ position: 'absolute', top: 32, right: 64, width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(255,255,255,0.10)' }} />
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        <View style={{ flex: 1, paddingRight: 16 }}>
+          <Text style={{ fontSize: 13, fontWeight: '600', color: '#C7D2FE', textTransform: 'uppercase', letterSpacing: 1.5 }}>Rekap Pasien</Text>
+          <Text style={{ fontSize: 24, fontWeight: '900', color: '#FFFFFF', letterSpacing: -0.6, marginTop: 4 }}>Menu Kuisioner</Text>
+          <Text style={{ fontSize: 14, fontWeight: '700', color: 'rgba(255,255,255,0.75)', marginTop: 4 }}>Data pasien, tanggal, dan 7 tahap rekap</Text>
         </View>
-        <View style={{ backgroundColor: '#F8FAFA', borderRadius: 16, paddingHorizontal: 14, paddingVertical: 10, marginRight: 10, marginBottom: 10 }}>
-          <Text style={{ fontSize: 12, fontWeight: '800', color: '#64748B' }}>Pasien: {summary.patients}</Text>
-        </View>
-        <View style={{ backgroundColor: '#F8FAFA', borderRadius: 16, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 10 }}>
-          <Text style={{ fontSize: 12, fontWeight: '800', color: '#64748B' }}>Terbaru: {formatDate(summary.latestDate)}</Text>
+        <View style={{ width: 48, height: 48, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.20)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.30)', alignItems: 'center', justifyContent: 'center' }}>
+          <ClipboardList color="#FFFFFF" size={22} />
         </View>
       </View>
 
-      <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', borderWidth: 1.5, borderColor: '#EEF0EF', borderRadius: 18, paddingHorizontal: 16, paddingVertical: 12, marginTop: 8 }}>
-        <Search color="#9DB0AA" size={18} />
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 18 }}>
+        <View style={{ backgroundColor: 'rgba(255,255,255,0.20)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.30)', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 8, marginRight: 10, marginBottom: 10 }}>
+          <Text style={{ fontSize: 12, fontWeight: '800', color: '#FFFFFF' }}>Total: {summary.total}</Text>
+        </View>
+        <View style={{ backgroundColor: 'rgba(255,255,255,0.20)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.30)', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 8, marginRight: 10, marginBottom: 10 }}>
+          <Text style={{ fontSize: 12, fontWeight: '800', color: '#FFFFFF' }}>Pasien: {summary.patients}</Text>
+        </View>
+        <View style={{ backgroundColor: 'rgba(255,255,255,0.20)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.30)', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 8, marginBottom: 10 }}>
+          <Text style={{ fontSize: 12, fontWeight: '800', color: '#FFFFFF' }}>Terbaru: {formatDate(summary.latestDate)}</Text>
+        </View>
+      </View>
+
+      <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.45)', borderRadius: 18, paddingHorizontal: 16, paddingVertical: 12, marginTop: 8 }}>
+        <Search color="#94A3B8" size={18} />
         <TextInput
-          style={{ flex: 1, marginLeft: 10, fontSize: 14, fontWeight: '600', color: '#1A2820' }}
+          style={{ flex: 1, marginLeft: 10, fontSize: 14, fontWeight: '600', color: '#1E293B' }}
           placeholder="Cari nama pasien..."
-          placeholderTextColor="#9DB0AA"
+          placeholderTextColor="#94A3B8"
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
@@ -386,52 +402,52 @@ export default function QuestionnaireListScreen() {
           </Pressable>
         ) : null}
       </View>
-    </View>
+    </LinearGradient>
   );
 
   const renderRekapList = () => (
     <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 22, paddingBottom: 64 }} showsVerticalScrollIndicator={false}>
-      <View style={{ backgroundColor: '#FFFFFF', borderRadius: 28, padding: 20, borderWidth: 1.5, borderColor: '#EEF0EF', marginBottom: 16 }}>
+      <View style={{ backgroundColor: '#FFFFFF', borderRadius: 28, padding: 20, borderWidth: 1.5, borderColor: '#E2E8F0', marginBottom: 16 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <View style={{ width: 48, height: 48, borderRadius: 18, backgroundColor: '#E8F8F3', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
-            <ClipboardList color="#0D7A6A" size={22} />
+          <View style={{ width: 48, height: 48, borderRadius: 18, backgroundColor: '#ECFEFF', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
+            <ClipboardList color="#0D9488" size={22} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 18, fontWeight: '900', color: '#1A2820' }}>Rekap Kuisioner</Text>
-            <Text style={{ fontSize: 12, fontWeight: '700', color: '#9DB0AA', marginTop: 2 }}>Data pasien, tanggal, dan isi tiga tahap rekap</Text>
+            <Text style={{ fontSize: 18, fontWeight: '900', color: '#1E293B' }}>Rekap Kuisioner</Text>
+            <Text style={{ fontSize: 12, fontWeight: '700', color: '#94A3B8', marginTop: 2 }}>Data pasien, tanggal, dan isi tiga tahap rekap</Text>
           </View>
         </View>
       </View>
 
       {loading ? (
-        <View style={{ backgroundColor: '#FFFFFF', borderRadius: 28, padding: 30, alignItems: 'center', borderWidth: 1.5, borderColor: '#EEF0EF' }}>
-          <ActivityIndicator size="large" color="#0D7A6A" />
-          <Text style={{ marginTop: 12, color: '#9DB0AA', fontWeight: '700' }}>Memuat rekap kuisioner...</Text>
+        <View style={{ backgroundColor: '#FFFFFF', borderRadius: 28, padding: 30, alignItems: 'center', borderWidth: 1.5, borderColor: '#E2E8F0' }}>
+          <ActivityIndicator size="large" color="#6366F1" />
+          <Text style={{ marginTop: 12, color: '#94A3B8', fontWeight: '700' }}>Memuat rekap kuisioner...</Text>
         </View>
       ) : filteredRekaps.length > 0 ? (
         filteredRekaps.map((rekap) => (
           <Pressable
             key={rekap.id}
             onPress={() => setSelectedRekap(rekap)}
-            style={{ backgroundColor: '#FFFFFF', borderRadius: 28, padding: 20, borderWidth: 1.5, borderColor: '#EEF0EF', marginBottom: 14 }}
+            style={{ backgroundColor: '#FFFFFF', borderRadius: 28, padding: 20, borderWidth: 1.5, borderColor: '#E2E8F0', marginBottom: 14 }}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                <View style={{ width: 44, height: 44, borderRadius: 16, backgroundColor: '#F0FDF4', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
+                <View style={{ width: 44, height: 44, borderRadius: 16, backgroundColor: '#ECFEFF', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
                   <UserRound color="#16A34A" size={20} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ color: '#1A2820', fontSize: 16, fontWeight: '900' }}>
+                  <Text style={{ color: '#1E293B', fontSize: 16, fontWeight: '900' }}>
                     {rekap.pasien?.nama || rekap.pasien?.nama_lengkap || 'Pasien'}
                   </Text>
                   <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
-                    <Clock3 color="#9DB0AA" size={14} />
-                    <Text style={{ color: '#9DB0AA', fontSize: 12, fontWeight: '700', marginLeft: 6 }}>{formatDate(rekap.tanggal)}</Text>
+                    <Clock3 color="#94A3B8" size={14} />
+                    <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', marginLeft: 6 }}>{formatDate(rekap.tanggal)}</Text>
                   </View>
                 </View>
               </View>
-              <View style={{ backgroundColor: '#E8F8F3', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8 }}>
-                <Text style={{ color: '#0D7A6A', fontWeight: '900', fontSize: 12 }}>Detail</Text>
+              <View style={{ backgroundColor: '#ECFEFF', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8 }}>
+                <Text style={{ color: '#0D9488', fontWeight: '900', fontSize: 12 }}>Detail</Text>
               </View>
             </View>
 
@@ -439,7 +455,7 @@ export default function QuestionnaireListScreen() {
               <View style={{ backgroundColor: '#EEF2FF', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6, marginRight: 8, marginBottom: 8 }}>
                 <Text style={{ color: '#4338CA', fontWeight: '800', fontSize: 12 }}>Usia: {rekap.pasien?.usia ?? '-'}</Text>
               </View>
-              <View style={{ backgroundColor: '#F8FAFA', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6, marginBottom: 8 }}>
+              <View style={{ backgroundColor: '#F1F5F9', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6, marginBottom: 8 }}>
                 <Text style={{ color: '#64748B', fontWeight: '800', fontSize: 12 }}>Tahap 1-7</Text>
               </View>
             </View>
@@ -450,9 +466,9 @@ export default function QuestionnaireListScreen() {
           </Pressable>
         ))
       ) : (
-        <View style={{ backgroundColor: '#FFFFFF', borderRadius: 28, padding: 30, alignItems: 'center', borderWidth: 1.5, borderColor: '#EEF0EF' }}>
+        <View style={{ backgroundColor: '#FFFFFF', borderRadius: 28, padding: 30, alignItems: 'center', borderWidth: 1.5, borderColor: '#E2E8F0' }}>
           <ClipboardList color="#CBD5E1" size={56} />
-          <Text style={{ color: '#9DB0AA', fontSize: 16, fontWeight: '700', marginTop: 16, textAlign: 'center' }}>
+          <Text style={{ color: '#94A3B8', fontSize: 16, fontWeight: '700', marginTop: 16, textAlign: 'center' }}>
             {searchQuery ? 'Data pasien tidak ditemukan.' : 'Belum ada data rekap kuisioner.'}
           </Text>
         </View>
@@ -470,31 +486,21 @@ export default function QuestionnaireListScreen() {
         animationType="slide"
         onRequestClose={() => setSelectedRekap(null)}
       >
-        <View style={{ flex: 1, backgroundColor: 'rgba(26,40,32,0.75)', justifyContent: 'flex-end' }}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(15,23,42,0.75)', justifyContent: 'flex-end' }}>
           <View style={{ backgroundColor: '#FFFFFF', borderTopLeftRadius: 32, borderTopRightRadius: 32, maxHeight: '88%' }}>
-            <View style={{ padding: 20, borderBottomWidth: 1.5, borderBottomColor: '#EEF0EF', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <View style={{ padding: 20, borderBottomWidth: 1.5, borderBottomColor: '#E2E8F0', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <View style={{ flex: 1, paddingRight: 12 }}>
-                <Text style={{ color: '#1A2820', fontSize: 18, fontWeight: '900' }}>
+                <Text style={{ color: '#1E293B', fontSize: 18, fontWeight: '900' }}>
                   {selectedRekap.pasien?.nama || selectedRekap.pasien?.nama_lengkap || 'Pasien'}
                 </Text>
-                <Text style={{ color: '#9DB0AA', fontSize: 12, fontWeight: '700', marginTop: 4 }}>{formatDate(selectedRekap.tanggal)}</Text>
+                <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', marginTop: 4 }}>{formatDate(selectedRekap.tanggal)}</Text>
               </View>
-              <Pressable onPress={() => setSelectedRekap(null)} style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#F4F6F5', alignItems: 'center', justifyContent: 'center' }}>
+              <Pressable onPress={() => setSelectedRekap(null)} style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center' }}>
                 <Text style={{ color: '#64748B', fontSize: 18, fontWeight: '900' }}>×</Text>
               </Pressable>
             </View>
 
             <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 36 }} showsVerticalScrollIndicator={false}>
-              <View style={{ backgroundColor: '#F8FAFA', borderRadius: 20, padding: 16, marginBottom: 16 }}>
-                <Text style={{ color: '#64748B', fontSize: 12, fontWeight: '800', textTransform: 'uppercase' }}>Ringkasan</Text>
-                <Text style={{ color: '#0D7A6A', fontSize: 16, fontWeight: '900', marginTop: 8 }}>
-                  Rekap kuisioner pasien
-                </Text>
-                <Text style={{ color: '#64748B', fontSize: 12, fontWeight: '700', marginTop: 4 }}>
-                  Data diambil langsung dari tabel rekap_kuisioner
-                </Text>
-              </View>
-
               {renderCollapsible('Tahap 1 - Identitas Pasien', 'tahap_1_identitas', renderSection('Tahap 1 - Identitas Pasien', selectedRekap.tahap_1_identitas))}
               {renderCollapsible('Tahap 2 - Riwayat', 'tahap_2_riwayat', renderSection('Tahap 2 - Riwayat', selectedRekap.tahap_2_riwayat))}
               {renderCollapsible('Tahap 3 - Efek Samping', 'tahap_3_efek_samping', renderSection('Tahap 3 - Efek Samping', selectedRekap.tahap_3_efek_samping))}
@@ -509,17 +515,17 @@ export default function QuestionnaireListScreen() {
                       const kepatuhan = calculateKepatuhan(selectedRekap.tahap_4_kepatuhan);
                       return (
                         <>
-                          <View style={{ backgroundColor: '#FFFFFF', borderRadius: 18, padding: 14, borderWidth: 1.5, borderColor: '#EEF0EF', marginBottom: 10 }}>
+                          <View style={{ backgroundColor: '#FFFFFF', borderRadius: 18, padding: 14, borderWidth: 1.5, borderColor: '#E2E8F0', marginBottom: 10 }}>
                             <Text style={{ color: '#64748B', fontSize: 12, fontWeight: '800', textTransform: 'uppercase', marginBottom: 6 }}>Jumlah Soal Terjawab</Text>
-                            <Text style={{ color: '#1A2820', fontSize: 16, fontWeight: '900' }}>{kepatuhan.count} dari 5</Text>
+                            <Text style={{ color: '#1E293B', fontSize: 16, fontWeight: '900' }}>{kepatuhan.count} dari 5</Text>
                           </View>
-                          <View style={{ backgroundColor: '#FFFFFF', borderRadius: 18, padding: 14, borderWidth: 1.5, borderColor: '#EEF0EF', marginBottom: 10 }}>
+                          <View style={{ backgroundColor: '#FFFFFF', borderRadius: 18, padding: 14, borderWidth: 1.5, borderColor: '#E2E8F0', marginBottom: 10 }}>
                             <Text style={{ color: '#64748B', fontSize: 12, fontWeight: '800', textTransform: 'uppercase', marginBottom: 6 }}>Skor</Text>
-                            <Text style={{ color: '#1A2820', fontSize: 16, fontWeight: '900' }}>{kepatuhan.score}</Text>
+                            <Text style={{ color: '#1E293B', fontSize: 16, fontWeight: '900' }}>{kepatuhan.score}</Text>
                           </View>
-                          <View style={{ backgroundColor: kepatuhan.label === 'Patuh' ? '#E8F8F3' : '#FEE2E2', borderRadius: 18, padding: 14, borderWidth: 1.5, borderColor: kepatuhan.label === 'Patuh' ? '#0D7A6A' : '#DC2626', marginBottom: 10 }}>
+                          <View style={{ backgroundColor: kepatuhan.label === 'Patuh' ? '#ECFEFF' : '#FEE2E2', borderRadius: 18, padding: 14, borderWidth: 1.5, borderColor: kepatuhan.label === 'Patuh' ? '#0D9488' : '#DC2626', marginBottom: 10 }}>
                             <Text style={{ color: '#64748B', fontSize: 12, fontWeight: '800', textTransform: 'uppercase', marginBottom: 6 }}>Keterangan</Text>
-                            <Text style={{ color: kepatuhan.label === 'Patuh' ? '#0D7A6A' : '#DC2626', fontSize: 14, fontWeight: '900' }}>{kepatuhan.label}</Text>
+                            <Text style={{ color: kepatuhan.label === 'Patuh' ? '#0D9488' : '#DC2626', fontSize: 14, fontWeight: '900' }}>{kepatuhan.label}</Text>
                           </View>
                           {renderObjectRows(selectedRekap.tahap_4_kepatuhan, formatKepatuhanValue)}
                         </>
@@ -539,17 +545,17 @@ export default function QuestionnaireListScreen() {
                       const efikasi = calculateEfikasi(selectedRekap.tahap_5_efikasi);
                       return (
                         <>
-                          <View style={{ backgroundColor: '#FFFFFF', borderRadius: 18, padding: 14, borderWidth: 1.5, borderColor: '#EEF0EF', marginBottom: 10 }}>
+                          <View style={{ backgroundColor: '#FFFFFF', borderRadius: 18, padding: 14, borderWidth: 1.5, borderColor: '#E2E8F0', marginBottom: 10 }}>
                             <Text style={{ color: '#64748B', fontSize: 12, fontWeight: '800', textTransform: 'uppercase', marginBottom: 6 }}>Jumlah Soal Terjawab</Text>
-                            <Text style={{ color: '#1A2820', fontSize: 16, fontWeight: '900' }}>{efikasi.count} dari 13</Text>
+                            <Text style={{ color: '#1E293B', fontSize: 16, fontWeight: '900' }}>{efikasi.count} dari 13</Text>
                           </View>
-                          <View style={{ backgroundColor: '#FFFFFF', borderRadius: 18, padding: 14, borderWidth: 1.5, borderColor: '#EEF0EF', marginBottom: 10 }}>
+                          <View style={{ backgroundColor: '#FFFFFF', borderRadius: 18, padding: 14, borderWidth: 1.5, borderColor: '#E2E8F0', marginBottom: 10 }}>
                             <Text style={{ color: '#64748B', fontSize: 12, fontWeight: '800', textTransform: 'uppercase', marginBottom: 6 }}>Skor</Text>
-                            <Text style={{ color: '#1A2820', fontSize: 16, fontWeight: '900' }}>{efikasi.score}</Text>
+                            <Text style={{ color: '#1E293B', fontSize: 16, fontWeight: '900' }}>{efikasi.score}</Text>
                           </View>
-                          <View style={{ backgroundColor: efikasi.label === 'Efikasi Tinggi' ? '#E8F8F3' : '#FEF3C7', borderRadius: 18, padding: 14, borderWidth: 1.5, borderColor: efikasi.label === 'Efikasi Tinggi' ? '#0D7A6A' : '#D97706', marginBottom: 10 }}>
+                          <View style={{ backgroundColor: efikasi.label === 'Efikasi Tinggi' ? '#ECFEFF' : '#FEF3C7', borderRadius: 18, padding: 14, borderWidth: 1.5, borderColor: efikasi.label === 'Efikasi Tinggi' ? '#0D9488' : '#D97706', marginBottom: 10 }}>
                             <Text style={{ color: '#64748B', fontSize: 12, fontWeight: '800', textTransform: 'uppercase', marginBottom: 6 }}>Keterangan</Text>
-                            <Text style={{ color: efikasi.label === 'Efikasi Tinggi' ? '#0D7A6A' : '#D97706', fontSize: 14, fontWeight: '900' }}>{efikasi.label}</Text>
+                            <Text style={{ color: efikasi.label === 'Efikasi Tinggi' ? '#0D9488' : '#D97706', fontSize: 14, fontWeight: '900' }}>{efikasi.label}</Text>
                           </View>
                           {renderObjectRows(selectedRekap.tahap_5_efikasi, formatEfikasiValue)}
                         </>
@@ -569,9 +575,9 @@ export default function QuestionnaireListScreen() {
                       const qol = formatKualitasHidup(selectedRekap.tahap_6_kualitas_hidup);
                       return (
                         <>
-                          <View style={{ backgroundColor: '#FFFFFF', borderRadius: 18, padding: 14, borderWidth: 1.5, borderColor: '#EEF0EF', marginBottom: 10 }}>
+                          <View style={{ backgroundColor: '#FFFFFF', borderRadius: 18, padding: 14, borderWidth: 1.5, borderColor: '#E2E8F0', marginBottom: 10 }}>
                             <Text style={{ color: '#64748B', fontSize: 12, fontWeight: '800', textTransform: 'uppercase', marginBottom: 6 }}>Jumlah Soal Terjawab</Text>
-                            <Text style={{ color: '#1A2820', fontSize: 16, fontWeight: '900' }}>{qol.count} dari 5</Text>
+                            <Text style={{ color: '#1E293B', fontSize: 16, fontWeight: '900' }}>{qol.count} dari 5</Text>
                           </View>
                           <View style={{ backgroundColor: '#EEF2FF', borderRadius: 18, padding: 14, borderWidth: 1.5, borderColor: '#C7D2FE', marginBottom: 10 }}>
                             <Text style={{ color: '#64748B', fontSize: 12, fontWeight: '800', textTransform: 'uppercase', marginBottom: 10 }}>Jawaban Skala</Text>
@@ -593,18 +599,18 @@ export default function QuestionnaireListScreen() {
                   <View>
                     {(() => {
                       const kccq = calculateKCCQ(selectedRekap.tahap_7_kccq);
-                      const bgColor = kccq.label === 'Baik' ? '#E8F8F3' : kccq.label === 'Cukup' ? '#FEF3C7' : '#FEE2E2';
-                      const borderColor = kccq.label === 'Baik' ? '#0D7A6A' : kccq.label === 'Cukup' ? '#D97706' : '#DC2626';
-                      const textColor = kccq.label === 'Baik' ? '#0D7A6A' : kccq.label === 'Cukup' ? '#D97706' : '#DC2626';
+                      const bgColor = kccq.label === 'Baik' ? '#ECFEFF' : kccq.label === 'Cukup' ? '#FEF3C7' : '#FEE2E2';
+                      const borderColor = kccq.label === 'Baik' ? '#0D9488' : kccq.label === 'Cukup' ? '#D97706' : '#DC2626';
+                      const textColor = kccq.label === 'Baik' ? '#0D9488' : kccq.label === 'Cukup' ? '#D97706' : '#DC2626';
                       return (
                         <>
-                          <View style={{ backgroundColor: '#FFFFFF', borderRadius: 18, padding: 14, borderWidth: 1.5, borderColor: '#EEF0EF', marginBottom: 10 }}>
+                          <View style={{ backgroundColor: '#FFFFFF', borderRadius: 18, padding: 14, borderWidth: 1.5, borderColor: '#E2E8F0', marginBottom: 10 }}>
                             <Text style={{ color: '#64748B', fontSize: 12, fontWeight: '800', textTransform: 'uppercase', marginBottom: 6 }}>Jumlah Soal Terjawab</Text>
-                            <Text style={{ color: '#1A2820', fontSize: 16, fontWeight: '900' }}>{kccq.count} dari 15</Text>
+                            <Text style={{ color: '#1E293B', fontSize: 16, fontWeight: '900' }}>{kccq.count} dari 15</Text>
                           </View>
-                          <View style={{ backgroundColor: '#FFFFFF', borderRadius: 18, padding: 14, borderWidth: 1.5, borderColor: '#EEF0EF', marginBottom: 10 }}>
+                          <View style={{ backgroundColor: '#FFFFFF', borderRadius: 18, padding: 14, borderWidth: 1.5, borderColor: '#E2E8F0', marginBottom: 10 }}>
                             <Text style={{ color: '#64748B', fontSize: 12, fontWeight: '800', textTransform: 'uppercase', marginBottom: 6 }}>Skor</Text>
-                            <Text style={{ color: '#1A2820', fontSize: 16, fontWeight: '900' }}>{kccq.score}</Text>
+                            <Text style={{ color: '#1E293B', fontSize: 16, fontWeight: '900' }}>{kccq.score}</Text>
                           </View>
                           <View style={{ backgroundColor: bgColor, borderRadius: 18, padding: 14, borderWidth: 1.5, borderColor: borderColor, marginBottom: 10 }}>
                             <Text style={{ color: '#64748B', fontSize: 12, fontWeight: '800', textTransform: 'uppercase', marginBottom: 6 }}>Keterangan</Text>
@@ -625,7 +631,7 @@ export default function QuestionnaireListScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#F0F4F3' }}>
+    <View style={{ flex: 1, backgroundColor: '#F0F4FF' }}>
       <StatusBar style="dark" />
       {renderHeader()}
       {renderRekapList()}

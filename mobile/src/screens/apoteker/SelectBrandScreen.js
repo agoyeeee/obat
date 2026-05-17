@@ -62,34 +62,34 @@ export default function SelectBrandScreen({ navigation, route }) {
   };
 
   return (
-    <View className="flex-1 bg-[#F0F4F3] pt-16 px-6">
+    <View className="flex-1 bg-[#F0F4FF] pt-16 px-6">
       <View className="flex-row items-center justify-between mb-5">
-        <Text className="text-xl font-black text-[#1A2820]">Merek untuk: {namaObat}</Text>
-        <Pressable onPress={() => setIsAddModalOpen(true)} className="flex-row items-center bg-[#0D7A6A] px-3 py-2 rounded-2xl">
+        <Text className="text-xl font-black text-[#1E293B]">Merek untuk: {namaObat}</Text>
+        <Pressable onPress={() => setIsAddModalOpen(true)} className="flex-row items-center bg-[#0D9488] px-3 py-2 rounded-2xl">
           <Plus color="white" size={16} />
           <Text className="text-white font-bold text-sm ml-2">Tambah</Text>
         </Pressable>
       </View>
 
-      <View className="bg-white rounded-3xl border-[1.5px] border-[#EEF0EF] flex-1 shadow-sm shadow-black/5 overflow-hidden">
+      <View className="bg-white rounded-3xl border-[1.5px] border-[#E2E8F0] flex-1 shadow-sm shadow-black/5 overflow-hidden">
         {loading ? (
-          <View className="p-8 items-center"><ActivityIndicator size="large" color="#0D7A6A" /></View>
+          <View className="p-8 items-center"><ActivityIndicator size="large" color="#0D9488" /></View>
         ) : merks.length > 0 ? (
           <FlatList
             data={merks}
             keyExtractor={item => String(item.id)}
             renderItem={({ item }) => (
-              <Pressable onPress={() => handleSelectMerk(item)} className="flex-row items-center p-4 border-b border-[#EEF0EF]">
+              <Pressable onPress={() => handleSelectMerk(item)} className="flex-row items-center p-4 border-b border-[#E2E8F0]">
                 <View className="flex-1">
-                  <Text className="text-base font-extrabold text-[#1A2820]">{item.nama_merk}</Text>
+                  <Text className="text-base font-extrabold text-[#1E293B]">{item.nama_merk}</Text>
                 </View>
-                <ChevronRight color="#CBD5E1" size={20} />
+                <ChevronRight color="#94A3B8" size={20} />
               </Pressable>
             )}
           />
         ) : (
           <View className="p-8 items-center">
-            <Text className="text-[#9DB0AA] text-base font-bold">Belum ada merek untuk obat ini.</Text>
+            <Text className="text-[#94A3B8] text-base font-bold">Belum ada merek untuk obat ini.</Text>
           </View>
         )}
       </View>
@@ -97,17 +97,17 @@ export default function SelectBrandScreen({ navigation, route }) {
       <Modal visible={isAddModalOpen} transparent animationType="slide" onRequestClose={() => setIsAddModalOpen(false)}>
         <View className="flex-1 bg-black/35 justify-end">
           <View className="bg-white rounded-t-3xl max-h-[50%]">
-            <View className="flex-row items-center justify-between px-5 py-4 border-b border-slate-200">
+            <View className="flex-row items-center justify-between px-5 py-4 border-b border-[#E2E8F0]">
               <Text className="text-base font-extrabold">Tambah Merek</Text>
               <Pressable onPress={() => setIsAddModalOpen(false)}>
                 <X color="#334155" size={22} />
               </Pressable>
             </View>
             <View className="p-5">
-              <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase">Nama Merek</Text>
-              <TextInput value={namaMerk} onChangeText={setNamaMerk} placeholder="Contoh: Merk A" className="border-2 border-slate-200 rounded-2xl px-4 py-3 mb-4" />
+              <Text className="text-xs font-bold text-[#94A3B8] mb-1.5 uppercase">Nama Merek</Text>
+              <TextInput value={namaMerk} onChangeText={setNamaMerk} placeholder="Contoh: Merk A" className="border-2 border-[#E2E8F0] rounded-2xl px-4 py-3 mb-4 bg-[#F1F5F9]" />
 
-              <Pressable onPress={handleAddMerk} disabled={isSubmitting} className={`rounded-2xl py-3 items-center ${isSubmitting ? 'bg-slate-400' : 'bg-[#0D7A6A]'}`}>
+              <Pressable onPress={handleAddMerk} disabled={isSubmitting} className={`rounded-2xl py-3 items-center ${isSubmitting ? 'bg-slate-400' : 'bg-[#0D9488]'}`}>
                 {isSubmitting ? <ActivityIndicator color="white" /> : <Text className="text-white font-bold text-sm">Simpan Merek</Text>}
               </Pressable>
             </View>
