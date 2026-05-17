@@ -163,25 +163,15 @@ export default function DashboardHomeScreen({ route, navigation }) {
           className="rounded-[32px] p-7 shadow-lg shadow-[#0D9488]/30 relative overflow-hidden"
         >
           <View className="absolute -top-9 -right-9 w-[140px] h-[140px] rounded-full bg-white/5" />
-          <View className="absolute top-7 right-7 w-16 h-16 rounded-[20px] bg-white/15 items-center justify-center">
-            <Pill color="#fff" size={32} />
-          </View>
           
-          <Text className="text-sm font-extrabold text-white/70 uppercase tracking-widest">
+          <Text className="text-sm font-extrabold mb-4 text-white/70 uppercase tracking-widest">
             Aktivitas Hari Ini
-          </Text>
-          <Text className="text-3xl font-black text-white leading-[36px] my-1">
-            {today.total ?? 0}
-          </Text>
-          <Text className="text-base text-white/85 font-bold mb-7">
-            Total Jadwal Obat
           </Text>
           
           <View className="flex-row bg-black/20 rounded-3xl py-5">
             {[
-              { num: today.taken ?? 0, label: 'Diminum', color: 'text-white' },
+              { num: today.taken ?? 0, label: 'Patuh', color: 'text-white' },
               { num: today.missed ?? 0, label: 'Tidak Patuh', color: 'text-[#FFA0AA]' },
-              { num: today.pending ?? 0, label: 'Antri', color: 'text-white' },
             ].map(({ num, label, color }, i, arr) => (
               <View key={label} className={`flex-1 items-center justify-center px-1 ${i < arr.length - 1 ? 'border-r border-white/15' : ''}`}>
                 <Text className={`text-2xl font-black text-center ${color}`}>{num}</Text>
@@ -194,32 +184,12 @@ export default function DashboardHomeScreen({ route, navigation }) {
         </LinearGradient>
 
         {/* METRIC CARDS */}
-        <View className="flex-row mt-5">
+        {/* <View className="flex-row mt-5">
           <MetricCard icon={<AlertTriangle color="#F43F5E" size={22} />} iconBg="bg-rose-50" value={alerts.count} label="Perlu Perhatian" badge={alerts.count > 0} />
           <View className="w-3" />
           <MetricCard icon={<Activity color="#6366F1" size={22} />} iconBg="bg-indigo-50" value={activities.length} label="Update Terbaru" />
-        </View>
+        </View> */}
 
-        {/* PROBLEM PATIENTS */}
-        <View className="mt-6">
-          <SectionHeader title="Pasien Bermasalah" onPressAll={() => navigation.navigate('MonitoringTab')} />
-          {alerts.patients?.length > 0 ? (
-            alerts.patients.map((patient) => (
-              <PatientRow
-                key={patient.id}
-                patient={patient}
-                onPress={() => navigation.navigate('PatientDetail', { pasien_id: patient.id })}
-              />
-            ))
-          ) : (
-            <View className="bg-teal-50 border-2 border-teal-200 rounded-[22px] p-8 items-center">
-              <CheckCircle2 color="#0D9488" size={40} />
-              <Text className="text-sm font-bold text-teal-700 text-center mt-3 leading-[20px]">
-                Luar biasa! Semua pasien patuh hari ini.
-              </Text>
-            </View>
-          )}
-        </View>
 
         {/* ACTIVITY */}
         {activities.length > 0 && (

@@ -377,10 +377,7 @@ export default function QuestionnaireListScreen() {
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 18 }}>
         <View style={{ backgroundColor: 'rgba(255,255,255,0.20)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.30)', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 8, marginRight: 10, marginBottom: 10 }}>
-          <Text style={{ fontSize: 12, fontWeight: '800', color: '#FFFFFF' }}>Total: {summary.total}</Text>
-        </View>
-        <View style={{ backgroundColor: 'rgba(255,255,255,0.20)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.30)', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 8, marginRight: 10, marginBottom: 10 }}>
-          <Text style={{ fontSize: 12, fontWeight: '800', color: '#FFFFFF' }}>Pasien: {summary.patients}</Text>
+          <Text style={{ fontSize: 12, fontWeight: '800', color: '#FFFFFF' }}>{summary.patients} Pasien</Text>
         </View>
         <View style={{ backgroundColor: 'rgba(255,255,255,0.20)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.30)', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 8, marginBottom: 10 }}>
           <Text style={{ fontSize: 12, fontWeight: '800', color: '#FFFFFF' }}>Terbaru: {formatDate(summary.latestDate)}</Text>
@@ -409,12 +406,9 @@ export default function QuestionnaireListScreen() {
     <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 22, paddingBottom: 64 }} showsVerticalScrollIndicator={false}>
       <View style={{ backgroundColor: '#FFFFFF', borderRadius: 28, padding: 20, borderWidth: 1.5, borderColor: '#E2E8F0', marginBottom: 16 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <View style={{ width: 48, height: 48, borderRadius: 18, backgroundColor: '#ECFEFF', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
-            <ClipboardList color="#0D9488" size={22} />
-          </View>
           <View style={{ flex: 1 }}>
             <Text style={{ fontSize: 18, fontWeight: '900', color: '#1E293B' }}>Rekap Kuisioner</Text>
-            <Text style={{ fontSize: 12, fontWeight: '700', color: '#94A3B8', marginTop: 2 }}>Data pasien, tanggal, dan isi tiga tahap rekap</Text>
+            <Text style={{ fontSize: 12, fontWeight: '700', color: '#94A3B8', marginTop: 2 }}>Ketuk detail untuk melihat detail semua field rekap kuisioner</Text>
           </View>
         </View>
       </View>
@@ -460,9 +454,6 @@ export default function QuestionnaireListScreen() {
               </View>
             </View>
 
-            <Text style={{ color: '#64748B', fontSize: 12, fontWeight: '700', marginTop: 12 }}>
-              Ketuk untuk melihat detail semua field rekap kuisioner
-            </Text>
           </Pressable>
         ))
       ) : (

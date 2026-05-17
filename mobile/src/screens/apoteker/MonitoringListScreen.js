@@ -75,7 +75,7 @@ export default function MonitoringListScreen({ navigation }) {
             <Text className="text-2xl font-black text-white tracking-tight mt-1">
               Pantau Pasien
             </Text>
-            <Text className="text-sm font-bold text-white/75 mt-1">Monitoring Kepatuhan Mingguan</Text>
+            <Text className="text-sm font-bold text-white/75 mt-1">Monitoring Kepatuhan Pasien</Text>
           </View>
           <View className="w-12 h-12 rounded-[14px] bg-white/20 items-center justify-center border border-white/30">
             <Activity color="#fff" size={22} />
@@ -106,40 +106,54 @@ export default function MonitoringListScreen({ navigation }) {
             </View>
           </View>
           
-            <View className="flex-row space-x-4">
-            <View className="flex-1 bg-white rounded-3xl p-5 border-[1.5px] border-[#E2E8F0] items-center mr-2">
-              <View className="w-12 h-12 rounded-2xl bg-emerald-50 items-center justify-center mb-3">
-                <CheckCircle color="#10B981" size={24} />
+          {/* Kepatuhan Cards - Side by Side */}
+          <View className="flex-row gap-3">
+            {/* Obat Card */}
+            <View className="flex-1 bg-white rounded-[22px] p-4 border-[1.5px] border-[#E2E8F0] shadow-sm shadow-black/5">
+              <Text className="text-[10px] font-extrabold text-[#94A3B8] uppercase tracking-widest mb-3">Kepatuhan Obat</Text>
+              <View className="flex-row items-center mb-2">
+                <View className="w-8 h-8 rounded-lg bg-emerald-50 items-center justify-center mr-2">
+                  <CheckCircle color="#10B981" size={16} />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-xl font-black text-emerald-500">{patuhCount}</Text>
+                  <Text className="text-[9px] font-extrabold text-[#94A3B8] uppercase tracking-wide">Patuh</Text>
+                </View>
               </View>
-              <Text className="text-3xl font-black text-emerald-500 text-center">{patuhCount}</Text>
-              <Text className="text-xs font-extrabold text-[#94A3B8] uppercase tracking-wider mt-1 text-center">Patuh</Text>
+              <View className="h-[1px] bg-[#E2E8F0] my-1.5" />
+              <View className="flex-row items-center mt-2">
+                <View className="w-8 h-8 rounded-lg bg-rose-50 items-center justify-center mr-2">
+                  <XCircle color="#F43F5E" size={16} />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-xl font-black text-rose-500">{tidakPatuhCount}</Text>
+                  <Text className="text-[9px] font-extrabold text-[#94A3B8] uppercase tracking-wide">Tidak Patuh</Text>
+                </View>
+              </View>
             </View>
 
-            <View className="flex-1 bg-white rounded-3xl p-5 border-[1.5px] border-[#E2E8F0] items-center ml-2">
-              <View className="w-12 h-12 rounded-2xl bg-rose-50 items-center justify-center mb-3">
-                <XCircle color="#F43F5E" size={24} />
+            {/* Cairan Card */}
+            <View className="flex-1 bg-white rounded-[22px] p-4 border-[1.5px] border-[#E2E8F0] shadow-sm shadow-black/5">
+              <Text className="text-[10px] font-extrabold text-[#94A3B8] uppercase tracking-widest mb-3">Kepatuhan Cairan</Text>
+              <View className="flex-row items-center mb-2">
+                <View className="w-8 h-8 rounded-lg bg-[#E0F2FE] items-center justify-center mr-2">
+                  <Droplets color="#0EA5E9" size={16} />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-xl font-black text-sky-500">{patuhCairanCount}</Text>
+                  <Text className="text-[9px] font-extrabold text-[#94A3B8] uppercase tracking-wide">Patuh</Text>
+                </View>
               </View>
-              <Text className="text-3xl font-black text-rose-500 text-center">{tidakPatuhCount}</Text>
-              <Text className="text-xs font-extrabold text-[#94A3B8] uppercase tracking-wider mt-1 text-center">Tidak Patuh</Text>
-            </View>
-          </View>
-          
-          {/* Cairan summary */}
-          <View className="flex-row space-x-4 mt-4">
-            <View className="flex-1 bg-white rounded-3xl p-5 border-[1.5px] border-[#E2E8F0] items-center mr-2">
-              <View className="w-12 h-12 rounded-2xl bg-[#E0F2FE] items-center justify-center mb-3">
-                <Droplets color="#0EA5E9" size={24} />
+              <View className="h-[1px] bg-[#E2E8F0] my-1.5" />
+              <View className="flex-row items-center mt-2">
+                <View className="w-8 h-8 rounded-lg bg-rose-50 items-center justify-center mr-2">
+                  <XCircle color="#F43F5E" size={16} />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-xl font-black text-rose-500">{tidakPatuhCairanCount}</Text>
+                  <Text className="text-[9px] font-extrabold text-[#94A3B8] uppercase tracking-wide">Tidak Patuh</Text>
+                </View>
               </View>
-              <Text className="text-3xl font-black text-sky-500 text-center">{patuhCairanCount}</Text>
-              <Text className="text-xs font-extrabold text-[#94A3B8] uppercase tracking-wider mt-1 text-center">Cairan Patuh</Text>
-            </View>
-
-            <View className="flex-1 bg-white rounded-3xl p-5 border-[1.5px] border-[#E2E8F0] items-center ml-2">
-              <View className="w-12 h-12 rounded-2xl bg-rose-50 items-center justify-center mb-3">
-                <XCircle color="#F43F5E" size={24} />
-              </View>
-              <Text className="text-3xl font-black text-rose-500 text-center">{tidakPatuhCairanCount}</Text>
-              <Text className="text-xs font-extrabold text-[#94A3B8] uppercase tracking-wider mt-1 text-center">Cairan Tidak Patuh</Text>
             </View>
           </View>
         </View>
@@ -149,7 +163,7 @@ export default function MonitoringListScreen({ navigation }) {
           <Search color="#94A3B8" size={24} />
           <TextInput
             className="flex-1 ml-3 text-base font-semibold text-[#1E293B]"
-            placeholder="Cari pasien untuk dipantau..."
+            placeholder="Cari nama pasien ..."
             placeholderTextColor="#94A3B8"
             value={searchQuery}
             onChangeText={setSearchQuery}
