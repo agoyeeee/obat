@@ -4,14 +4,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => {
-    try {
-      await playAlarmSound();
-    } catch (error) {
-      console.log('Error playing alarm sound:', error);
-    }
     return {
       shouldShowAlert: true,
-      shouldPlaySound: true,
+      shouldPlaySound: false,
       shouldSetBadge: true,
       shouldShowBanner: true,
       shouldShowList: true,
@@ -21,6 +16,16 @@ Notifications.setNotificationHandler({
 
 const CATEGORY_ID = 'REMINDER_OBAT_ACTIONS';
 const STOP_ACTION_ID = 'STOP_REMINDER_OBAT';
+const REMINDER_OBAT_CHANNEL_ID = 'reminder_obat_alarm_silent_v8';
+const OLD_REMINDER_OBAT_CHANNEL_IDS = [
+  'reminder_obat_channel',
+  'reminder_obat_channel_v2',
+  'reminder_obat_channel_v3',
+  'reminder_obat_channel_v4',
+  'reminder_obat_alarm_v5',
+  'reminder_obat_alarm_v6',
+  'reminder_obat_alarm_native',
+];
 const ALARM_MISS_TIMEOUT_MS = 5 * 60 * 1000;
 const PATIENT_ALARM_OCCURRENCES_KEY = '@patient_alarm_occurrences';
 
@@ -201,15 +206,35 @@ export const initializeReminderAlarmNotifications = async () => {
 
   // Create Android notification channel with custom sound name (requires resource in android/app/src/main/res/raw)
   try {
-    await Notifications.setNotificationChannelAsync('reminder_obat_channel', {
-      name: 'Reminder Obat',
-      importance: Notifications.AndroidImportance.MAX || 5,
-      sound: 'alarm_sound', // resource name without extension (alarm_sound.wav)
-      vibrationPattern: [0, 250, 250, 250],
+    await Promise.all(
+      OLD_REMINDER_OBAT_CHANNEL_IDS.map((channelId) =>
+        Notifications.deleteNotificationChannelAsync(channelId).catch(() => {})
+      )
+    );
+
+    await Notifications.setNotificationChannelAsync(REMINDER_OBAT_CHANNEL_ID, {
+      name: 'Alarm Obat',
+      importance: Notifications.AndroidImportance.MAX,
+      sound: null,
+      audioAttributes: {
+        usage: Notifications.AndroidAudioUsage.ALARM,
+        contentType: Notifications.AndroidAudioContentType.SONIFICATION,
+      },
+      vibrationPattern: [0, 500, 500, 500, 500, 500],
+      lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
     });
+
+    await Notifications.setNotificationCategoryAsync(CATEGORY_ID, [
+      {
+        identifier: STOP_ACTION_ID,
+        buttonTitle: 'Matikan Alarm',
+        options: {
+          opensAppToForeground: true,
+        },
+      },
+    ]);
   } catch (err) {
-    // ignore if platform doesn't support or fails
-    console.log('Could not create notification channel:', err?.message || err);
+    console.log('Could not setup notification category:', err?.message || err);
   }
 
   return true;
@@ -243,8 +268,10 @@ export const scheduleReminderObatAlarms = async (reminderItem) => {
     content: {
       title: `Waktunya minum ${reminderItem.nama_obat}`,
       body: `Dosis ${reminderItem.dosis} | Tap notifikasi untuk matikan alarm`,
-      sound: true,
-      channelId: 'reminder_obat_channel',
+      sound: null,
+      channelId: REMINDER_OBAT_CHANNEL_ID,
+      categoryIdentifier: CATEGORY_ID,
+      priority: Notifications.AndroidNotificationPriority.MAX,
       data: {
         reminder_obat_id: reminderItem.server_id || null,
         reminder_local_id: reminderItem.local_id,
@@ -271,6 +298,8 @@ export const cancelReminderObatAlarms = async (notificationIds = []) => {
     notificationIds.map((id) => Notifications.cancelScheduledNotificationAsync(id))
   );
 };
+
+export { STOP_ACTION_ID };
 
 export const addReminderAlarmDeliveryListener = (onAlarmDelivered) => {
   return Notifications.addNotificationReceivedListener((notification) => {
@@ -303,6 +332,10 @@ export const addReminderAlarmDeliveryListener = (onAlarmDelivered) => {
 
 export const addReminderAlarmResponseListener = (onStopAlarm) => {
   return Notifications.addNotificationResponseReceivedListener((response) => {
+    if (response.actionIdentifier !== STOP_ACTION_ID) {
+      return;
+    }
+
     const reminderId = response.notification.request.content.data?.reminder_obat_id;
     const reminderLocalId = response.notification.request.content.data?.reminder_local_id;
     const alarmWaktu = response.notification.request.content.data?.alarm_waktu;

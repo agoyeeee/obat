@@ -3,6 +3,7 @@ import { Audio } from 'expo-av';
 
 const CATEGORY_ID = 'REMINDER_CAIRAN_ACTIONS';
 const STOP_ACTION_ID = 'STOP_REMINDER_CAIRAN';
+const REMINDER_CAIRAN_CHANNEL_ID = 'reminder_cairan_silent_v2';
 
 // Play alarm sound saat notif diterima
 const playAlarmSound = async () => {
@@ -46,14 +47,9 @@ const playSystemBeep = async () => {
 // Notification handler dengan alarm sound
 const notificationHandler = {
   handleNotification: async () => {
-    try {
-      await playAlarmSound();
-    } catch (error) {
-      console.log('Error playing alarm sound:', error);
-    }
     return {
       shouldShowAlert: true,
-      shouldPlaySound: true,
+      shouldPlaySound: false,
       shouldSetBadge: false,
     };
   },
@@ -95,10 +91,10 @@ export const initializeReminderCairanNotifications = async () => {
 
   // Create Android notification channel with custom sound name (requires resource in android/app/src/main/res/raw)
   try {
-    await Notifications.setNotificationChannelAsync('reminder_cairan_channel', {
+    await Notifications.setNotificationChannelAsync(REMINDER_CAIRAN_CHANNEL_ID, {
       name: 'Reminder Cairan',
       importance: Notifications.AndroidImportance.MAX || 5,
-      sound: 'alarm_sound',
+      sound: null,
       vibrationPattern: [0, 250, 250, 250],
     });
   } catch (err) {
@@ -134,8 +130,8 @@ export const scheduleReminderCairanAlarm = async (reminderItem) => {
     content: {
       title: `Waktunya minum cairan`,
       body: `Minuman ${reminderItem.minuman || 'Air mineral'} | ${reminderItem.jumlah_ml} ml`,
-      sound: true,
-      channelId: 'reminder_cairan_channel',
+      sound: null,
+      channelId: REMINDER_CAIRAN_CHANNEL_ID,
       categoryIdentifier: CATEGORY_ID,
       data: {
         reminder_cairan_id: reminderItem.id,

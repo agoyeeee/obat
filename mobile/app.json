@@ -6,12 +6,18 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
+
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+
+    "ios": {
+      "supportsTablet": true
+    },
+
     "android": {
       "package": "id.myheart.app",
       "versionCode": 1,
@@ -19,21 +25,35 @@
         "foregroundImage": "./assets/myheart.png",
         "backgroundColor": "#ffffff"
       },
+      "usesCleartextTraffic": true,
       "edgeToEdgeEnabled": true
     },
+
     "web": {
       "favicon": "./assets/favicon.png"
     },
+
     "runtimeVersion": {
       "policy": "appVersion"
     },
+
     "updates": {
       "fallbackToCacheTimeout": 0
     },
+
     "plugins": [
       "expo-font",
+      [
+        "expo-notifications",
+        {
+          "sounds": [
+            "./assets/alarm-sound.wav"
+          ]
+        }
+      ],
       "@react-native-community/datetimepicker"
     ],
+
     "extra": {
       "eas": {
         "projectId": "7e74e396-33e4-43c0-9827-074f412921c9"

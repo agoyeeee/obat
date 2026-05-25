@@ -1,7 +1,8 @@
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, useNavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../hooks/useAuth';
 import { useEffect, useRef, useState } from 'react';
+import * as Notifications from 'expo-notifications';
 
 import EntryScreen from '../screens/EntryScreen';
 import LoginScreen from '../screens/LoginScreen';
@@ -10,6 +11,7 @@ import PatientHomeScreen from '../screens/pasien/PatientHomeScreen';
 import PatientDashboardScreen from '../screens/pasien/PatientDashboardScreen';
 import PatientReminderObatScreen from '../screens/pasien/PatientReminderObatScreen';
 import PatientReminderCairanScreen from '../screens/pasien/PatientReminderCairanScreen';
+import PatientAlarmScreen from '../screens/pasien/PatientAlarmScreen';
 import PatientInformasiObatListScreen from '../screens/pasien/PatientInformasiObatListScreen';
 import PatientInformasiObatDetailScreen from '../screens/pasien/PatientInformasiObatDetailScreen';
 
@@ -52,22 +54,85 @@ import {
   addReminderAlarmDeliveryListener,
   initializeReminderAlarmNotifications,
   cancelReminderObatAlarms,
+  STOP_ACTION_ID,
 } from '../services/reminderAlarmService';
 
 import { enqueuePatientAlarmLog } from '../storage/patientAlarmLogStorage';
 import { syncPendingAlarmLogs } from '../services/patientAlarmLogSyncService';
+import { importNativePendingEvents } from '../services/patientAlarmNativeSyncService';
 import { openRandomApotekerWhatsApp } from '../utils/helpers';
 
 const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
   const { user, isLoading, login, logout } = useAuth();
+  const navigationRef = useNavigationContainerRef();
 
   const [selectedRole, setSelectedRole] = useState(null);
   const [patientProfile, setPatientProfile] = useState(null);
   const [selectedObatInfo, setSelectedObatInfo] = useState(null);
 
   const isAutoSyncingRef = useRef(false);
+  const pendingAlarmNavigationRef = useRef(null);
+  const handledNotificationKeyRef = useRef(null);
+
+  const handleReminderTaken = async (data) => {
+    try {
+      if (!data?.reminderObatId) {
+        throw new Error('Reminder obat belum tersinkron.');
+      }
+
+      await publicLogKonsumsiObat({
+        reminder_obat_id: data.reminderObatId,
+        status: 'diminum',
+        logged_at: data.loggedAt,
+        tanggal: data.tanggal,
+        waktu: data.waktu,
+        alarm_waktu: data.alarmWaktu,
+      });
+      await consumePatientReminderStock({
+        reminderObatId: data.reminderObatId || null,
+        reminderLocalId: data.reminderLocalId || null,
+      });
+    } catch (error) {
+      await consumePatientReminderStock({
+        reminderObatId: data.reminderObatId || null,
+        reminderLocalId: data.reminderLocalId || null,
+      });
+
+      await enqueuePatientAlarmLog({
+        reminder_obat_id: data.reminderObatId || null,
+        reminder_local_id: data.reminderLocalId || null,
+        status: 'diminum',
+        logged_at: data.loggedAt,
+        tanggal: data.tanggal,
+        waktu: data.waktu,
+        alarm_waktu: data.alarmWaktu,
+      });
+    }
+  };
+
+  const openAlarmScreen = (data) => {
+    const payload = {
+      launchSource: 'notificationTap',
+      title: data?.title || 'Waktunya minum obat',
+      body: data?.body || 'Alarm aktif. Geser ke kanan untuk mematikan.',
+      alarmTime: data?.alarmWaktu || null,
+      reminderObatId: data?.reminderObatId || null,
+      reminderLocalId: data?.reminderLocalId || null,
+      loggedAt: data?.loggedAt || new Date().toISOString(),
+      tanggal: data?.tanggal || null,
+      waktu: data?.waktu || null,
+      alarmWaktu: data?.alarmWaktu || null,
+    };
+
+    if (navigationRef.isReady()) {
+      navigationRef.navigate('PatientAlarm', payload);
+      return;
+    }
+
+    pendingAlarmNavigationRef.current = payload;
+  };
 
   // ================= AUTO SYNC =================
   const tryAutoSync = async () => {
@@ -75,6 +140,12 @@ export default function AppNavigator() {
 
     isAutoSyncingRef.current = true;
     try {
+      // Import any events created by the native alarm wiring
+      try {
+        await importNativePendingEvents();
+      } catch (e) {
+        // ignore
+      }
       if (patientProfile) {
         await syncPendingReminderObat(patientProfile);
         await syncPendingReminderCairan(patientProfile);
@@ -114,47 +185,78 @@ export default function AppNavigator() {
     loadPatientProfile();
   }, []);
 
+  // ================= HELPER: process notification response =================
+  const processNotificationResponse = (response) => {
+    const requestId = response?.notification?.request?.identifier || null;
+    const deliveryStamp = response?.notification?.date || null;
+    const responseKey = `${requestId || 'unknown'}:${deliveryStamp || 'unknown'}:${response?.actionIdentifier || 'default'}`;
+
+    if (handledNotificationKeyRef.current === responseKey) {
+      return;
+    }
+
+    const reminderObatId = response.notification.request.content.data?.reminder_obat_id;
+    const reminderLocalId = response.notification.request.content.data?.reminder_local_id;
+    const alarmWaktu = response.notification.request.content.data?.alarm_waktu;
+
+    if (!reminderObatId && !reminderLocalId) {
+      return;
+    }
+
+    if (response.actionIdentifier === STOP_ACTION_ID) {
+      handledNotificationKeyRef.current = responseKey;
+      return;
+    }
+
+    const now = new Date();
+    const pad = (value) => String(value).padStart(2, '0');
+    const tanggal = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+    const waktu = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+
+    openAlarmScreen({
+      reminderObatId: reminderObatId ? Number(reminderObatId) : null,
+      reminderLocalId: reminderLocalId || null,
+      alarmWaktu: alarmWaktu || null,
+      loggedAt: now.toISOString(),
+      tanggal,
+      waktu,
+      title: response.notification.request.content.title,
+      body: response.notification.request.content.body,
+    });
+
+    handledNotificationKeyRef.current = responseKey;
+
+    Notifications.clearLastNotificationResponseAsync().catch((err) => {
+      console.log('clearLastNotificationResponseAsync error:', err);
+    });
+  };
+
   // ================= NOTIFICATION + SYNC =================
   useEffect(() => {
     // AKTIFKAN kalau device support (jangan Expo Go kalau error)
     initializeReminderAlarmNotifications();
 
+    // --- COLD START: handle notification tap that launched the app ---
+    Notifications.getLastNotificationResponseAsync().then((response) => {
+      if (response) {
+        processNotificationResponse(response);
+      }
+      Notifications.clearLastNotificationResponseAsync().catch((err) => {
+        console.log('clearLastNotificationResponseAsync error:', err);
+      });
+    }).catch((err) => {
+      console.log('getLastNotificationResponseAsync error:', err);
+    });
+
     const responseSubscription =
       addReminderAlarmResponseListener(async (data) => {
-        try {
-          if (!data.reminderObatId) {
-            throw new Error('Reminder obat belum tersinkron.');
-          }
-
-          await publicLogKonsumsiObat({
-            reminder_obat_id: data.reminderObatId,
-            status: 'diminum',
-            logged_at: data.loggedAt,
-            tanggal: data.tanggal,
-            waktu: data.waktu,
-            alarm_waktu: data.alarmWaktu,
-          });
-          await consumePatientReminderStock({
-            reminderObatId: data.reminderObatId || null,
-            reminderLocalId: data.reminderLocalId || null,
-          });
-        } catch (error) {
-          await consumePatientReminderStock({
-            reminderObatId: data.reminderObatId || null,
-            reminderLocalId: data.reminderLocalId || null,
-          });
-
-          await enqueuePatientAlarmLog({
-            reminder_obat_id: data.reminderObatId || null,
-            reminder_local_id: data.reminderLocalId || null,
-            status: 'diminum',
-            logged_at: data.loggedAt,
-            tanggal: data.tanggal,
-            waktu: data.waktu,
-            alarm_waktu: data.alarmWaktu,
-          });
-        }
+        await handleReminderTaken(data);
       });
+
+    // --- NOTIFICATION TAP: open alarm screen when user taps notification ---
+    const openSubscription = Notifications.addNotificationResponseReceivedListener((response) => {
+      processNotificationResponse(response);
+    });
 
     const deliverySubscription =
       addReminderAlarmDeliveryListener(async (data) => {
@@ -213,6 +315,7 @@ export default function AppNavigator() {
       unsubscribeNetInfo();
       appStateSub.remove();
       responseSubscription.remove();
+      openSubscription.remove();
       deliverySubscription.remove();
     };
   }, [patientProfile]);
@@ -307,7 +410,16 @@ export default function AppNavigator() {
 
   // ================= NAVIGATION =================
   return (
-    <NavigationContainer>
+    <NavigationContainer
+      ref={navigationRef}
+      onReady={() => {
+        if (pendingAlarmNavigationRef.current) {
+          const pending = pendingAlarmNavigationRef.current;
+          pendingAlarmNavigationRef.current = null;
+          navigationRef.navigate('PatientAlarm', pending);
+        }
+      }}
+    >
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {isLoading ? (
           <Stack.Screen name="Splash">
@@ -433,6 +545,9 @@ export default function AppNavigator() {
             />
           </>
         )}
+        <Stack.Screen name="PatientAlarm" options={{ presentation: 'fullScreenModal' }}>
+          {(props) => <PatientAlarmScreen {...props} onTaken={handleReminderTaken} />}
+        </Stack.Screen>
       </Stack.Navigator>
     </NavigationContainer>
   );
