@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": false,
+    "newArchEnabled": true,
 
     "splash": {
       "image": "./assets/splash-icon.png",
@@ -43,15 +43,26 @@
 
     "plugins": [
       "expo-font",
+
       [
         "expo-notifications",
         {
           "sounds": [
-            "./assets/alarm-sound.wav"
+            "./assets/alarm_sound.wav"
           ]
         }
       ],
-      "@react-native-community/datetimepicker"
+
+      "@react-native-community/datetimepicker",
+
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "newArchEnabled": true
+          }
+        }
+      ]
     ],
 
     "extra": {
