@@ -336,12 +336,12 @@ export default function AppNavigator() {
 
     if (!target) return;
 
-    const perDose = Math.max(1, Number(target.jumlah_per_minum || 1));
-    const currentStock = Math.max(0, Number(target.jumlah_obat || 0));
+    const perDose = Math.max(0.25, parseFloat(target.jumlah_per_minum || 1));
+    const currentStock = Math.max(0, parseFloat(target.jumlah_obat || 0));
     const nextStock = Math.max(0, currentStock - perDose);
     const alarmIds = Array.isArray(target.alarm_notification_ids) ? target.alarm_notification_ids : [];
 
-    if (nextStock === 0 && alarmIds.length > 0) {
+    if (nextStock <= 0 && alarmIds.length > 0) {
       await cancelReminderObatAlarms(alarmIds);
       await updatePatientReminderObatAlarmIds(target.local_id, []);
     }

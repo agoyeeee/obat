@@ -44,12 +44,15 @@ class ObatController extends Controller
             'monitoring' => ['nullable', 'string'],
         ]);
 
-        // Normalize dosis_inisiasi: if array provided, join into newline-separated string
+        // Normalize dosis_inisiasi: ensure it's stored as an array
         $dosisInisiasiInput = $request->input('dosis_inisiasi');
         if (is_array($dosisInisiasiInput)) {
-            $validated['dosis_inisiasi'] = collect($dosisInisiasiInput)->map(fn($v) => (string) $v)->filter()->implode("\n");
+            $validated['dosis_inisiasi'] = collect($dosisInisiasiInput)->map(fn($v) => (string) $v)->filter()->values()->all();
         } else {
-            $validated['dosis_inisiasi'] = (string) $dosisInisiasiInput;
+            // If string, split by newline or treat as single item
+            $str = (string) $dosisInisiasiInput;
+            $parts = array_filter(array_map('trim', preg_split('/[\n,]+/', $str)));
+            $validated['dosis_inisiasi'] = count($parts) > 0 ? array_values($parts) : [$str];
         }
 
         $obat = Obat::query()->create($validated);
@@ -83,9 +86,11 @@ class ObatController extends Controller
 
         $dosisInisiasiInput = $request->input('dosis_inisiasi');
         if (is_array($dosisInisiasiInput)) {
-            $validated['dosis_inisiasi'] = collect($dosisInisiasiInput)->map(fn($v) => (string) $v)->filter()->implode("\n");
+            $validated['dosis_inisiasi'] = collect($dosisInisiasiInput)->map(fn($v) => (string) $v)->filter()->values()->all();
         } else {
-            $validated['dosis_inisiasi'] = (string) $dosisInisiasiInput;
+            $str = (string) $dosisInisiasiInput;
+            $parts = array_filter(array_map('trim', preg_split('/[\n,]+/', $str)));
+            $validated['dosis_inisiasi'] = count($parts) > 0 ? array_values($parts) : [$str];
         }
 
         $obat->update($validated);

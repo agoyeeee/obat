@@ -9,7 +9,7 @@ export default function EntryScreen({ onSelectApoteker, onSelectPasien }) {
       <View className="flex-1 px-6 justify-center">
         <View className="items-center mb-10">
           <Image
-            source={require('../../assets/logo myhearth.png')}
+            source={require('../../assets/logo myhearth 2.png')}
             style={{ width: 450, height: 160, borderRadius: 16, marginBottom: 1 }}
             resizeMode="contain"
           />

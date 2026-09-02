@@ -30,6 +30,16 @@ const SEDIAAN_OPTIONS = [
   { label: 'Sirup', value: 'sirup' },
 ];
 
+const JUMLAH_PER_MINUM_OPTIONS = [
+  { label: '¼ tablet', value: '0.25' },
+  { label: '½ tablet', value: '0.5' },
+  { label: '1 tablet', value: '1' },
+  { label: '1½ tablet', value: '1.5' },
+  { label: '2 tablet', value: '2' },
+  { label: '2½ tablet', value: '2.5' },
+  { label: '3 tablet', value: '3' },
+];
+
 const TIME_PRESETS = {
   2: ['07.00 - 19.00', '06.00 - 18.00', '08.00 - 20.00', '09.00 - 21.00', '10.00 - 22.00'],
   3: ['06.00 - 14.00 - 22.00', '07.00 - 15.00 - 23.00', '08.00 - 16.00 - 24.00', '09.00 - 17.00 - 01.00', '10.00 - 18.00 - 02.00'],
@@ -48,11 +58,45 @@ const pad = (value) => String(value).padStart(2, '0');
 const formatTimeHMS = (date) => `${pad(date.getHours())}:${pad(date.getMinutes())}:00`;
 const formatTimeHM = (time) => (time ? time.slice(0, 5) : '-');
 
+/** Convert a decimal number to a human-readable fraction string.
+ *  e.g. 0.25 → "¼", 0.5 → "½", 1.5 → "1½", 2 → "2", 12.5 → "12½" */
+const formatFraction = (num) => {
+  if (num === null || num === undefined || num === '') return '-';
+  const n = Number(num);
+  if (isNaN(n)) return String(num);
+  const whole = Math.floor(n);
+  const frac = n - whole;
+  const FRAC_MAP = { 0.25: '¼', 0.5: '½', 0.75: '¾' };
+  const fracStr = FRAC_MAP[Math.round(frac * 100) / 100] || '';
+  if (whole === 0 && fracStr) return fracStr;
+  if (fracStr) return `${whole}${fracStr}`;
+  return String(n % 1 === 0 ? n : n.toFixed(2));
+};
+
+/** Get the label for a jumlah_per_minum value from the dropdown options */
+const getPerMinumLabel = (val) => {
+  if (val === null || val === undefined || val === '') return '';
+  const numVal = String(Number(val));
+  const found = JUMLAH_PER_MINUM_OPTIONS.find((o) => String(Number(o.value)) === numVal);
+  return found ? found.label : `${formatFraction(val)} tablet`;
+};
+
 const resolveDoseOptions = (obat) => {
   if (!obat) return [];
   const options = [];
-  if (Array.isArray(obat.dosis_inisiasi) && obat.dosis_inisiasi.length > 0) {
-    for (const doseItem of obat.dosis_inisiasi) {
+  let dosisArr = obat.dosis_inisiasi;
+  // Handle string: try JSON parse, then split by newline/comma
+  if (dosisArr && typeof dosisArr === 'string') {
+    try {
+      const parsed = JSON.parse(dosisArr);
+      if (Array.isArray(parsed)) dosisArr = parsed;
+      else dosisArr = [String(parsed)];
+    } catch {
+      dosisArr = dosisArr.split(/[\n,]+/).map((s) => s.trim()).filter(Boolean);
+    }
+  }
+  if (Array.isArray(dosisArr) && dosisArr.length > 0) {
+    for (const doseItem of dosisArr) {
       const label = formatDoseOption(doseItem);
       if (label) options.push({ label, value: label });
     }
@@ -240,8 +284,12 @@ export default function PatientReminderObatScreen({ onBack, profile, onOpenDetai
     const obat = obatList.find((item) => String(item.id) === String(obatId));
     if (!obat) return;
     const freq = Number(obat.frekuensi_default || 0);
-    const doseDisplay = getDoseDisplay(obat);
-    setDosis(doseDisplay || '');
+    const options = resolveDoseOptions(obat);
+    if (options.length === 1) {
+      setDosis(options[0].value);
+    } else {
+      setDosis('');
+    }
     setFrekuensi(String(freq || ''));
     setAturanMinum(obat.cara_pemakaian || '');
     if (freq === 1) {
@@ -281,7 +329,7 @@ export default function PatientReminderObatScreen({ onBack, profile, onOpenDetai
     setWaktuKonsumsi(item.waktu_konsumsi || '');
     setJamCustom(item.frekuensi === 1 ? (item.waktu_konsumsi || '') : '');
     setJumlahObat(String(item.jumlah_obat || ''));
-    setJumlahPerMinum(String(item.jumlah_per_minum || ''));
+    setJumlahPerMinum(String(item.jumlah_per_minum || '1'));
     setSelectModal({ visible: false, label: '', options: [], onSelect: null });
     setIsAddModalOpen(true);
   };
@@ -321,8 +369,8 @@ export default function PatientReminderObatScreen({ onBack, profile, onOpenDetai
       sediaan,
       frekuensi: Number(frekuensi),
       waktu_konsumsi: isFrekuensiOne ? jamCustom.trim() : waktuKonsumsi,
-      jumlah_obat: Number(jumlahObat),
-      jumlah_per_minum: Number(jumlahPerMinum),
+      jumlah_obat: parseFloat(jumlahObat),
+      jumlah_per_minum: parseFloat(jumlahPerMinum),
       aturan_minum: aturanMinum,
     };
     try {
@@ -591,7 +639,7 @@ export default function PatientReminderObatScreen({ onBack, profile, onOpenDetai
             reminderItems.map((item) => {
               const isSynced = item.sync_status === 'synced';
               const isAlarmActive = Array.isArray(item.alarm_notification_ids) && item.alarm_notification_ids.length > 0;
-              const isStockEmpty = Number(item.jumlah_obat || 0) === 0;
+              const isStockEmpty = parseFloat(item.jumlah_obat || 0) <= 0;
 
               return (
                 <View key={item.local_id} style={{
@@ -642,8 +690,8 @@ export default function PatientReminderObatScreen({ onBack, profile, onOpenDetai
                   {/* Info rows */}
                   {[
                     { label: 'Dosis', value: `${item.dosis} · ${item.frekuensi}x per hari` },
-                    { label: 'Sisa', value: `${item.jumlah_obat || 0} pcs` },
-                    { label: '1x Minum', value: `${item.jumlah_per_minum || 1} pcs` },
+                    { label: 'Sisa', value: `${formatFraction(item.jumlah_obat || 0)} pcs` },
+                    { label: '1x Minum', value: getPerMinumLabel(item.jumlah_per_minum || 1) },
                     { label: 'Waktu', value: item.waktu_konsumsi },
                     { label: 'Aturan', value: item.aturan_minum },
                   ].map((row, i) => (
@@ -799,24 +847,34 @@ export default function PatientReminderObatScreen({ onBack, profile, onOpenDetai
 
               
 
-              <View style={{ marginBottom: 16 }}>
-                {renderLabel('Dosis')}
-                <View style={{
-                  borderWidth: 1.5,
-                  borderColor: dosis ? '#14B8A6' : '#E2E8F0',
-                  borderRadius: 16,
-                  paddingHorizontal: 16,
-                  paddingVertical: 14,
-                  backgroundColor: dosis ? '#F5F3FF' : '#fff',
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}>
-                  <Text style={{ color: dosis ? '#1E293B' : '#94A3B8', fontWeight: dosis ? '600' : '400', fontSize: 14, flex: 1 }}>
-                    {dosis || '—'}
-                  </Text>
+              {doseOptions.length > 1 ? (
+                renderSelectField(
+                  'Dosis',
+                  dosis,
+                  doseOptions,
+                  (value) => { setDosis(value); setSelectModal({ visible: false, label: '', options: [], onSelect: null }); },
+                  setSelectModal
+                )
+              ) : (
+                <View style={{ marginBottom: 16 }}>
+                  {renderLabel('Dosis')}
+                  <View style={{
+                    borderWidth: 1.5,
+                    borderColor: dosis ? '#14B8A6' : '#E2E8F0',
+                    borderRadius: 16,
+                    paddingHorizontal: 16,
+                    paddingVertical: 14,
+                    backgroundColor: dosis ? '#F5F3FF' : '#fff',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}>
+                    <Text style={{ color: dosis ? '#1E293B' : '#94A3B8', fontWeight: dosis ? '600' : '400', fontSize: 14, flex: 1 }}>
+                      {dosis || '—'}
+                    </Text>
+                  </View>
                 </View>
-              </View>
+              )}
 
               {renderSelectField(
                 'Sediaan',
@@ -920,23 +978,15 @@ export default function PatientReminderObatScreen({ onBack, profile, onOpenDetai
                 />
               </View>
 
-              <View style={{ marginBottom: 16 }}>
-                <Text style={{ fontSize: 10, fontWeight: '700', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 6 }}>
-                  Sekali Minum (Pcs)
-                </Text>
-                <TextInput
-                  style={{
-                    borderWidth: 1.5, borderColor: '#E2E8F0', borderRadius: 14,
-                    paddingHorizontal: 16, paddingVertical: 14,
-                    backgroundColor: '#fff', color: '#1E293B',
-                    fontWeight: '500', fontSize: 14,
-                  }}
-                  placeholder="Masukkan jumlah pcs per minum"
-                  placeholderTextColor="#94A3B8"
-                  keyboardType="numeric"
-                  value={jumlahPerMinum}
-                  onChangeText={(text) => setJumlahPerMinum(text.replace(/[^0-9]/g, ''))}
-                />
+              {renderSelectField(
+                'Sekali Minum',
+                getPerMinumLabel(jumlahPerMinum),
+                JUMLAH_PER_MINUM_OPTIONS,
+                (value) => { setJumlahPerMinum(value); setSelectModal({ visible: false, label: '', options: [], onSelect: null }); },
+                setSelectModal
+              )}
+              {/* Spacer to keep margin consistent */}
+              <View style={{ marginBottom: 0 }}>
               </View>
 
               <View style={{ marginBottom: 16 }}>

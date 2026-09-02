@@ -71,8 +71,8 @@ class PasienController extends Controller
             'reminders.*.merk_id' => ['nullable', 'integer', 'exists:merk,id'],
             'reminders.*.dosis' => ['required', 'string', 'max:100'],
             'reminders.*.sediaan' => ['required', 'string', 'max:100'],
-            'reminders.*.jumlah_obat' => ['required', 'integer', 'min:1'],
-            'reminders.*.jumlah_per_minum' => ['nullable', 'integer', 'min:1'],
+            'reminders.*.jumlah_obat' => ['required', 'numeric', 'min:0.25'],
+            'reminders.*.jumlah_per_minum' => ['nullable', 'numeric', 'min:0.25'],
             'reminders.*.frekuensi' => ['required', 'integer', 'min:1', 'max:24'],
             'reminders.*.waktu_konsumsi' => ['required', 'string', 'max:255'],
             'reminders.*.aturan_minum' => ['required', 'string', 'max:255'],
@@ -121,8 +121,8 @@ class PasienController extends Controller
                     'merk_id' => isset($item['merk_id']) ? (int) $item['merk_id'] : null,
                     'dosis' => $item['dosis'],
                     'sediaan' => $item['sediaan'],
-                    'jumlah_obat' => (int) $item['jumlah_obat'],
-                    'jumlah_per_minum' => (int) ($item['jumlah_per_minum'] ?? 1),
+                    'jumlah_obat' => (float) $item['jumlah_obat'],
+                    'jumlah_per_minum' => (float) ($item['jumlah_per_minum'] ?? 1),
                     'waktu_konsumsi_id' => $waktu->id,
                 ];
 
@@ -190,21 +190,23 @@ class PasienController extends Controller
         }
 
         if ($status === 'diminum' && (!$existingLog || $existingLog->status !== 'diminum')) {
-            $perDose = max(1, (int) ($reminder->jumlah_per_minum ?? 1));
-            $reminder->jumlah_obat = max(0, (int) $reminder->jumlah_obat - $perDose);
+            $perDose = max(0.25, (float) ($reminder->jumlah_per_minum ?? 1));
+            $reminder->jumlah_obat = max(0, (float) $reminder->jumlah_obat - $perDose);
             $reminder->save();
         }
 
-        $log = RekapanCairan::query()->create([
-            'pasien_id' => $reminder->pasien_id,
-            'minggu_mulai' => Carbon::parse($tanggal)->startOfWeek()->toDateString(),
-            'tanggal' => $tanggal,
-            'waktu' => $waktu,
-            'minuman' => $reminder->minuman,
-            'jumlah_ml' => $reminder->jumlah_ml,
-            'catatan_asupan' => $reminder->catatan_asupan,
-            'status_kepatuhan' => null,
-        ]);
+        $log = LogKonsumsiObat::query()->updateOrCreate(
+            [
+                'reminder_obat_id' => $reminder->id,
+                'pasien_id' => $reminder->pasien_id,
+                'tanggal' => $tanggal,
+                'waktu' => $waktu,
+            ],
+            [
+                'status' => $status,
+                'skor' => $skor,
+            ]
+        );
 
         return response()->json([
             'message' => 'Log konsumsi cairan dari alarm berhasil disimpan.',

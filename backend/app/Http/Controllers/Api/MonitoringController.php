@@ -102,8 +102,8 @@ class MonitoringController extends Controller
 
         if ($validated['status'] === 'diminum' && (!$existingLog || $existingLog->status !== 'diminum')) {
             $reminder = \App\Models\ReminderObat::query()->findOrFail($validated['reminder_obat_id']);
-            $perDose = max(1, (int) ($reminder->jumlah_per_minum ?? 1));
-            $reminder->jumlah_obat = max(0, (int) $reminder->jumlah_obat - $perDose);
+            $perDose = max(0.25, (float) ($reminder->jumlah_per_minum ?? 1));
+            $reminder->jumlah_obat = max(0, (float) $reminder->jumlah_obat - $perDose);
             $reminder->save();
         }
 

@@ -5,6 +5,20 @@ import api from '../../services/api';
 import { ArrowLeft, CheckCircle, XCircle, Droplets, Pill, Calendar, X, Info, ChevronRight } from 'lucide-react-native';
 import { formatDateDDMMYY } from '../../utils/date';
 
+/** Convert a decimal number to a human-readable fraction string. */
+const formatFraction = (num) => {
+  if (num === null || num === undefined || num === '') return '-';
+  const n = Number(num);
+  if (isNaN(n)) return String(num);
+  const whole = Math.floor(n);
+  const frac = n - whole;
+  const FRAC_MAP = { 0.25: '¼', 0.5: '½', 0.75: '¾' };
+  const fracStr = FRAC_MAP[Math.round(frac * 100) / 100] || '';
+  if (whole === 0 && fracStr) return fracStr;
+  if (fracStr) return `${whole}${fracStr}`;
+  return String(n % 1 === 0 ? n : n.toFixed(2));
+};
+
 const MONTHS = [
   'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
   'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
@@ -180,7 +194,7 @@ export default function PatientDetailScreen({ route, navigation }) {
         }
 
         const reminder = log.reminder_obat || {};
-        const perDose = Math.max(1, Number(reminder.jumlah_per_minum ?? 1));
+        const perDose = Math.max(0.25, parseFloat(reminder.jumlah_per_minum ?? 1));
         const previousConsumed = consumedCountByReminder.get(reminderId) || 0;
         consumedCountByReminder.set(reminderId, previousConsumed + perDose);
       });
@@ -207,7 +221,7 @@ export default function PatientDetailScreen({ route, navigation }) {
         }
 
         const reminder = log.reminder_obat || {};
-        const perDose = Math.max(1, Number(reminder.jumlah_per_minum ?? 1));
+        const perDose = Math.max(0.25, parseFloat(reminder.jumlah_per_minum ?? 1));
         const startingStock = startingStockByReminder.get(reminderId) ?? Number(reminder.jumlah_obat ?? 0);
         const consumedBeforeThisLog = runningConsumedByReminder.get(reminderId) || 0;
         const stockRemaining = Math.max(0, startingStock - consumedBeforeThisLog - (log.status === 'diminum' ? perDose : 0));
@@ -262,8 +276,8 @@ export default function PatientDetailScreen({ route, navigation }) {
         <View className="bg-white rounded-lg p-3 mb-3">
           <DetailRow label="Dosis" value={reminder.dosis || '-'} />
           <DetailRow label="Sediaan" value={reminder.sediaan || '-'} />
-          <DetailRow label="Jumlah/Minum" value={reminder.jumlah_per_minum ? `${reminder.jumlah_per_minum}` : '-'} />
-          <DetailRow label="Sisa Stok" value={stockRemaining !== '-' ? `${stockRemaining}` : '-'} />
+          <DetailRow label="Jumlah/Minum" value={reminder.jumlah_per_minum ? `${formatFraction(reminder.jumlah_per_minum)}` : '-'} />
+          <DetailRow label="Sisa Stok" value={stockRemaining !== '-' ? `${formatFraction(stockRemaining)}` : '-'} />
           {reminder.cara_pemakaian && (
             <DetailRow label="Cara Pakai" value={reminder.cara_pemakaian} />
           )}

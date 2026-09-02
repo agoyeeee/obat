@@ -20,6 +20,11 @@ class ReminderObat extends Model
         'waktu_konsumsi_id',
     ];
 
+    protected $casts = [
+        'jumlah_obat' => 'float',
+        'jumlah_per_minum' => 'float',
+    ];
+
     public function logs()
     {
         return $this->hasMany(LogKonsumsiObat::class, 'reminder_obat_id');

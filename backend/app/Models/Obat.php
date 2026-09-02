@@ -23,7 +23,7 @@ class Obat extends Model
 
     /** @var array<string,string> */
     protected $casts = [
-        'dosis_inisiasi' => 'string',
+        'dosis_inisiasi' => 'array',
     ];
 
     public function merks(): HasMany
