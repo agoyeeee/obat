@@ -30,13 +30,17 @@ erDiagram
     obat {
         int id PK
         string nama_obat
+        string klasifikasi
         string indikasi
         json dosis_inisiasi
-        string dosis_target
-        string frekuensi_default
+        string dosis_lazim
+        string dosis_target "nullable"
+        int frekuensi_default "nullable"
+        string frekuensi_keterangan "nullable"
         string kontraindikasi
         string efek_samping
         string monitoring
+        string cara_pemakaian
     }
 
     merk {

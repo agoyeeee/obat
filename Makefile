@@ -1,4 +1,4 @@
-.PHONY: help install install-backend install-mobile keygen migrate seed fresh route-list serve-backend serve-mobile serve-mobile-build android-doctor android-avd-list android-emulator-start ensure-android-localprops run stop
+.PHONY: help install install-backend install-mobile keygen migrate seed fresh route-list serve-backend serve-mobile serve-mobile-build build-apk android-doctor android-avd-list android-emulator-start ensure-android-localprops run stop
 
 help:
 	@echo "Available targets:"
@@ -12,6 +12,7 @@ help:
 	@echo "  make route-list      - Show Laravel routes"
 	@echo "  make serve-backend   - Run Laravel API server"
 	@echo "  make serve-mobile    - Run Expo dev server for development build"
+	@echo "  make build-apk       - Build standalone Release APK (app-release.apk)"
 	@echo "  make ensure-android-localprops - Ensure mobile/android/local.properties exists with sdk.dir"
 	@echo "  make android-doctor  - Check Android SDK, adb, emulator, and devices"
 	@echo "  make android-avd-list - List available Android Virtual Devices"
@@ -64,6 +65,9 @@ android-emulator-start:
 serve-mobile-build: ensure-android-localprops
 	powershell -NoProfile -Command '$$sdk = $$env:ANDROID_SDK_ROOT; if (-not $$sdk) { $$sdk = $$env:ANDROID_HOME }; if (-not $$sdk) { $$defaultSdk = Join-Path $$env:USERPROFILE "AppData\\Local\\Android\\Sdk"; if (Test-Path $$defaultSdk) { $$sdk = $$defaultSdk } }; $$adb = if ($$sdk) { Join-Path $$sdk "platform-tools\\adb.exe" } else { "adb" }; $$emu = if ($$sdk) { Join-Path $$sdk "emulator\\emulator.exe" } else { "emulator" }; if (-not (Test-Path $$adb)) { Write-Error "adb tidak ditemukan. Install Android SDK Platform-Tools."; exit 1 }; $$adbOut = & $$adb devices; $$readyCount = ($$adbOut | Select-String "\sdevice$$" | Measure-Object).Count; $$unauthorizedCount = ($$adbOut | Select-String "\sunauthorized$$" | Measure-Object).Count; $$offlineCount = ($$adbOut | Select-String "\soffline$$" | Measure-Object).Count; if ($$readyCount -gt 0) { exit 0 }; if ($$unauthorizedCount -gt 0) { Write-Error "Device terdeteksi tapi masih unauthorized. Cek layar HP dan tekan Allow USB debugging, lalu jalankan: adb kill-server; adb start-server; make serve-mobile-build"; exit 1 }; if ($$offlineCount -gt 0) { Write-Error "Device status offline. Coba cabut/pasang kabel, aktifkan ulang USB debugging, lalu jalankan: adb kill-server; adb start-server"; exit 1 }; if (Test-Path $$emu) { $$avd = & $$emu -list-avds | Select-Object -First 1; if ($$avd) { Start-Process $$emu -ArgumentList ("-avd " + $$avd); Write-Host ("Starting emulator: " + $$avd + ". Tunggu sampai boot selesai lalu jalankan ulang make serve-mobile-build."); exit 1 } else { Write-Error "Tidak ada device terhubung dan tidak ada AVD. Buat emulator dulu atau sambungkan HP (USB debugging)."; exit 1 } } else { Write-Error "Tidak ada device fisik terhubung. Sambungkan HP (USB debugging) atau install Android Emulator."; exit 1 }'
 	cd mobile && npm run android:dev
+
+build-apk: ensure-android-localprops
+	cd mobile/android && cmd.exe /c "set JAVA_HOME=C:\Program Files\Java\jdk-17&& set ANDROID_HOME=C:\2022.3.44f1\Editor\Data\PlaybackEngines\AndroidPlayer\SDK&& gradlew.bat assembleRelease -PreactNativeArchitectures=arm64-v8a,armeabi-v7a"
 
 run:
 	powershell -NoProfile -Command "Start-Process powershell -ArgumentList '-NoExit','-Command','cd ''$(CURDIR)\\backend''; php artisan serve --host 0.0.0.0 --port 8000'"

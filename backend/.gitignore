@@ -20,6 +20,11 @@
 /storage/*.key
 /storage/pail
 /vendor
+
+# Local database backups; never commit application/user data dumps.
+/storage/app/private/backups/
+*.sql
+
 _ide_helper.php
 Homestead.json
 Homestead.yaml

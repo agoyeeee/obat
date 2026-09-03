@@ -13,7 +13,21 @@ class ObatController extends Controller
     public function publicList(): JsonResponse
     {
         $obats = Obat::query()
-            ->select(['id', 'nama_obat', 'dosis_target', 'dosis_inisiasi', 'frekuensi_default', 'cara_pemakaian'])
+            ->select([
+                'id',
+                'nama_obat',
+                'klasifikasi',
+                'indikasi',
+                'dosis_inisiasi',
+                'dosis_lazim',
+                'dosis_target',
+                'frekuensi_default',
+                'frekuensi_keterangan',
+                'kontraindikasi',
+                'efek_samping',
+                'monitoring',
+                'cara_pemakaian',
+            ])
             ->with('merks:id,obat_id,nama_merk')
             ->orderBy('nama_obat')
             ->get();
@@ -35,25 +49,20 @@ class ObatController extends Controller
     {
         $validated = $request->validate([
             'nama_obat' => ['required', 'string', 'max:255', 'unique:obat,nama_obat'],
+            'klasifikasi' => ['nullable', 'string'],
             'indikasi' => ['required', 'string'],
-            'dosis_inisiasi' => ['required'], // accept string or array; normalize below
-            'dosis_target' => ['required', 'string', 'max:100'],
-            'frekuensi_default' => ['required', 'integer', 'min:1', 'max:24'],
+            'dosis_inisiasi' => ['nullable'], // accept string or array; normalize below
+            'dosis_lazim' => ['nullable', 'string'],
+            'dosis_target' => ['nullable', 'string', 'max:100'],
+            'frekuensi_default' => ['nullable', 'integer', 'min:1', 'max:24'],
+            'frekuensi_keterangan' => ['nullable', 'string', 'max:100'],
             'kontraindikasi' => ['nullable', 'string'],
             'efek_samping' => ['nullable', 'string'],
             'monitoring' => ['nullable', 'string'],
+            'cara_pemakaian' => ['nullable', 'string'],
         ]);
 
-        // Normalize dosis_inisiasi: ensure it's stored as an array
-        $dosisInisiasiInput = $request->input('dosis_inisiasi');
-        if (is_array($dosisInisiasiInput)) {
-            $validated['dosis_inisiasi'] = collect($dosisInisiasiInput)->map(fn($v) => (string) $v)->filter()->values()->all();
-        } else {
-            // If string, split by newline or treat as single item
-            $str = (string) $dosisInisiasiInput;
-            $parts = array_filter(array_map('trim', preg_split('/[\n,]+/', $str)));
-            $validated['dosis_inisiasi'] = count($parts) > 0 ? array_values($parts) : [$str];
-        }
+        $validated['dosis_inisiasi'] = $this->normalizeDosisInisiasi($request->input('dosis_inisiasi'));
 
         $obat = Obat::query()->create($validated);
 
@@ -75,23 +84,20 @@ class ObatController extends Controller
 
         $validated = $request->validate([
             'nama_obat' => ['required', 'string', 'max:255', Rule::unique('obat', 'nama_obat')->ignore($obat->id)],
+            'klasifikasi' => ['nullable', 'string'],
             'indikasi' => ['required', 'string'],
-            'dosis_inisiasi' => ['required'], // accept string or array; normalize below
-            'dosis_target' => ['required', 'string', 'max:100'],
-            'frekuensi_default' => ['required', 'integer', 'min:1', 'max:24'],
+            'dosis_inisiasi' => ['nullable'], // accept string or array; normalize below
+            'dosis_lazim' => ['nullable', 'string'],
+            'dosis_target' => ['nullable', 'string', 'max:100'],
+            'frekuensi_default' => ['nullable', 'integer', 'min:1', 'max:24'],
+            'frekuensi_keterangan' => ['nullable', 'string', 'max:100'],
             'kontraindikasi' => ['nullable', 'string'],
             'efek_samping' => ['nullable', 'string'],
             'monitoring' => ['nullable', 'string'],
+            'cara_pemakaian' => ['nullable', 'string'],
         ]);
 
-        $dosisInisiasiInput = $request->input('dosis_inisiasi');
-        if (is_array($dosisInisiasiInput)) {
-            $validated['dosis_inisiasi'] = collect($dosisInisiasiInput)->map(fn($v) => (string) $v)->filter()->values()->all();
-        } else {
-            $str = (string) $dosisInisiasiInput;
-            $parts = array_filter(array_map('trim', preg_split('/[\n,]+/', $str)));
-            $validated['dosis_inisiasi'] = count($parts) > 0 ? array_values($parts) : [$str];
-        }
+        $validated['dosis_inisiasi'] = $this->normalizeDosisInisiasi($request->input('dosis_inisiasi'));
 
         $obat->update($validated);
 
@@ -104,5 +110,25 @@ class ObatController extends Controller
         $obat->delete();
 
         return response()->json(['message' => 'Data obat berhasil dihapus.']);
+    }
+
+    /** @return array<int, string>|null */
+    private function normalizeDosisInisiasi(mixed $value): ?array
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $values = is_array($value)
+            ? $value
+            : preg_split('/[\r\n,;]+/', (string) $value);
+
+        $normalized = collect($values ?: [])
+            ->map(fn ($item): string => trim((string) $item))
+            ->filter()
+            ->values()
+            ->all();
+
+        return $normalized === [] ? null : $normalized;
     }
 }

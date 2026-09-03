@@ -14,22 +14,12 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            // Tabel master (tanpa dependensi)
-            ApotekerSeeder::class,
-            PasienSeeder::class,
+            // Master data yang aman untuk database fresh/production.
+            // Data demo akun, pasien, reminder, log, dan rekap tidak dijalankan otomatis.
             ObatSeeder::class,
+            MerkSeeder::class,
             WaktuKonsumsiSeeder::class,
             KuisionerSeeder::class,
-
-            MerkSeeder::class,
-
-            // Tabel transaksi (bergantung pada tabel relasi)
-            ReminderObatSeeder::class,
-            ReminderCairanSeeder::class,
-            RekapKuisionerSeeder::class,
-            JawabanKuisionerSeeder::class,
-            LogKonsumsiObatSeeder::class,
-            LogKonsumsiCairanSeeder::class,
         ]);
     }
 }

@@ -11,10 +11,13 @@ class Obat extends Model
 
     protected $fillable = [
         'nama_obat',
+        'klasifikasi',
         'indikasi',
         'dosis_inisiasi',
+        'dosis_lazim',
         'dosis_target',
         'frekuensi_default',
+        'frekuensi_keterangan',
         'kontraindikasi',
         'efek_samping',
         'monitoring',

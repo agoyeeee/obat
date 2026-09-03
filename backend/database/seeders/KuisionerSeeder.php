@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Kuisioner;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -62,18 +63,23 @@ class KuisionerSeeder extends Seeder
             [
                 'pertanyaan' => 'Seberapa sering Anda kesulitan mengingat untuk minum semua obat Anda?',
                 'tipe'       => 'skala',
-                'opsi'       => json_encode([
+                'opsi'       => [
                     'Tidak pernah',
                     'Sesekali',
                     'Kadang-kadang',
                     'Sering',
                     'Selalu',
-                ]),
-                'created_at' => now(),
-                'updated_at' => now(),
+                ],
             ],
         ];
 
-        DB::table('kuisioner')->insert($kuisioners);
+        DB::transaction(function () use ($kuisioners): void {
+            foreach ($kuisioners as $data) {
+                Kuisioner::query()->updateOrCreate(
+                    ['pertanyaan' => $data['pertanyaan']],
+                    $data,
+                );
+            }
+        });
     }
 }
