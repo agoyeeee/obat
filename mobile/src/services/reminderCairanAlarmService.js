@@ -44,18 +44,6 @@ const playSystemBeep = async () => {
   }
 };
 
-// Notification handler dengan alarm sound
-const notificationHandler = {
-  handleNotification: async () => {
-    return {
-      shouldShowAlert: true,
-      shouldPlaySound: false,
-      shouldSetBadge: false,
-    };
-  },
-};
-
-Notifications.setNotificationHandler(notificationHandler);
 
 const parseTime = (waktu) => {
   if (!waktu) return null;

@@ -11,15 +11,21 @@ import PatientHomeScreen from '../screens/pasien/PatientHomeScreen';
 import PatientDashboardScreen from '../screens/pasien/PatientDashboardScreen';
 import PatientReminderObatScreen from '../screens/pasien/PatientReminderObatScreen';
 import PatientReminderCairanScreen from '../screens/pasien/PatientReminderCairanScreen';
-import PatientAlarmScreen from '../screens/pasien/PatientAlarmScreen';
 import PatientInformasiObatListScreen from '../screens/pasien/PatientInformasiObatListScreen';
 import PatientInformasiObatDetailScreen from '../screens/pasien/PatientInformasiObatDetailScreen';
 
 import PatientDetailScreen from '../screens/apoteker/PatientDetailScreen';
 import SelectBrandScreen from '../screens/apoteker/SelectBrandScreen';
 
-import { View, ActivityIndicator, AppState, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, AppState, Alert, Platform } from 'react-native';
+import { BellRing } from 'lucide-react-native';
 import NetInfo from '@react-native-community/netinfo';
+import FloatingAlarmModal from '../components/FloatingAlarmModal';
+import {
+  dismissFloatingAlarm,
+  checkOverlayPermission,
+  requestOverlayPermission,
+} from '../services/floatingOverlayService';
 
 import MainTabNavigator from './MainTabNavigator';
 import KuisionerNavigator from './KuisionerNavigator';
@@ -55,6 +61,7 @@ import {
   initializeReminderAlarmNotifications,
   cancelReminderObatAlarms,
   STOP_ACTION_ID,
+  stopAlarmSound,
 } from '../services/reminderAlarmService';
 
 import { enqueuePatientAlarmLog } from '../storage/patientAlarmLogStorage';
@@ -71,12 +78,16 @@ export default function AppNavigator() {
   const [selectedRole, setSelectedRole] = useState(null);
   const [patientProfile, setPatientProfile] = useState(null);
   const [selectedObatInfo, setSelectedObatInfo] = useState(null);
+  const [activeForegroundAlarm, setActiveForegroundAlarm] = useState(null);
 
   const isAutoSyncingRef = useRef(false);
-  const pendingAlarmNavigationRef = useRef(null);
   const handledNotificationKeyRef = useRef(null);
 
   const handleReminderTaken = async (data) => {
+    stopAlarmSound().catch(() => {});
+    if (data?.isTest) {
+      return;
+    }
     try {
       if (!data?.reminderObatId) {
         throw new Error('Reminder obat belum tersinkron.');
@@ -112,27 +123,37 @@ export default function AppNavigator() {
     }
   };
 
-  const openAlarmScreen = (data) => {
-    const payload = {
-      launchSource: 'notificationTap',
-      title: data?.title || 'Waktunya minum obat',
-      body: data?.body || 'Alarm aktif. Geser ke kanan untuk mematikan.',
-      alarmTime: data?.alarmWaktu || null,
-      reminderObatId: data?.reminderObatId || null,
-      reminderLocalId: data?.reminderLocalId || null,
-      loggedAt: data?.loggedAt || new Date().toISOString(),
-      tanggal: data?.tanggal || null,
-      waktu: data?.waktu || null,
-      alarmWaktu: data?.alarmWaktu || null,
-    };
+  // ================= PERMINTAAN IZIN POP-UP MENGAMBANG SAAT APK DIBUKA =================
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
 
-    if (navigationRef.isReady()) {
-      navigationRef.navigate('PatientAlarm', payload);
-      return;
-    }
+    // Berikan jeda singkat agar splash screen selesai render
+    const timer = setTimeout(async () => {
+      try {
+        const hasOverlay = await checkOverlayPermission();
+        if (!hasOverlay) {
+          Alert.alert(
+            'Izin Pop-up Alarm Diperlukan',
+            'Agar alarm pengingat minum obat dapat muncul mengambang di atas layar (saat membuka aplikasi lain atau saat layar HP terkunci), silakan aktifkan izin "Tampilkan di atas aplikasi lain".',
+            [
+              { text: 'Nanti', style: 'cancel' },
+              {
+                text: 'Aktifkan Izin',
+                onPress: () => {
+                  requestOverlayPermission();
+                },
+              },
+            ],
+            { cancelable: true }
+          );
+        }
+      } catch (err) {
+        console.log('[AppNavigator] Error checking overlay permission on startup:', err);
+      }
+    }, 1200);
 
-    pendingAlarmNavigationRef.current = payload;
-  };
+    return () => clearTimeout(timer);
+  }, []);
 
   // ================= AUTO SYNC =================
   const tryAutoSync = async () => {
@@ -198,12 +219,17 @@ export default function AppNavigator() {
     const reminderObatId = response.notification.request.content.data?.reminder_obat_id;
     const reminderLocalId = response.notification.request.content.data?.reminder_local_id;
     const alarmWaktu = response.notification.request.content.data?.alarm_waktu;
+    const isTest = Boolean(
+      response.notification.request.content.data?.is_test ||
+      response.notification.request.content.data?.isTest
+    );
 
-    if (!reminderObatId && !reminderLocalId) {
+    if (!reminderObatId && !reminderLocalId && !isTest) {
       return;
     }
 
     if (response.actionIdentifier === STOP_ACTION_ID) {
+      stopAlarmSound().catch(() => {});
       handledNotificationKeyRef.current = responseKey;
       return;
     }
@@ -213,7 +239,7 @@ export default function AppNavigator() {
     const tanggal = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
     const waktu = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
 
-    openAlarmScreen({
+    setActiveForegroundAlarm({
       reminderObatId: reminderObatId ? Number(reminderObatId) : null,
       reminderLocalId: reminderLocalId || null,
       alarmWaktu: alarmWaktu || null,
@@ -222,6 +248,9 @@ export default function AppNavigator() {
       waktu,
       title: response.notification.request.content.title,
       body: response.notification.request.content.body,
+      nama_obat: response.notification.request.content.data?.nama_obat || null,
+      dosis: response.notification.request.content.data?.dosis || null,
+      isTest,
     });
 
     handledNotificationKeyRef.current = responseKey;
@@ -256,6 +285,30 @@ export default function AppNavigator() {
     // --- NOTIFICATION TAP: open alarm screen when user taps notification ---
     const openSubscription = Notifications.addNotificationResponseReceivedListener((response) => {
       processNotificationResponse(response);
+    });
+
+    // --- NOTIFICATION RECEIVED (FOREGROUND): show in-app heads-up popup banner ---
+    const foregroundReceivedSubscription = Notifications.addNotificationReceivedListener((notification) => {
+      const content = notification?.request?.content || {};
+      const data = content.data || {};
+      const isTest = Boolean(data.is_test || data.isTest);
+      const reminderObatId = data.reminder_obat_id;
+      const reminderLocalId = data.reminder_local_id;
+
+      if (!reminderObatId && !reminderLocalId && !isTest) {
+        return;
+      }
+
+      setActiveForegroundAlarm({
+        title: content.title || 'Waktunya minum obat',
+        body: content.body || 'Silakan minum obat sesuai jadwal.',
+        reminderObatId: reminderObatId ? Number(reminderObatId) : null,
+        reminderLocalId: reminderLocalId || null,
+        alarmWaktu: data.alarm_waktu || null,
+        nama_obat: data.nama_obat || null,
+        dosis: data.dosis || null,
+        isTest,
+      });
     });
 
     const deliverySubscription =
@@ -317,6 +370,7 @@ export default function AppNavigator() {
       responseSubscription.remove();
       openSubscription.remove();
       deliverySubscription.remove();
+      foregroundReceivedSubscription.remove();
     };
   }, [patientProfile]);
 
@@ -410,16 +464,8 @@ export default function AppNavigator() {
 
   // ================= NAVIGATION =================
   return (
-    <NavigationContainer
-      ref={navigationRef}
-      onReady={() => {
-        if (pendingAlarmNavigationRef.current) {
-          const pending = pendingAlarmNavigationRef.current;
-          pendingAlarmNavigationRef.current = null;
-          navigationRef.navigate('PatientAlarm', pending);
-        }
-      }}
-    >
+    <View style={{ flex: 1 }}>
+      <NavigationContainer ref={navigationRef}>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {isLoading ? (
           <Stack.Screen name="Splash">
@@ -545,10 +591,22 @@ export default function AppNavigator() {
             />
           </>
         )}
-        <Stack.Screen name="PatientAlarm" options={{ presentation: 'fullScreenModal' }}>
-          {(props) => <PatientAlarmScreen {...props} onTaken={handleReminderTaken} />}
-        </Stack.Screen>
       </Stack.Navigator>
     </NavigationContainer>
-  );
+
+    <FloatingAlarmModal
+      alarm={activeForegroundAlarm}
+      onDismiss={() => {
+        setActiveForegroundAlarm(null);
+        stopAlarmSound().catch(() => {});
+        dismissFloatingAlarm().catch(() => {});
+      }}
+      onTakeMedicine={async (alarmData) => {
+        setActiveForegroundAlarm(null);
+        dismissFloatingAlarm().catch(() => {});
+        await handleReminderTaken(alarmData);
+      }}
+    />
+  </View>
+);
 }

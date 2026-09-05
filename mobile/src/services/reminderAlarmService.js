@@ -1,12 +1,27 @@
 import * as Notifications from 'expo-notifications';
 import { Audio } from 'expo-av';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  dismissFloatingAlarm,
+  scheduleNativeAlarm,
+  cancelNativeAlarm,
+  triggerTestFloating,
+} from './floatingOverlayService';
+
+// Global active alarm sound reference
+let activeAlarmSound = null;
 
 Notifications.setNotificationHandler({
   handleNotification: async () => {
+    // 1. Putar suara sirene di background secara non-blocking
+    playAlarmSound().catch((error) => {
+      console.log('Error playing alarm sound in handleNotification:', error);
+    });
+
+    // 2. Langsung kembalikan konfigurasi presentasi agar tidak di-discard oleh OS Android/iOS
     return {
       shouldShowAlert: true,
-      shouldPlaySound: false,
+      shouldPlaySound: true, // Wajib true di Android agar memenuhi syarat Heads-up banner
       shouldSetBadge: true,
       shouldShowBanner: true,
       shouldShowList: true,
@@ -16,7 +31,7 @@ Notifications.setNotificationHandler({
 
 const CATEGORY_ID = 'REMINDER_OBAT_ACTIONS';
 const STOP_ACTION_ID = 'STOP_REMINDER_OBAT';
-const REMINDER_OBAT_CHANNEL_ID = 'reminder_obat_alarm_silent_v8';
+const REMINDER_OBAT_CHANNEL_ID = 'reminder_obat_alarm_v10';
 const OLD_REMINDER_OBAT_CHANNEL_IDS = [
   'reminder_obat_channel',
   'reminder_obat_channel_v2',
@@ -25,6 +40,8 @@ const OLD_REMINDER_OBAT_CHANNEL_IDS = [
   'reminder_obat_alarm_v5',
   'reminder_obat_alarm_v6',
   'reminder_obat_alarm_native',
+  'reminder_obat_alarm_silent_v8',
+  'reminder_obat_alarm_v9',
 ];
 const ALARM_MISS_TIMEOUT_MS = 5 * 60 * 1000;
 const PATIENT_ALARM_OCCURRENCES_KEY = '@patient_alarm_occurrences';
@@ -141,25 +158,52 @@ const startAlarmOccurrenceTimer = async (payload, onMissedAlarm) => {
   return key;
 };
 
+// Hentikan suara alarm aktif jika ada
+export const stopAlarmSound = async () => {
+  dismissFloatingAlarm().catch(() => {});
+  if (activeAlarmSound) {
+    const sound = activeAlarmSound;
+    activeAlarmSound = null;
+    try {
+      await sound.stopAsync().catch(() => {});
+      await sound.unloadAsync().catch(() => {});
+    } catch (error) {
+      console.log('Error stopping active alarm sound:', error);
+    }
+  }
+};
+
 // Play alarm sound saat notif diterima
 export const playAlarmSound = async () => {
   try {
+    // Hentikan suara sebelumnya jika masih ada
+    await stopAlarmSound();
+
     await Audio.setAudioModeAsync({
       allowsRecordingIOS: false,
       playsInSilentModeIOS: true,
       staysActiveInBackground: true,
-      shouldDuckAndroid: true,
+      shouldDuckAndroid: false,
+      playThroughEarpieceAndroid: false,
     });
 
-    // Try to play from assets file
+    // Coba putar dari assets file
     try {
-      const { sound } = await Audio.Sound.createAsync(require('../../assets/alarm-sound.wav'));
+      const { sound } = await Audio.Sound.createAsync(
+        require('../../assets/alarm-sound.wav'),
+        { shouldPlay: true, isLooping: true, volume: 1.0 }
+      );
+      activeAlarmSound = sound;
       await sound.playAsync();
+
+      // Matikan otomatis setelah 30 detik bila tidak ada interaksi pengguna
       setTimeout(() => {
-        sound.unloadAsync().catch(console.log);
-      }, 5000);
+        if (activeAlarmSound === sound) {
+          stopAlarmSound();
+        }
+      }, 30000);
     } catch (fileError) {
-      // Fallback: generate simple beep alarm tone
+      console.log('Error loading alarm sound asset, falling back to beep:', fileError);
       await playSystemBeep();
     }
   } catch (error) {
@@ -174,6 +218,7 @@ const playSystemBeep = async () => {
     const { sound } = await Audio.Sound.createAsync({
       uri: 'data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQIAAAAAAAA=',
     });
+    activeAlarmSound = sound;
     await sound.playAsync();
   } catch (error) {
     console.log('System beep fallback error:', error);
@@ -215,12 +260,15 @@ export const initializeReminderAlarmNotifications = async () => {
     await Notifications.setNotificationChannelAsync(REMINDER_OBAT_CHANNEL_ID, {
       name: 'Alarm Obat',
       importance: Notifications.AndroidImportance.MAX,
-      sound: null,
+      sound: 'alarm_sound.wav',
       audioAttributes: {
         usage: Notifications.AndroidAudioUsage.ALARM,
         contentType: Notifications.AndroidAudioContentType.SONIFICATION,
       },
       vibrationPattern: [0, 500, 500, 500, 500, 500],
+      enableVibrate: true,
+      bypassDnd: true,
+      showBadge: true,
       lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
     });
 
@@ -255,38 +303,61 @@ export const scheduleReminderObatAlarms = async (reminderItem) => {
     throw new Error('Format waktu konsumsi tidak valid untuk alarm.');
   }
 
-  const [time] = times;
+  const notificationIds = [];
 
-  if (Array.isArray(reminderItem.alarm_notification_ids) && reminderItem.alarm_notification_ids.length > 0) {
-    await Promise.all(
-      reminderItem.alarm_notification_ids.map((id) => Notifications.cancelScheduledNotificationAsync(id))
-    );
+  for (let index = 0; index < times.length; index++) {
+    const time = times[index];
+    const alarmWaktu = `${String(time.hour).padStart(2, '0')}:${String(time.minute).padStart(2, '0')}:00`;
+    const notificationId = await Notifications.scheduleNotificationAsync({
+      content: {
+        title: `Waktunya minum ${reminderItem.nama_obat}`,
+        body: `Dosis ${reminderItem.dosis} | Tap notifikasi untuk matikan alarm`,
+        sound: 'alarm_sound.wav',
+        channelId: REMINDER_OBAT_CHANNEL_ID,
+        categoryIdentifier: CATEGORY_ID,
+        priority: Notifications.AndroidNotificationPriority.MAX,
+        data: {
+          reminder_obat_id: reminderItem.server_id || null,
+          reminder_local_id: reminderItem.local_id,
+          local_id: reminderItem.local_id,
+          alarm_waktu: alarmWaktu,
+          nama_obat: reminderItem.nama_obat,
+          dosis: reminderItem.dosis,
+        },
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DAILY,
+        hour: time.hour,
+        minute: time.minute,
+      },
+    });
+    notificationIds.push(notificationId);
+
+    // Jadwalkan juga pada modul floating alarm native untuk memunculkan pop-up mengambang di atas aplikasi lain
+    try {
+      let hash = 0;
+      const str = `${reminderItem.local_id || reminderItem.server_id || 'rem'}_${index}_${time.hour}_${time.minute}`;
+      for (let i = 0; i < str.length; i++) {
+        hash = (hash << 5) - hash + str.charCodeAt(i);
+        hash |= 0;
+      }
+      const nativeAlarmId = Math.abs(hash) % 100000;
+      await scheduleNativeAlarm({
+        id: nativeAlarmId,
+        hour: time.hour,
+        minute: time.minute,
+        title: `Waktunya minum ${reminderItem.nama_obat}`,
+        medicineName: reminderItem.nama_obat,
+        dose: reminderItem.dosis || '1 dosis',
+        reminderId: reminderItem.local_id,
+        isTest: false,
+      });
+    } catch (nativeErr) {
+      console.log('[FloatingAlarm] Error scheduling native overlay alarm:', nativeErr);
+    }
   }
 
-  const alarmWaktu = `${String(time.hour).padStart(2, '0')}:${String(time.minute).padStart(2, '0')}:00`;
-  const notificationId = await Notifications.scheduleNotificationAsync({
-    content: {
-      title: `Waktunya minum ${reminderItem.nama_obat}`,
-      body: `Dosis ${reminderItem.dosis} | Tap notifikasi untuk matikan alarm`,
-      sound: null,
-      channelId: REMINDER_OBAT_CHANNEL_ID,
-      categoryIdentifier: CATEGORY_ID,
-      priority: Notifications.AndroidNotificationPriority.MAX,
-      data: {
-        reminder_obat_id: reminderItem.server_id || null,
-        reminder_local_id: reminderItem.local_id,
-        local_id: reminderItem.local_id,
-        alarm_waktu: alarmWaktu,
-      },
-    },
-    trigger: {
-      type: Notifications.SchedulableTriggerInputTypes.DAILY,
-      hour: time.hour,
-      minute: time.minute,
-    },
-  });
-
-  return [notificationId];
+  return notificationIds;
 };
 
 export const cancelReminderObatAlarms = async (notificationIds = []) => {
@@ -299,10 +370,73 @@ export const cancelReminderObatAlarms = async (notificationIds = []) => {
   );
 };
 
+export const triggerTestReminderAlarm = async ({ reminderItem, delaySeconds = 5 } = {}) => {
+  const hasPermission = await initializeReminderAlarmNotifications();
+  if (!hasPermission) {
+    throw new Error('Izin notifikasi belum diberikan pada perangkat ini.');
+  }
+
+  const now = new Date();
+  const pad = (value) => String(value).padStart(2, '0');
+  const testWaktu = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+  const namaObat = reminderItem?.nama_obat || 'Obat Uji Coba (Debug)';
+  const dosis = reminderItem?.dosis || '1 tablet';
+
+  const notificationId = await Notifications.scheduleNotificationAsync({
+    content: {
+      title: `[Uji Alarm] Waktunya minum ${namaObat}`,
+      body: `Dosis ${dosis} | Tap untuk buka alarm layar penuh`,
+      sound: 'alarm_sound.wav',
+      channelId: REMINDER_OBAT_CHANNEL_ID,
+      categoryIdentifier: CATEGORY_ID,
+      priority: Notifications.AndroidNotificationPriority.MAX,
+      data: {
+        reminder_obat_id: reminderItem?.server_id || null,
+        reminder_local_id: reminderItem?.local_id || 'test_debug_id',
+        local_id: reminderItem?.local_id || 'test_debug_id',
+        alarm_waktu: testWaktu,
+        nama_obat: namaObat,
+        dosis: dosis,
+        is_test: true,
+        isTest: true,
+      },
+    },
+    trigger: delaySeconds > 0
+      ? {
+          type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+          seconds: Math.max(1, delaySeconds),
+          repeats: false,
+        }
+      : null,
+  });
+
+  // Uji pop-up mengambang native (floating overlay)
+  try {
+    await triggerTestFloating(delaySeconds, {
+      title: `[Uji Alarm] Waktunya minum ${namaObat}`,
+      medicineName: namaObat,
+      dose: dosis,
+      reminderId: reminderItem?.local_id || 'test_debug_id',
+    });
+  } catch (nativeErr) {
+    console.log('[FloatingAlarm] Error triggering test floating:', nativeErr);
+  }
+
+  return notificationId;
+};
+
 export { STOP_ACTION_ID };
 
 export const addReminderAlarmDeliveryListener = (onAlarmDelivered) => {
   return Notifications.addNotificationReceivedListener((notification) => {
+    const isTest = Boolean(
+      notification.request.content.data?.is_test ||
+      notification.request.content.data?.isTest
+    );
+    if (isTest) {
+      return;
+    }
+
     const reminderObatId = notification.request.content.data?.reminder_obat_id;
     const reminderLocalId = notification.request.content.data?.reminder_local_id;
     const alarmWaktu = notification.request.content.data?.alarm_waktu;
@@ -333,6 +467,17 @@ export const addReminderAlarmDeliveryListener = (onAlarmDelivered) => {
 export const addReminderAlarmResponseListener = (onStopAlarm) => {
   return Notifications.addNotificationResponseReceivedListener((response) => {
     if (response.actionIdentifier !== STOP_ACTION_ID) {
+      return;
+    }
+
+    // Segera matikan suara alarm saat action Matikan Alarm ditekan
+    stopAlarmSound().catch(() => {});
+
+    const isTest = Boolean(
+      response.notification.request.content.data?.is_test ||
+      response.notification.request.content.data?.isTest
+    );
+    if (isTest) {
       return;
     }
 

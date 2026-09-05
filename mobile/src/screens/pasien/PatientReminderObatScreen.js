@@ -1,20 +1,29 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View, Text, Pressable, ScrollView, TextInput, Alert,
-  RefreshControl, ActivityIndicator, Modal, Platform, SafeAreaView, TouchableOpacity,
+  RefreshControl, ActivityIndicator, Modal, Platform, SafeAreaView, TouchableOpacity, Linking, AppState,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   ArrowLeft, Pill, CloudUpload, CircleCheck, Clock3,
-  Plus, X, Bell, ChevronDown, Pencil, Trash2, AlertCircle, ChevronRight,
+  Plus, X, Bell, BellRing, ChevronDown, Pencil, Trash2, AlertCircle, ChevronRight,
+  Info,
 } from 'lucide-react-native';
 import { HelpCircle } from 'lucide-react-native';
+import {
+  checkOverlayPermission,
+  requestOverlayPermission,
+  openNotificationChannelSettings,
+} from '../../services/floatingOverlayService';
 import PatientInformasiObatDetailScreen from './PatientInformasiObatDetailScreen';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { fetchPublicObatList } from '../../services/patientService';
 import { syncPendingReminderObat } from '../../services/patientSyncService';
-import { scheduleReminderObatAlarms, cancelReminderObatAlarms } from '../../services/reminderAlarmService';
+import {
+  scheduleReminderObatAlarms,
+  cancelReminderObatAlarms,
+} from '../../services/reminderAlarmService';
 import {
   addPatientReminderObat,
   getPatientReminderObatQueue,
@@ -160,7 +169,7 @@ const renderSelectField = (label, value, options, onChangeText, setSelectModal, 
 );
 
 // ── MAIN SCREEN ───────────────────────────────────────────────
-export default function PatientReminderObatScreen({ onBack, profile, onOpenDetail }) {
+export default function PatientReminderObatScreen({ navigation, onBack, profile, onOpenDetail }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -174,17 +183,9 @@ export default function PatientReminderObatScreen({ onBack, profile, onOpenDetai
   const [selectModal, setSelectModal] = useState({ visible: false, label: '', options: [], onSelect: null });
   const [showObatInfoModal, setShowObatInfoModal] = useState(false);
 
+  const [hasOverlayPermission, setHasOverlayPermission] = useState(true);
+
   const [selectedObatId, setSelectedObatId] = useState('');
-  const [dosis, setDosis] = useState('');
-  const [frekuensi, setFrekuensi] = useState('');
-  const [sediaan, setSediaan] = useState('');
-  const [waktuKonsumsi, setWaktuKonsumsi] = useState('');
-  const [jamCustom, setJamCustom] = useState('');
-  const [showTimePicker, setShowTimePicker] = useState(false);
-  const [jumlahObat, setJumlahObat] = useState('');
-  const [jumlahPerMinum, setJumlahPerMinum] = useState('');
-  const [aturanMinum, setAturanMinum] = useState('');
-  const [editingReminder, setEditingReminder] = useState(null);
 
   const loadQueueStats = useCallback(async () => {
     const queue = await getPatientReminderObatQueue();
@@ -229,15 +230,26 @@ export default function PatientReminderObatScreen({ onBack, profile, onOpenDetai
   }, [profile, loadQueueStats]);
 
   useEffect(() => {
+    checkOverlayPermission().then(setHasOverlayPermission);
+
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        checkOverlayPermission().then(setHasOverlayPermission);
+      }
+    });
+
     const bootstrap = async () => {
       await Promise.all([loadObat(), loadQueueStats()]);
       await attemptSyncPending(false);
     };
     bootstrap();
+
+    return () => sub.remove();
   }, [loadObat, loadQueueStats, attemptSyncPending]);
 
   const onRefresh = useCallback(async () => {
     setIsRefreshing(true);
+    checkOverlayPermission().then(setHasOverlayPermission);
     await Promise.all([loadObat(), loadQueueStats()]);
     await attemptSyncPending(false);
   }, [loadObat, loadQueueStats, attemptSyncPending]);
@@ -583,6 +595,90 @@ export default function PatientReminderObatScreen({ onBack, profile, onOpenDetai
         refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#6366F1" />}
       >
 
+        {/* ── CARD IZIN POP-UP MENGAMBANG (HANYA MUNCUL JIKA BELUM DIAKTIFKAN) ── */}
+        {!hasOverlayPermission && (
+          <View style={{
+            marginHorizontal: 20,
+            marginTop: 18,
+            backgroundColor: '#FFFBEB',
+            borderRadius: 20,
+            padding: 16,
+            borderWidth: 1.5,
+            borderColor: '#F59E0B',
+            shadowColor: '#D97706',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.12,
+            shadowRadius: 10,
+            elevation: 4,
+          }}>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
+              <View style={{
+                width: 42,
+                height: 42,
+                borderRadius: 13,
+                backgroundColor: '#FEF3C7',
+                borderWidth: 1,
+                borderColor: '#FDE68A',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <BellRing color="#D97706" size={20} />
+              </View>
+
+              <View style={{ flex: 1 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Text style={{
+                    color: '#92400E',
+                    fontWeight: '900',
+                    fontSize: 14.5,
+                  }}>
+                    Izin Pop-up Belum Aktif
+                  </Text>
+                  <View style={{
+                    backgroundColor: '#FDE68A',
+                    paddingHorizontal: 7,
+                    paddingVertical: 2,
+                    borderRadius: 6,
+                  }}>
+                    <Text style={{ color: '#B45309', fontSize: 9.5, fontWeight: '800' }}>PENTING</Text>
+                  </View>
+                </View>
+
+                <Text style={{
+                  color: '#78350F',
+                  fontSize: 12,
+                  lineHeight: 17,
+                  marginTop: 4,
+                }}>
+                  Aktifkan izin agar kartu alarm minum obat dapat muncul mengambang di atas aplikasi lain dan di layar kunci HP.
+                </Text>
+
+                <TouchableOpacity
+                  onPress={async () => {
+                    await requestOverlayPermission();
+                  }}
+                  activeOpacity={0.85}
+                  style={{
+                    backgroundColor: '#D97706',
+                    borderRadius: 12,
+                    paddingVertical: 10,
+                    paddingHorizontal: 16,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginTop: 10,
+                    flexDirection: 'row',
+                    gap: 6,
+                  }}
+                >
+                  <Text style={{ color: '#fff', fontWeight: '800', fontSize: 12.5 }}>
+                    ⚡ Aktifkan Izin Sekarang
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        )}
+
         {/* ── DAFTAR REMINDER ── */}
         <View style={{ marginHorizontal: 20, marginTop: 20 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
@@ -598,7 +694,7 @@ export default function PatientReminderObatScreen({ onBack, profile, onOpenDetai
               style={({ pressed }) => ({
                 flexDirection: 'row', alignItems: 'center', gap: 6,
                 backgroundColor: '#6366F1',
-                paddingHorizontal: 14, paddingVertical: 10,
+                paddingHorizontal: 15, paddingVertical: 10,
                 borderRadius: 12,
                 opacity: pressed ? 0.8 : 1,
                 shadowColor: '#6366F1',
@@ -608,8 +704,8 @@ export default function PatientReminderObatScreen({ onBack, profile, onOpenDetai
                 elevation: 5,
               })}
             >
-              
-              <Text style={{ color: '#6366F1', fontWeight: '800', fontSize: 13 }}><Plus color="#6366F1" size={10} /> Tambah</Text>
+              <Plus color="#fff" size={14} />
+              <Text style={{ color: '#fff', fontWeight: '800', fontSize: 13 }}>Tambah</Text>
             </Pressable>
           </View>
 
@@ -734,7 +830,7 @@ export default function PatientReminderObatScreen({ onBack, profile, onOpenDetai
                   )}
 
                   {/* Actions */}
-                  <View style={{ flexDirection: 'row', gap: 8, marginTop: 14 }}>
+                  <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
                     <Pressable
                       onPress={() => openEditModal(item)}
                       style={({ pressed }) => ({
@@ -744,8 +840,8 @@ export default function PatientReminderObatScreen({ onBack, profile, onOpenDetai
                         opacity: pressed ? 0.7 : 1,
                       })}
                     >
-                      
-                      <Text style={{ color: '#6366F1', fontWeight: '800', fontSize: 13 }}><Pencil color="#6366F1" size={13} /> Edit</Text>
+                      <Pencil color="#6366F1" size={14} />
+                      <Text style={{ color: '#6366F1', fontWeight: '800', fontSize: 13 }}>Edit</Text>
                     </Pressable>
 
                     <Pressable
@@ -757,8 +853,8 @@ export default function PatientReminderObatScreen({ onBack, profile, onOpenDetai
                         opacity: pressed ? 0.7 : 1,
                       })}
                     >
-                      
-                      <Text style={{ color: '#F43F5E', fontWeight: '800', fontSize: 13 }}><Trash2 color="#F43F5E" size={13} /> Hapus</Text>
+                      <Trash2 color="#F43F5E" size={14} />
+                      <Text style={{ color: '#F43F5E', fontWeight: '800', fontSize: 13 }}>Hapus</Text>
                     </Pressable>
                   </View>
                 </View>
@@ -1124,6 +1220,7 @@ export default function PatientReminderObatScreen({ onBack, profile, onOpenDetai
           onBack={() => setShowObatInfoModal(false)}
         />
       </Modal>
+
     </View>
   );
 }
