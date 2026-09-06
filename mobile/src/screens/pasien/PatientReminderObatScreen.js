@@ -186,6 +186,16 @@ export default function PatientReminderObatScreen({ navigation, onBack, profile,
   const [hasOverlayPermission, setHasOverlayPermission] = useState(true);
 
   const [selectedObatId, setSelectedObatId] = useState('');
+  const [dosis, setDosis] = useState('');
+  const [frekuensi, setFrekuensi] = useState('');
+  const [sediaan, setSediaan] = useState('');
+  const [waktuKonsumsi, setWaktuKonsumsi] = useState('');
+  const [jamCustom, setJamCustom] = useState('');
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [jumlahObat, setJumlahObat] = useState('');
+  const [jumlahPerMinum, setJumlahPerMinum] = useState('');
+  const [aturanMinum, setAturanMinum] = useState('');
+  const [editingReminder, setEditingReminder] = useState(null);
 
   const loadQueueStats = useCallback(async () => {
     const queue = await getPatientReminderObatQueue();

@@ -18,6 +18,7 @@ class MerkSeeder extends Seeder
             'Sacubitril-Valsartan' => [],
             'Candesartan' => ['Blopress', 'Canderin', 'Candetens'],
             'Valsartan' => ['Valesco', 'Co-diovan'],
+            'Hidroklorotiazid' => ['Dexacap Plus', 'Blopress Plus 16', 'Coaprovel', 'Irtan Pluss'],
         ];
 
         DB::transaction(function () use ($merksByObat): void {

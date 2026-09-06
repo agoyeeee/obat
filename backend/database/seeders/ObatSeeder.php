@@ -97,6 +97,20 @@ class ObatSeeder extends Seeder
                 'monitoring' => 'Pantau tekanan darah, elektrolit (misalnya kadar K serum), dan fungsi ginjal secara teratur selama terapi. Kaji tanda-tanda angioedema.',
                 'cara_pemakaian' => 'Dapat diminum dengan atau tanpa makanan.',
             ],
+            [
+                'nama_obat' => 'Hidroklorotiazid',
+                'klasifikasi' => 'Diuretik thiazide',
+                'indikasi' => 'Edema, Hipertensi, gagal jantung',
+                'dosis_inisiasi' => ['12.5 mg'],
+                'dosis_lazim' => '12.5 mg, 25 mg, 50 mg',
+                'dosis_target' => '100 mg (Hidroklorotiazid 25 mg 4 tablet)',
+                'frekuensi_default' => 1,
+                'frekuensi_keterangan' => '1 x sehari pagi hari',
+                'kontraindikasi' => 'Hipersensitif terhadap hidroklorotiazid, kehamilan, gangguan ginjal, gangguan hepar, hiperkalemia',
+                'efek_samping' => "Sering buang air kecil/poliuria, hipotensi ortostatik, sakit kepala.\n\nCara Penanganan Efek Samping:\n1. Poliuria: Kondisi ketika tubuh memproduksi dan mengeluarkan urin secara berlebihan (> 3 liter/hari). Penanganan: Minum air putih secukupnya. Minum obat hidroklorotiazid di pagi hari.\n2. Hipotensi ortostatik: Penurunan tekanan darah tiba-tiba (sistolik turun >= 20 mmHg / diastolik turun >= 10 mmHg) dalam waktu 3 menit setelah berdiri. Penanganan: Minum air putih lebih banyak, konsumsi makanan yang mengandung garam/natrium, hindari mengubah posisi tubuh tiba-tiba dan berdiri terlalu lama.\n3. Sakit kepala:\n- Derajat 1: Nyeri tegang di kepala, aktivitas normal. Penanganan: Istirahat di tempat tenang, kompres dingin di dahi/tengkuk, cukupi cairan tubuh.\n- Derajat 2: Nyeri berdenyut/menekan, aktivitas terhambat. Penanganan: Konsumsi obat pereda nyeri jika diperlukan (seperti parasetamol).\n- Derajat 3: Nyeri sangat hebat (migrain berat/klaster), sulit bangun, mual/sensitif cahaya. Penanganan: Segera dirujuk ke rumah sakit.",
+                'monitoring' => 'Pantau elektrolit serum (misalnya Na, K), tekanan darah, kreatinin. Menilai kulit untuk fotosensitifitas dan kanker kulit; ketajaman penglihatan dan nyeri mata. Dapat mempengaruhi tes fungsi paratiroid, dan hasil positif palsu Aldosteron Renin Ratio (ARR)',
+                'cara_pemakaian' => 'Diminum pagi hari. Harus dikonsumsi dengan makanan. Obat ini dapat menyebabkan reaksi fotosensitifitas, hindari paparan sinar matahari langsung dan sinar UV serta gunakan tabir surya saat beraktivitas di luar ruangan.',
+            ],
         ];
 
         DB::transaction(function () use ($obats): void {
