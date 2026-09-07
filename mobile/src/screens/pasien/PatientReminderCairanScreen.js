@@ -413,8 +413,52 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
           </View>
         </View>
 
+        {/* ── TOMBOL TAMBAH CATATAN CAIRAN (BESAR DI TENGAH) ── */}
+        <View style={{ marginHorizontal: 20, marginTop: 18, marginBottom: 8 }}>
+          <Pressable
+            onPress={openAddModal}
+            style={({ pressed }) => ({
+              backgroundColor: '#0284C7',
+              borderRadius: 20,
+              paddingVertical: 18,
+              paddingHorizontal: 20,
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexDirection: 'row',
+              gap: 14,
+              opacity: pressed ? 0.88 : 1,
+              shadowColor: '#0284C7',
+              shadowOffset: { width: 0, height: 6 },
+              shadowOpacity: 0.35,
+              shadowRadius: 12,
+              elevation: 6,
+              borderWidth: 1.5,
+              borderColor: '#38BDF8',
+            })}
+          >
+            <View style={{
+              width: 44,
+              height: 44,
+              borderRadius: 14,
+              backgroundColor: '#ffffff28',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <Plus color="#fff" size={24} strokeWidth={2.8} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: '#fff', fontWeight: '900', fontSize: 16 }}>
+                + Catat Asupan Cairan
+              </Text>
+              <Text style={{ color: '#E0F2FE', fontSize: 12, marginTop: 2, fontWeight: '500' }}>
+                Tekan untuk menambah catatan konsumsi air harian
+              </Text>
+            </View>
+          </Pressable>
+        </View>
+
         {/* ── DAFTAR REMINDER ── */}
-        <View style={{ marginHorizontal: 20, marginTop: 16 }}>
+        <View style={{ marginHorizontal: 20, marginTop: 14 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
             <View>
               <Text style={{ color: '#1E293B', fontWeight: '900', fontSize: 18 }}>Daftar Cairan</Text>
@@ -422,25 +466,6 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
                 {queue.length} catatan terdaftar
               </Text>
             </View>
-
-            <Pressable
-              onPress={openAddModal}
-              style={({ pressed }) => ({
-                flexDirection: 'row', alignItems: 'center', gap: 6,
-                backgroundColor: '#0EA5E9',
-                paddingHorizontal: 14, paddingVertical: 10,
-                borderRadius: 12,
-                opacity: pressed ? 0.8 : 1,
-                shadowColor: '#0EA5E9',
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.35,
-                shadowRadius: 8,
-                elevation: 5,
-              })}
-            >
-              
-              <Text style={{ color: '#0EA5E9', fontWeight: '800', fontSize: 13 }}><Plus color="#0EA5E9" size={10} /> Tambah</Text>
-            </Pressable>
           </View>
 
           {/* Empty state */}
@@ -738,47 +763,45 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
                   )}
                 </>
               )}
+
+            {/* Submit button - Integrated with comfortable bottom margin */}
+            <View style={{ marginTop: 24, marginBottom: 36 }}>
+                <Pressable
+                  onPress={submitCairan}
+                  disabled={!canSubmit || isSubmitting}
+                  style={({ pressed }) => ({
+                    borderRadius: 18,
+                    paddingVertical: 16,
+                    paddingHorizontal: 20,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: canSubmit && !isSubmitting ? '#0284C7' : '#CBD5E1',
+                    opacity: pressed && (canSubmit && !isSubmitting) ? 0.85 : 1,
+                    shadowColor: '#0284C7',
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: canSubmit && !isSubmitting ? 0.3 : 0,
+                    shadowRadius: 10,
+                    elevation: canSubmit && !isSubmitting ? 5 : 0,
+                  })}
+                >
+                  <Text style={{
+                    color: '#fff',
+                    fontWeight: '800',
+                    fontSize: 16,
+                    letterSpacing: 0.5,
+                  }}>
+                    {isSubmitting ? 'Menyimpan...' : editingReminder ? 'Simpan Perubahan' : 'Simpan Catatan'}
+                  </Text>
+                </Pressable>
+                {!canSubmit ? (
+                  <Text style={{ color: '#94A3B8', fontSize: 11, textAlign: 'center', marginTop: 8 }}>
+                    Isi jumlah cairan (ml) untuk mengaktifkan tombol simpan.
+                  </Text>
+                ) : null}
+              </View>
             </View>
 
           </ScrollView>
-
-          {/* Submit button - Fixed at bottom */}
-          <View style={{
-            paddingHorizontal: 20,
-            paddingVertical: 16,
-            paddingBottom: 24,
-            borderTopWidth: 1,
-            borderTopColor: '#E2E8F0',
-            backgroundColor: '#0EA5E9',
-          }}>
-            <Pressable
-              onPress={submitCairan}
-              disabled={!canSubmit || isSubmitting}
-              style={({ pressed }) => ({
-                borderRadius: 16,
-                paddingVertical: 18,
-                paddingHorizontal: 20,
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: canSubmit && !isSubmitting ? '#0EA5E9' : '#CBD5E1',
-                opacity: pressed && (canSubmit && !isSubmitting) ? 0.8 : 1,
-                shadowColor: '#0EA5E9',
-                shadowOffset: { width: 0, height: 6 },
-                shadowOpacity: canSubmit && !isSubmitting ? 0.3 : 0,
-                shadowRadius: 12,
-                elevation: canSubmit && !isSubmitting ? 6 : 0,
-              })}
-            >
-              <Text style={{
-                color: canSubmit && !isSubmitting ? '#fff' : '#fff',
-                fontWeight: '700',
-                fontSize: 16,
-                letterSpacing: 0.5,
-              }}>
-                {isSubmitting ? 'Menyimpan...' : editingReminder ? 'Simpan Perubahan' : 'Simpan Catatan'}
-              </Text>
-            </Pressable>
-          </View>
         </SafeAreaView>
       </Modal>
     </View>

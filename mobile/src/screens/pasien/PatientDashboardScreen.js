@@ -227,15 +227,22 @@ export default function PatientDashboardScreen({ profile, onEditProfile, onBack,
           {/* Divider */}
           <View style={{ height: 1, backgroundColor: '#F1F5F9', marginBottom: 16 }} />
 
-          <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center' }}>
             {[
-              { label: 'Usia', value: profile?.usia || '—', unit: 'thn' },
+              {
+                label: 'Tgl Lahir',
+                value: formatDisplayDate(profile?.tgl_lahir || profile?.tanggal_lahir) !== '-'
+                  ? formatDisplayDate(profile?.tgl_lahir || profile?.tanggal_lahir)
+                  : (profile?.usia ? `${profile.usia} thn` : '—'),
+                unit: '',
+                isDate: true,
+              },
               { label: 'Berat', value: profile?.berat_badan || '—', unit: 'kg' },
               { label: 'Gender', value: profile?.jenis_kelamin || '—', unit: '' },
             ].map((item, i) => (
               <View key={i} style={{ alignItems: 'center' }}>
                 <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 2 }}>
-                  <Text style={{ color: '#1E293B', fontSize: 22, fontWeight: '900' }}>{item.value}</Text>
+                  <Text style={{ color: '#1E293B', fontSize: item.isDate ? 15 : 22, fontWeight: '900' }}>{item.value}</Text>
                   {item.unit ? (
                     <Text style={{ color: '#94A3B8', fontSize: 12, marginBottom: 3 }}>{item.unit}</Text>
                   ) : null}

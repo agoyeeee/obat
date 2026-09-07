@@ -175,10 +175,7 @@ export default function PatientInformasiObatListScreen({ onBack, onOpenDetail })
                       <Text style={{ color: '#1E293B', fontWeight: '900', fontSize: 16 }} numberOfLines={1}>
                         {item.nama_obat}
                       </Text>
-                      <Text style={{ color: '#0D9488', fontSize: 12, fontWeight: '700', marginTop: 4 }}>
-                        Dosis: {formatDosePreview(item)}
-                      </Text>
-                      <Text style={{ color: '#94A3B8', fontSize: 12, marginTop: 6, lineHeight: 18 }} numberOfLines={2}>
+                      <Text style={{ color: '#94A3B8', fontSize: 12, marginTop: 4, lineHeight: 18 }} numberOfLines={2}>
                         {item.indikasi || '-'}
                       </Text>
                     </View>
