@@ -218,7 +218,7 @@ const PatientKuisionerFormScreen = ({ route, navigation }) => {
           {loading ? (
             <ActivityIndicator size="small" color="white" />
           ) : (
-            <Text className="text-white font-bold text-center text-base">
+            <Text className={`font-bold text-center text-base ${answeredCount === kuisioners.length ? 'text-black' : 'text-gray-500'}`}>
               Simpan Jawaban
             </Text>
           )}

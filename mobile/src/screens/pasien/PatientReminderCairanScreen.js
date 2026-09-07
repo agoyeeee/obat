@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View, Text, Pressable, ScrollView, TextInput, Alert,
-  RefreshControl, ActivityIndicator, Modal, Platform, SafeAreaView,
+  RefreshControl, ActivityIndicator, Modal, Platform, SafeAreaView, TouchableOpacity,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -97,6 +97,8 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [editingReminder, setEditingReminder] = useState(null);
 
+  const isSyncingRef = useRef(false);
+
   const loadQueue = useCallback(async () => {
     const data = await getPatientReminderCairanQueue();
     setQueue(Array.isArray(data) ? data : []);
@@ -105,15 +107,19 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
   }, []);
 
   const autoSync = useCallback(async () => {
-    if (!profile || isSyncing) return;
+    if (!profile || isSyncingRef.current) return;
+    isSyncingRef.current = true;
     setIsSyncing(true);
     try {
       const result = await syncPendingReminderCairan(profile);
       if (result && !result.skipped) await loadQueue();
+    } catch (err) {
+      console.warn('AutoSync cairan warning:', err?.message || err);
     } finally {
+      isSyncingRef.current = false;
       setIsSyncing(false);
     }
-  }, [profile, isSyncing, loadQueue]);
+  }, [profile, loadQueue]);
 
   useEffect(() => {
     const bootstrap = async () => {
@@ -415,46 +421,54 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
 
         {/* ── TOMBOL TAMBAH CATATAN CAIRAN (BESAR DI TENGAH) ── */}
         <View style={{ marginHorizontal: 20, marginTop: 18, marginBottom: 8 }}>
-          <Pressable
+          <TouchableOpacity
             onPress={openAddModal}
-            style={({ pressed }) => ({
-              backgroundColor: '#0284C7',
-              borderRadius: 20,
-              paddingVertical: 18,
-              paddingHorizontal: 20,
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexDirection: 'row',
-              gap: 14,
-              opacity: pressed ? 0.88 : 1,
+            activeOpacity={0.85}
+            style={{
               shadowColor: '#0284C7',
               shadowOffset: { width: 0, height: 6 },
               shadowOpacity: 0.35,
               shadowRadius: 12,
               elevation: 6,
-              borderWidth: 1.5,
-              borderColor: '#38BDF8',
-            })}
+              borderRadius: 20,
+            }}
           >
-            <View style={{
-              width: 44,
-              height: 44,
-              borderRadius: 14,
-              backgroundColor: '#ffffff28',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-              <Plus color="#fff" size={24} strokeWidth={2.8} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={{ color: '#fff', fontWeight: '900', fontSize: 16 }}>
-                + Catat Asupan Cairan
-              </Text>
-              <Text style={{ color: '#E0F2FE', fontSize: 12, marginTop: 2, fontWeight: '500' }}>
-                Tekan untuk menambah catatan konsumsi air harian
-              </Text>
-            </View>
-          </Pressable>
+            <LinearGradient
+              colors={['#0284C7', '#0EA5E9']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={{
+                borderRadius: 20,
+                paddingVertical: 18,
+                paddingHorizontal: 20,
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexDirection: 'row',
+                gap: 14,
+                borderWidth: 1.5,
+                borderColor: '#38BDF8',
+              }}
+            >
+              <View style={{
+                width: 44,
+                height: 44,
+                borderRadius: 14,
+                backgroundColor: 'rgba(255, 255, 255, 0.22)',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <Plus color="#1e293b" size={24} strokeWidth={2.8} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: '#1e293b', fontWeight: '900', fontSize: 16 }}>
+                  + Catat Asupan Cairan
+                </Text>
+                <Text style={{ color: '#1e293b', fontSize: 12, marginTop: 2, fontWeight: '500' }}>
+                  Tekan untuk menambah catatan konsumsi air harian
+                </Text>
+              </View>
+            </LinearGradient>
+          </TouchableOpacity>
         </View>
 
         {/* ── DAFTAR REMINDER ── */}
@@ -766,33 +780,60 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
 
             {/* Submit button - Integrated with comfortable bottom margin */}
             <View style={{ marginTop: 24, marginBottom: 36 }}>
-                <Pressable
+                <TouchableOpacity
                   onPress={submitCairan}
                   disabled={!canSubmit || isSubmitting}
-                  style={({ pressed }) => ({
+                  activeOpacity={0.85}
+                  style={{
                     borderRadius: 18,
-                    paddingVertical: 16,
-                    paddingHorizontal: 20,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: canSubmit && !isSubmitting ? '#0284C7' : '#CBD5E1',
-                    opacity: pressed && (canSubmit && !isSubmitting) ? 0.85 : 1,
+                    overflow: 'hidden',
                     shadowColor: '#0284C7',
                     shadowOffset: { width: 0, height: 4 },
                     shadowOpacity: canSubmit && !isSubmitting ? 0.3 : 0,
                     shadowRadius: 10,
                     elevation: canSubmit && !isSubmitting ? 5 : 0,
-                  })}
+                  }}
                 >
-                  <Text style={{
-                    color: '#fff',
-                    fontWeight: '800',
-                    fontSize: 16,
-                    letterSpacing: 0.5,
-                  }}>
-                    {isSubmitting ? 'Menyimpan...' : editingReminder ? 'Simpan Perubahan' : 'Simpan Catatan'}
-                  </Text>
-                </Pressable>
+                  {canSubmit && !isSubmitting ? (
+                    <LinearGradient
+                      colors={['#0284C7', '#0EA5E9']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={{
+                        paddingVertical: 16,
+                        paddingHorizontal: 20,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Text style={{
+                        color: '#1e293b',
+                        fontWeight: '800',
+                        fontSize: 16,
+                        letterSpacing: 0.5,
+                      }}>
+                        {isSubmitting ? 'Menyimpan...' : editingReminder ? 'Simpan Perubahan' : 'Simpan Catatan'}
+                      </Text>
+                    </LinearGradient>
+                  ) : (
+                    <View style={{
+                      backgroundColor: '#E2E8F0',
+                      paddingVertical: 16,
+                      paddingHorizontal: 20,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}>
+                      <Text style={{
+                        color: '#1e293b',
+                        fontWeight: '800',
+                        fontSize: 16,
+                        letterSpacing: 0.5,
+                      }}>
+                        {isSubmitting ? 'Menyimpan...' : editingReminder ? 'Simpan Perubahan' : 'Simpan Catatan'}
+                      </Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
                 {!canSubmit ? (
                   <Text style={{ color: '#94A3B8', fontSize: 11, textAlign: 'center', marginTop: 8 }}>
                     Isi jumlah cairan (ml) untuk mengaktifkan tombol simpan.

@@ -581,7 +581,7 @@ export default function PatientReminderObatScreen({ navigation, onBack, profile,
                 Menu Pasien
               </Text>
               <Text style={{ color: '#fff', fontSize: 20, fontWeight: '900', marginTop: 2 }}>
-                Pengigat Minum Obat
+                Pengingat Minum Obat
               </Text>
             </View>
           </View>
@@ -691,46 +691,54 @@ export default function PatientReminderObatScreen({ navigation, onBack, profile,
 
         {/* ── TOMBOL TAMBAH PENGINGAT OBAT (BESAR DI TENGAH) ── */}
         <View style={{ marginHorizontal: 20, marginTop: 20, marginBottom: 8 }}>
-          <Pressable
+          <TouchableOpacity
             onPress={handleOpenAddModal}
-            style={({ pressed }) => ({
-              backgroundColor: '#4F46E5',
-              borderRadius: 20,
-              paddingVertical: 18,
-              paddingHorizontal: 20,
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexDirection: 'row',
-              gap: 14,
-              opacity: pressed ? 0.88 : 1,
+            activeOpacity={0.85}
+            style={{
               shadowColor: '#4F46E5',
               shadowOffset: { width: 0, height: 6 },
               shadowOpacity: 0.35,
               shadowRadius: 12,
               elevation: 6,
-              borderWidth: 1.5,
-              borderColor: '#818CF8',
-            })}
+              borderRadius: 20,
+            }}
           >
-            <View style={{
-              width: 44,
-              height: 44,
-              borderRadius: 14,
-              backgroundColor: '#ffffff28',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-              <Plus color="#fff" size={24} strokeWidth={2.8} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={{ color: '#fff', fontWeight: '900', fontSize: 16 }}>
-                + Tambah Pengingat Obat
-              </Text>
-              <Text style={{ color: '#E0E7FF', fontSize: 12, marginTop: 2, fontWeight: '500' }}>
-                Tekan untuk membuat jadwal & alarm minum obat baru
-              </Text>
-            </View>
-          </Pressable>
+            <LinearGradient
+              colors={['#4F46E5', '#6366F1']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={{
+                borderRadius: 20,
+                paddingVertical: 18,
+                paddingHorizontal: 20,
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexDirection: 'row',
+                gap: 14,
+                borderWidth: 1.5,
+                borderColor: '#818CF8',
+              }}
+            >
+              <View style={{
+                width: 44,
+                height: 44,
+                borderRadius: 14,
+                backgroundColor: 'rgba(255, 255, 255, 0.22)',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <Plus color="#FACC15" size={24} strokeWidth={2.8} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: '#FACC15', fontWeight: '900', fontSize: 16 }}>
+                  + Tambah Pengingat Obat
+                </Text>
+                <Text style={{ color: '#FACC15', fontSize: 12, marginTop: 2, fontWeight: '500' }}>
+                  Tekan untuk membuat jadwal & alarm minum obat baru
+                </Text>
+              </View>
+            </LinearGradient>
+          </TouchableOpacity>
         </View>
 
         {/* ── DAFTAR REMINDER ── */}
@@ -1113,33 +1121,60 @@ export default function PatientReminderObatScreen({ navigation, onBack, profile,
 
             {/* Submit button - Integrated with comfortable bottom margin */}
             <View style={{ marginTop: 24, marginBottom: 36 }}>
-              <Pressable
+              <TouchableOpacity
                 onPress={handleSubmit}
                 disabled={!canSubmit || isSaving}
-                style={({ pressed }) => ({
+                activeOpacity={0.85}
+                style={{
                   borderRadius: 18,
-                  paddingVertical: 16,
-                  paddingHorizontal: 20,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: canSubmit && !isSaving ? '#4F46E5' : '#CBD5E1',
-                  opacity: pressed && (canSubmit && !isSaving) ? 0.85 : 1,
+                  overflow: 'hidden',
                   shadowColor: '#4F46E5',
                   shadowOffset: { width: 0, height: 4 },
                   shadowOpacity: canSubmit && !isSaving ? 0.3 : 0,
                   shadowRadius: 10,
                   elevation: canSubmit && !isSaving ? 5 : 0,
-                })}
+                }}
               >
-                <Text style={{
-                  color: '#fff',
-                  fontWeight: '800',
-                  fontSize: 16,
-                  letterSpacing: 0.5,
-                }}>
-                  {isSaving ? 'Menyimpan...' : editingReminder ? 'Simpan Perubahan' : 'Simpan Reminder'}
-                </Text>
-              </Pressable>
+                {canSubmit && !isSaving ? (
+                  <LinearGradient
+                    colors={['#4F46E5', '#6366F1']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={{
+                      paddingVertical: 16,
+                      paddingHorizontal: 20,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Text style={{
+                      color: '#FACC15',
+                      fontWeight: '800',
+                      fontSize: 16,
+                      letterSpacing: 0.5,
+                    }}>
+                      {isSaving ? 'Menyimpan...' : editingReminder ? 'Simpan Perubahan' : 'Simpan Reminder'}
+                    </Text>
+                  </LinearGradient>
+                ) : (
+                  <View style={{
+                    backgroundColor: '#E2E8F0',
+                    paddingVertical: 16,
+                    paddingHorizontal: 20,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    <Text style={{
+                      color: '#64748B',
+                      fontWeight: '800',
+                      fontSize: 16,
+                      letterSpacing: 0.5,
+                    }}>
+                      {isSaving ? 'Menyimpan...' : editingReminder ? 'Simpan Perubahan' : 'Simpan Reminder'}
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
               {!canSubmit ? (
                 <Text style={{ color: '#94A3B8', fontSize: 11, textAlign: 'center', marginTop: 8 }}>
                   Lengkapi data obat, dosis, dan waktu untuk mengaktifkan tombol simpan.
