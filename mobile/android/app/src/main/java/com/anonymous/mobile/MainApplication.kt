@@ -1,5 +1,7 @@
 package com.anonymous.mobile
 
+import id.myheart.app.BuildConfig
+
 import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
