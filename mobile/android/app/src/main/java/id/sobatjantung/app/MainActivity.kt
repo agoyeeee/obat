@@ -1,4 +1,4 @@
-package id.myheart.app
+package id.sobatjantung.app
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build

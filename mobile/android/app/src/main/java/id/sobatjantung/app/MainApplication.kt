@@ -1,4 +1,4 @@
-package id.myheart.app
+package id.sobatjantung.app
 
 import android.app.Application
 import android.content.res.Configuration

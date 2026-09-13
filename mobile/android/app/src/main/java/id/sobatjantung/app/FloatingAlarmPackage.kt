@@ -1,4 +1,4 @@
-package id.myheart.app
+package id.sobatjantung.app
 
 import com.facebook.react.ReactPackage
 import com.facebook.react.bridge.NativeModule

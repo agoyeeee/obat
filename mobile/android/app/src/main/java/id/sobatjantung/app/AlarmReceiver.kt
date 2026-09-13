@@ -1,4 +1,4 @@
-package id.myheart.app
+package id.sobatjantung.app
 
 import android.app.AlarmManager
 import android.app.PendingIntent
@@ -61,7 +61,7 @@ class AlarmReceiver : BroadcastReceiver() {
                 PowerManager.SCREEN_BRIGHT_WAKE_LOCK or
                     PowerManager.ACQUIRE_CAUSES_WAKEUP or
                     PowerManager.ON_AFTER_RELEASE,
-                "MyHeart:AlarmWakeLock"
+                "SobatJantung:AlarmWakeLock"
             )
             wakeLock?.acquire(10000)
         } catch (e: Exception) {

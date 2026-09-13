@@ -32,6 +32,10 @@ const formatDateDisplay = (ymd) => {
   return `${m[3]} ${months[parseInt(m[2]) - 1]} ${m[1]}`;
 };
 
+// ── PRESET OPTIONS ───────────────────────────────────────────
+const MINUMAN_PRESET_OPTIONS = ['Air mineral', 'Soda', 'Teh', 'Lainnya'];
+const JUMLAH_PRESET_OPTIONS = ['330 ml', '600 ml', '1000 ml', 'Lainnya'];
+
 // ── FIELD LABEL ───────────────────────────────────────────────
 const FieldLabel = ({ children }) => (
   <Text style={{
@@ -43,20 +47,46 @@ const FieldLabel = ({ children }) => (
 );
 
 // ── TEXT INPUT FIELD ──────────────────────────────────────────
+const inputBoxStyle = {
+  borderWidth: 1.5, borderColor: '#E2E8F0', borderRadius: 14,
+  paddingHorizontal: 16, paddingVertical: 14,
+  backgroundColor: '#fff', color: '#1E293B',
+  fontWeight: '500', fontSize: 14,
+};
+
 const InputField = ({ label, ...props }) => (
   <View style={{ marginBottom: 16 }}>
     <FieldLabel>{label}</FieldLabel>
     <TextInput
-      style={{
-        borderWidth: 1.5, borderColor: '#E2E8F0', borderRadius: 14,
-        paddingHorizontal: 16, paddingVertical: 14,
-        backgroundColor: '#fff', color: '#1E293B',
-        fontWeight: '500', fontSize: 14,
-      }}
+      style={inputBoxStyle}
       placeholderTextColor="#94A3B8"
       {...props}
     />
   </View>
+);
+
+// ── PRESET CHIP ───────────────────────────────────────────────
+const PresetChip = ({ label, selected, onPress }) => (
+  <Pressable
+    onPress={onPress}
+    style={({ pressed }) => ({
+      borderWidth: 1.5,
+      borderColor: selected ? '#0EA5E9' : '#E2E8F0',
+      borderRadius: 14,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      backgroundColor: selected ? '#F0F9FF' : '#fff',
+      opacity: pressed && !selected ? 0.7 : 1,
+    })}
+  >
+    <Text style={{
+      color: selected ? '#0EA5E9' : '#475569',
+      fontWeight: selected ? '800' : '500',
+      fontSize: 13,
+    }}>
+      {label}
+    </Text>
+  </Pressable>
 );
 
 // ── PICKER TRIGGER ────────────────────────────────────────────
@@ -89,9 +119,12 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
   const [queue, setQueue] = useState([]);
 
   const [tanggal, setTanggal] = useState(formatDateYMD(new Date()));
-  const [catatanAsupan, setCatatanAsupan] = useState('');
-  const [minuman, setMinuman] = useState('Contoh: Air mineral');
-  const [jumlahMl, setJumlahMl] = useState('');
+  const [minumanPreset, setMinumanPreset] = useState('Air mineral');
+  const [minumanLainnya, setMinumanLainnya] = useState('');
+  const [jumlahPreset, setJumlahPreset] = useState('330 ml');
+  const [jumlahLainnya, setJumlahLainnya] = useState('');
+  const minuman = minumanPreset === 'Lainnya' ? minumanLainnya : minumanPreset;
+  const jumlahMl = jumlahPreset === 'Lainnya' ? jumlahLainnya : jumlahPreset.replace(/ ml$/, '');
   const [waktu, setWaktu] = useState(formatTimeHMS(new Date()));
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
@@ -142,9 +175,10 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
 
   const resetForm = () => {
     setTanggal(formatDateYMD(new Date()));
-    setCatatanAsupan('');
-    setMinuman('Air mineral');
-    setJumlahMl('');
+    setMinumanPreset('Air mineral');
+    setMinumanLainnya('');
+    setJumlahPreset('330 ml');
+    setJumlahLainnya('');
     setWaktu(formatTimeHMS(new Date()));
     setEditingReminder(null);
   };
@@ -154,9 +188,25 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
   const openEditModal = (item) => {
     setEditingReminder(item);
     setTanggal(item.tanggal || formatDateYMD(new Date()));
-    setCatatanAsupan(item.catatan_asupan || '');
-    setMinuman(item.minuman || 'Air mineral');
-    setJumlahMl(String(item.jumlah_ml || ''));
+    const itemMinuman = item.minuman || 'Air mineral';
+    if (MINUMAN_PRESET_OPTIONS.includes(itemMinuman)) {
+      setMinumanPreset(itemMinuman);
+      setMinumanLainnya('');
+    } else {
+      setMinumanPreset('Lainnya');
+      setMinumanLainnya(itemMinuman);
+    }
+    const itemJumlah = item.jumlah_ml ? String(item.jumlah_ml) : '';
+    const itemJumlahLabel = JUMLAH_PRESET_OPTIONS.find(
+      (opt) => opt !== 'Lainnya' && opt.replace(/ ml$/, '') === itemJumlah
+    );
+    if (itemJumlahLabel) {
+      setJumlahPreset(itemJumlahLabel);
+      setJumlahLainnya('');
+    } else {
+      setJumlahPreset('Lainnya');
+      setJumlahLainnya(itemJumlah);
+    }
     setWaktu(item.waktu || formatTimeHMS(new Date()));
     setShowDatePicker(false);
     setShowTimePicker(false);
@@ -177,7 +227,6 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
       setIsSubmitting(true);
       const payload = {
         tanggal,
-        catatan_asupan: catatanAsupan.trim(),
         minuman: minuman.trim(),
         jumlah_ml: jumlahValue,
         waktu,
@@ -590,12 +639,6 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
                     </View>
                   </View>
 
-                  {item.catatan_asupan ? (
-                    <Text style={{ color: '#64748B', fontSize: 12, marginTop: 6, fontStyle: 'italic' }}>
-                      "{item.catatan_asupan}"
-                    </Text>
-                  ) : null}
-
                   {/* Error */}
                   {item.last_error && (
                     <View style={{
@@ -734,28 +777,59 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
                 </>
               )}
 
-              <InputField
-                label="Catat Asupan Cairan"
-                placeholder="Contoh: Setelah olahraga"
-                value={catatanAsupan}
-                onChangeText={setCatatanAsupan}
-              />
+              <View style={{ marginBottom: 16 }}>
+                <FieldLabel>Minuman</FieldLabel>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  {MINUMAN_PRESET_OPTIONS.map((option) => (
+                    <PresetChip
+                      key={option}
+                      label={option}
+                      selected={minumanPreset === option}
+                      onPress={() => {
+                        setMinumanPreset(option);
+                        if (option !== 'Lainnya') setMinumanLainnya('');
+                      }}
+                    />
+                  ))}
+                </View>
+                {minumanPreset === 'Lainnya' && (
+                  <TextInput
+                    style={[inputBoxStyle, { marginTop: 8 }]}
+                    placeholder="Tulis minuman lain…"
+                    placeholderTextColor="#94A3B8"
+                    value={minumanLainnya}
+                    onChangeText={setMinumanLainnya}
+                  />
+                )}
+              </View>
 
-              <InputField
-                label="Minuman"
-                placeholder="Air mineral"
-                value={minuman}
-                onChangeText={setMinuman}
-              />
-
-              <InputField
-                label="Jumlah (ml)"
-                placeholder="Contoh: 250"
-                keyboardType="numeric"
-                value={jumlahMl}
-                onChangeText={(text) => setJumlahMl(text.replace(/[^0-9]/g, ''))}
-              />
-              <Text style={{ color: '#64748B', fontSize: 12, lineHeight: 18, marginTop: -8, marginBottom: 16 }}>
+              <View style={{ marginBottom: 16 }}>
+                <FieldLabel>Jumlah (ml)</FieldLabel>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  {JUMLAH_PRESET_OPTIONS.map((option) => (
+                    <PresetChip
+                      key={option}
+                      label={option}
+                      selected={jumlahPreset === option}
+                      onPress={() => {
+                        setJumlahPreset(option);
+                        if (option !== 'Lainnya') setJumlahLainnya('');
+                      }}
+                    />
+                  ))}
+                </View>
+                {jumlahPreset === 'Lainnya' && (
+                  <TextInput
+                    style={[inputBoxStyle, { marginTop: 8 }]}
+                    placeholder="Contoh: 250"
+                    placeholderTextColor="#94A3B8"
+                    keyboardType="numeric"
+                    value={jumlahLainnya}
+                    onChangeText={(text) => setJumlahLainnya(text.replace(/[^0-9]/g, ''))}
+                  />
+                )}
+              </View>
+              <Text style={{ color: '#64748B', fontSize: 12, lineHeight: 18, marginBottom: 16 }}>
                 Gunakan gelas dengan ukuran volume yang telah diketahui (misalnya 250 ml) untuk memudahkan proses pencatatan.
               </Text>
 

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View, Text, Pressable, ScrollView, TextInput, Alert,
-  RefreshControl, ActivityIndicator, Modal, Platform, SafeAreaView, TouchableOpacity, Linking, AppState,
+  RefreshControl, ActivityIndicator, Modal, SafeAreaView, TouchableOpacity, Linking, AppState,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -17,7 +17,6 @@ import {
   openNotificationChannelSettings,
 } from '../../services/floatingOverlayService';
 import PatientInformasiObatDetailScreen from './PatientInformasiObatDetailScreen';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { fetchPublicObatList } from '../../services/patientService';
 import { syncPendingReminderObat } from '../../services/patientSyncService';
 import {
@@ -50,8 +49,9 @@ const JUMLAH_PER_MINUM_OPTIONS = [
 ];
 
 const TIME_PRESETS = {
-  2: ['07.00 - 19.00', '06.00 - 18.00', '08.00 - 20.00', '09.00 - 21.00', '10.00 - 22.00'],
-  3: ['06.00 - 14.00 - 22.00', '07.00 - 15.00 - 23.00', '08.00 - 16.00 - 24.00', '09.00 - 17.00 - 01.00', '10.00 - 18.00 - 02.00'],
+  1: ['06.00', '07.00', '08.00', '09.00', '10.00', '20.00', '21.00', '22.00'],
+  2: ['06.00 - 20.00', '07.00 - 21.00', '08.00 - 22.00', '06.00 - 21.00', '06.00 - 22.00'],
+  3: ['06.00 - 14.00 - 20.00', '07.00 - 15.00 - 21.00', '08.00 - 16.00 - 22.00'],
 };
 
 const formatDoseOption = (item) => {
@@ -63,9 +63,7 @@ const formatDoseOption = (item) => {
   return String(item);
 };
 
-const pad = (value) => String(value).padStart(2, '0');
-const formatTimeHMS = (date) => `${pad(date.getHours())}:${pad(date.getMinutes())}:00`;
-const formatTimeHM = (time) => (time ? time.slice(0, 5) : '-');
+
 
 /** Convert a decimal number to a human-readable fraction string.
  *  e.g. 0.25 → "¼", 0.5 → "½", 1.5 → "1½", 2 → "2", 12.5 → "12½" */
@@ -190,8 +188,6 @@ export default function PatientReminderObatScreen({ navigation, onBack, profile,
   const [frekuensi, setFrekuensi] = useState('');
   const [sediaan, setSediaan] = useState('');
   const [waktuKonsumsi, setWaktuKonsumsi] = useState('');
-  const [jamCustom, setJamCustom] = useState('');
-  const [showTimePicker, setShowTimePicker] = useState(false);
   const [jumlahObat, setJumlahObat] = useState('');
   const [jumlahPerMinum, setJumlahPerMinum] = useState('');
   const [aturanMinum, setAturanMinum] = useState('');
@@ -282,14 +278,11 @@ export default function PatientReminderObatScreen({ navigation, onBack, profile,
     return presets.map((item) => ({ label: item, value: item }));
   }, [frekuensiNumber]);
 
-  const isFrekuensiOne = frekuensiNumber === 1;
-
   const canSubmit = useMemo(() => {
     if (!selectedObatId || !dosis || !jumlahPerMinum || !aturanMinum) return false;
-    if (isFrekuensiOne && !jamCustom.trim()) return false;
-    if (!isFrekuensiOne && !waktuKonsumsi) return false;
+    if (!waktuKonsumsi) return false;
     return true;
-  }, [selectedObatId, dosis, jumlahPerMinum, aturanMinum, isFrekuensiOne, jamCustom, waktuKonsumsi]);
+  }, [selectedObatId, dosis, jumlahPerMinum, aturanMinum, waktuKonsumsi]);
 
   useEffect(() => {
     if (!selectedObat) {
@@ -314,13 +307,8 @@ export default function PatientReminderObatScreen({ navigation, onBack, profile,
     }
     setFrekuensi(String(freq || ''));
     setAturanMinum(obat.cara_pemakaian || '');
-    if (freq === 1) {
-      setWaktuKonsumsi('');
-    } else {
-      const defaults = TIME_PRESETS[freq] || [];
-      setWaktuKonsumsi(defaults[0] || '');
-    }
-    setJamCustom('');
+    const defaults = TIME_PRESETS[freq] || [];
+    setWaktuKonsumsi(defaults[0] || '');
   };
 
   const resetForm = () => {
@@ -329,7 +317,6 @@ export default function PatientReminderObatScreen({ navigation, onBack, profile,
     setFrekuensi('');
     setSediaan('');
     setWaktuKonsumsi('');
-    setJamCustom('');
     setJumlahObat('');
     setJumlahPerMinum('');
     setAturanMinum('');
@@ -349,7 +336,6 @@ export default function PatientReminderObatScreen({ navigation, onBack, profile,
     setFrekuensi(String(item.frekuensi || ''));
     setSediaan(item.sediaan || '');
     setWaktuKonsumsi(item.waktu_konsumsi || '');
-    setJamCustom(item.frekuensi === 1 ? (item.waktu_konsumsi || '') : '');
     setJumlahObat(String(item.jumlah_obat || ''));
     setJumlahPerMinum(String(item.jumlah_per_minum || '1'));
     setSelectModal({ visible: false, label: '', options: [], onSelect: null });
@@ -390,7 +376,7 @@ export default function PatientReminderObatScreen({ navigation, onBack, profile,
       dosis,
       sediaan: sediaan || 'tablet',
       frekuensi: Number(frekuensi),
-      waktu_konsumsi: isFrekuensiOne ? jamCustom.trim() : waktuKonsumsi,
+      waktu_konsumsi: waktuKonsumsi,
       jumlah_obat: parseFloat(jumlahObat) || 100,
       jumlah_per_minum: parseFloat(jumlahPerMinum) || 1,
       aturan_minum: aturanMinum,
@@ -985,7 +971,7 @@ export default function PatientReminderObatScreen({ navigation, onBack, profile,
 
               
 
-              {doseOptions.length > 1 ? (
+              {doseOptions.length > 0 ? (
                 renderSelectField(
                   'Dosis',
                   dosis,
@@ -1030,63 +1016,14 @@ export default function PatientReminderObatScreen({ navigation, onBack, profile,
                 </View>
               </View>
 
-              {/* Waktu konsumsi */}
-              {!frekuensi ? null : isFrekuensiOne ? (
-                <View style={{ marginBottom: 16 }}>
-                  <Text style={{ fontSize: 10, fontWeight: '700', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 6 }}>
-                    Waktu Konsumsi Obat
-                  </Text>
-                  {Platform.OS === 'web' ? (
-                    <input
-                      type="time"
-                      value={jamCustom ? jamCustom.slice(0, 5) : ''}
-                      onChange={(e) => setJamCustom(`${e.target.value}:00`)}
-                      style={{
-                        padding: '14px 16px', borderRadius: 14,
-                        border: '1.5px solid #E2E8F0', marginBottom: 14,
-                        fontSize: 14, width: '100%', boxSizing: 'border-box',
-                      }}
-                    />
-                  ) : (
-                    <>
-                      <Pressable
-                        onPress={() => setShowTimePicker(true)}
-                        style={{
-                          borderWidth: 1.5, borderColor: '#E2E8F0', borderRadius: 14,
-                          paddingHorizontal: 16, paddingVertical: 14, backgroundColor: '#fff',
-                          marginBottom: 8,
-                        }}
-                      >
-                        <Text style={{ color: '#1E293B', fontWeight: '600', fontSize: 14 }}>
-                          {formatTimeHM(jamCustom)}
-                        </Text>
-                      </Pressable>
-                      {showTimePicker && (
-                        <DateTimePicker
-                          value={new Date(`2026-01-01T${jamCustom || '21:00:00'}`)}
-                          mode="time"
-                          onChange={(event, selectedDate) => {
-                            setShowTimePicker(false);
-                            if (event.type === 'dismissed' || !selectedDate) return;
-                            setJamCustom(formatTimeHMS(selectedDate));
-                          }}
-                        />
-                      )}
-                    </>
-                  )}
-                  <Text style={{ color: '#94A3B8', fontSize: 11, marginTop: 4 }}>
-                    Frekuensi 1x/hari bebas selama 24 jam, isi jam sesuai kebutuhan.
-                  </Text>
-                </View>
-              ) : (
-                renderSelectField(
-                  'Waktu Konsumsi Obat',
-                  waktuKonsumsi,
-                  presetOptions,
-                  (value) => { setWaktuKonsumsi(value); setSelectModal({ visible: false, label: '', options: [], onSelect: null }); },
-                  setSelectModal
-                )
-              )}
+              {/* Waktu konsumsi — pilihan digital preset */}
+              {frekuensi ? renderSelectField(
+                'Waktu Konsumsi Obat',
+                waktuKonsumsi,
+                presetOptions,
+                (value) => { setWaktuKonsumsi(value); setSelectModal({ visible: false, label: '', options: [], onSelect: null }); },
+                setSelectModal
+              ) : null}
 
               {renderSelectField(
                 'Sekali Minum',
@@ -1191,20 +1128,20 @@ export default function PatientReminderObatScreen({ navigation, onBack, profile,
             >
               <View style={{
                 flex: 1,
-                backgroundColor: '#00000040',
-                justifyContent: 'flex-end',
+                backgroundColor: 'rgba(0, 0, 0, 0.4)',
+                justifyContent: 'center',
               }}>
                 <View style={{
                   backgroundColor: '#fff',
-                  borderTopLeftRadius: 24,
-                  borderTopRightRadius: 24,
+                  borderRadius: 24,
+                  marginHorizontal: 24,
                   paddingHorizontal: 20,
                   paddingTop: 24,
-                  paddingBottom: 32,
-                  maxHeight: '80%',
+                  paddingBottom: 24,
+                  maxHeight: '70%',
                 }}>
                   <Text style={{
-                    fontSize: 16,
+                    fontSize: 17,
                     fontWeight: '700',
                     color: '#1E293B',
                     marginBottom: 16,
@@ -1227,7 +1164,7 @@ export default function PatientReminderObatScreen({ navigation, onBack, profile,
                         }}
                         style={({ pressed }) => ({
                           paddingHorizontal: 16,
-                          paddingVertical: 16,
+                          paddingVertical: 14,
                           marginVertical: 6,
                           borderBottomWidth: 0,
                           backgroundColor: pressed ? '#F5F3FF' : '#fff',
@@ -1236,7 +1173,7 @@ export default function PatientReminderObatScreen({ navigation, onBack, profile,
                         <Text style={{
                           color: '#1E293B',
                           fontWeight: '500',
-                          fontSize: 15,
+                          fontSize: 17,
                         }}>
                           {option.label}
                         </Text>

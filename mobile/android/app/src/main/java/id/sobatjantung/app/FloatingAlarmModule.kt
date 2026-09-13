@@ -1,4 +1,4 @@
-package id.myheart.app
+package id.sobatjantung.app
 
 import android.app.AlarmManager
 import android.app.PendingIntent

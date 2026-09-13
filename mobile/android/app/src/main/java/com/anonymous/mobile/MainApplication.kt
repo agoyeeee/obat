@@ -1,6 +1,6 @@
 package com.anonymous.mobile
 
-import id.myheart.app.BuildConfig
+import id.sobatjantung.app.BuildConfig
 
 import android.app.Application
 import android.app.NotificationChannel

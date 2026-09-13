@@ -1,7 +1,7 @@
 package com.anonymous.mobile
 
-import id.myheart.app.R
-import id.myheart.app.BuildConfig
+import id.sobatjantung.app.R
+import id.sobatjantung.app.BuildConfig
 
 import android.os.Build
 import android.os.Bundle

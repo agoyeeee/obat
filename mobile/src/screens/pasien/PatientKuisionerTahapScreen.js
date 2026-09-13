@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -17,6 +17,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, ChevronRight, Info, Plus, X, ClipboardList } from 'lucide-react-native';
 import { submitKuisionerAnswers } from '../../services/patientService';
 import { getPatientProfile } from '../../storage/patientStorage';
+import { getPatientReminderObatQueue } from '../../storage/patientReminderObatStorage';
 
 const TAHAP_1_FIELDS = {
   nama: { label: 'Nama', type: 'text', required: true, readonly: true },
@@ -28,12 +29,13 @@ const TAHAP_1_FIELDS = {
   pendidikan: { label: 'Pendidikan Terakhir', type: 'select', required: true, options: ['Tidak sekolah', 'SMP', 'S1', 'Tidak tamat SD', 'SMA', 'S2', 'SD', 'D3', 'S3'] },
   pekerjaan: { label: 'Pekerjaan', type: 'select', required: true, options: ['Pelajar / mahasiswa', 'Bekerja: PNS / Karyawan BUMN / Swasta / Wirausaha', 'Ibu rumah tangga / pensiunan', 'Lain-lain'] },
   nomor_hp: { label: 'Nomor HP', type: 'text', required: true },
-  pendapatan: { label: 'Pendapatan', type: 'select', required: true, options: ['<1.000.000', '1.000.000 – 5.000.000', '>5.000.000'] },
 };
+
+const PENYAKIT_PENYERTA_OPTIONS = ['Diabetes Mellitus', 'Hipertensi', 'Hiperkolesterol', 'Penyakit Jantung Koroner', 'Post Stroke', 'Merokok'];
 
 const TAHAP_2_FIELDS = {
   diagnosis: { label: 'Diagnosis Gagal Jantung', type: 'text', required: true, readonly: true },
-  penyakit_penyerta: { label: 'Penyakit Penyerta', type: 'select', required: true, options: ['Tidak', 'Ya'], subfield: 'alasan_penyakit' },
+  penyakit_penyerta: { label: 'Penyakit Penyerta', type: 'checkbox', options: PENYAKIT_PENYERTA_OPTIONS },
   herbal: { label: 'Menggunakan Obat Herbal', type: 'select', required: true, options: ['Tidak', 'Ya'], subfield: 'detail_herbal' },
   obat_jantung: { label: 'Obat Gagal Jantung yang Digunakan', type: 'repeat', fields: ['nama_obat', 'dosis', 'frekuensi', 'keterangan'] },
   obat_lain: { label: 'Ada Obat Lain yang Digunakan', type: 'select', required: true, options: ['Tidak', 'Ya'], subfield: 'detail_obat_lain' },
@@ -228,8 +230,7 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
   });
 
   const [tahap2Data, setTahap2Data] = useState({});
-  const [tahap3Data, setTahap3Data] = useState({});
-  const [tahap4Data, setTahap4Data] = useState({});
+  const [tahap3Data, setTahap3Data] = useState({});  const [tahap4Data, setTahap4Data] = useState({});
   const [tahap5Data, setTahap5Data] = useState({});
   const [tahap6Data, setTahap6Data] = useState({});
   const [tahap7Data, setTahap7Data] = useState({});
@@ -245,6 +246,27 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
   const [isRulerDragging, setIsRulerDragging] = useState(false);
   const [rulerDragValue, setRulerDragValue] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  // Prefill obat gagal jantung dari data pengingat minum obat (AsyncStorage queue)
+  useEffect(() => {
+    let cancelled = false;
+    getPatientReminderObatQueue()
+      .then((queue) => {
+        if (cancelled || !Array.isArray(queue)) return;
+        const prefilled = queue
+          .filter((item) => item && item.nama_obat)
+          .map((item) => ({
+            id: item.local_id || item.server_id || `${Date.now()}-${item?.nama_obat}`,
+            nama_obat: String(item.nama_obat),
+            dosis: item.dosis ? String(item.dosis) : '',
+            frekuensi: item.frekuensi ? `${item.frekuensi}x per hari` : '',
+            keterangan: '',
+          }));
+        if (prefilled.length > 0) setObatList(prefilled);
+      })
+      .catch(() => { /* data tidak tersedia: biarkan daftar kosong */ });
+    return () => { cancelled = true; };
+  }, []);
 
   const pad = (v) => String(v).padStart(2, '0');
   const formatDisplayDate = (iso) => {
@@ -301,13 +323,12 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
     if (currentTahap === 1) {
       return Boolean(
         tahap1Data.tanggal_lahir && tahap1Data.suku && tahap1Data.status &&
-        tahap1Data.pendidikan && tahap1Data.pekerjaan && tahap1Data.nomor_hp && tahap1Data.pendapatan
+        tahap1Data.pendidikan && tahap1Data.pekerjaan && tahap1Data.nomor_hp
       );
     }
     if (currentTahap === 2) {
-      const penyakitOk = tahap2Data.penyakit_penyerta !== undefined && tahap2Data.penyakit_penyerta !== '';
       const herbalOk = tahap2Data.herbal !== undefined && tahap2Data.herbal !== '';
-      return penyakitOk && herbalOk && obatList.length > 0;
+      return herbalOk && obatList.length > 0;
     }
     if (currentTahap === 4) {
       // require all kepatuhan questions answered
@@ -411,6 +432,14 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
     handleUpdateTahap3('efek_samping', arr);
   };
 
+  const handleTogglePenyakit = (penyakit) => {
+    const arr = tahap2Data.penyakit_penyerta ? String(tahap2Data.penyakit_penyerta).split(', ') : [];
+    const idx = arr.indexOf(penyakit);
+    if (idx === -1) arr.push(penyakit);
+    else arr.splice(idx, 1);
+    handleUpdateTahap2('penyakit_penyerta', arr.join(', '));
+  };
+
   const handleExit = () => {
     if (typeof onBack === 'function') {
       onBack();
@@ -436,14 +465,13 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
         pendidikan: prev.pendidikan || 'SMA',
         pekerjaan: prev.pekerjaan || 'Bekerja: PNS / Karyawan BUMN / Swasta / Wirausaha',
         nomor_hp: prev.nomor_hp || '081234567890',
-        pendapatan: prev.pendapatan || '1.000.000 – 5.000.000',
       }));
       return;
     }
 
     if (currentTahap === 2) {
       setTahap2Data({
-        penyakit_penyerta: 'Tidak',
+        penyakit_penyerta: 'Hipertensi',
         herbal: 'Tidak',
         obat_lain: 'Tidak',
       });
@@ -815,7 +843,6 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
             {renderSelectField('Pendidikan Terakhir', tahap1Data.pendidikan, TAHAP_1_FIELDS.pendidikan.options, (v) => handleUpdateTahap1('pendidikan', v))}
             {renderSelectField('Pekerjaan', tahap1Data.pekerjaan, TAHAP_1_FIELDS.pekerjaan.options, (v) => handleUpdateTahap1('pekerjaan', v))}
             {renderTextField('Nomor HP', tahap1Data.nomor_hp, (v) => handleUpdateTahap1('nomor_hp', v), false, 'number')}
-            {renderSelectField('Pendapatan', tahap1Data.pendapatan, TAHAP_1_FIELDS.pendapatan.options, (v) => handleUpdateTahap1('pendapatan', v))}
           </View>
         )}
 
@@ -864,11 +891,8 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
             <View style={{ marginBottom: 16 }}>
               {renderLabel(RULER_QUESTION.label)}
               <View style={{ marginBottom: 8 }}>
-                <Text style={{ color: '#475569', marginBottom: 6 }}>Kami ingin mengetahui seberapa baik atau buruk kesehatan Anda HARI INI.</Text>
-                <Text style={{ color: '#475569', marginBottom: 4 }}>- Skala ini memiliki angka dari 0 hingga 100.</Text>
-                <Text style={{ color: '#475569', marginBottom: 4 }}>- 100 berarti kesehatan terbaik yang dapat Anda bayangkan.</Text>
-                <Text style={{ color: '#475569', marginBottom: 4 }}>- 0 berarti kesehatan terburuk yang dapat Anda bayangkan.</Text>
-                <Text style={{ color: '#475569', marginBottom: 4 }}>- Geser penanda pada skala untuk menunjukkan kesehatan Anda HARI INI.</Text>
+                <Text style={{ color: '#475569', fontWeight: '600', marginBottom: 6 }}>Tarik seberapa nyaman kondisi hari ini</Text>
+                <Text style={{ color: '#94A3B8', fontSize: 12 }}>Geser penanda pada skala 0–100 (100 = paling nyaman).</Text>
               </View>
               <View style={{ backgroundColor: '#fff', borderRadius: 20, borderWidth: 1.5, borderColor: '#FDE68A', padding: 12 }}>
                 <View style={{ position: 'relative' }}>
@@ -999,8 +1023,37 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
         {currentTahap === 2 && (
           <View>
             {renderTextField('Diagnosis Gagal Jantung', formatDisplayDate(patientProfile?.tgl_diagnosa || ''), () => {}, true)}
-            {renderSelectField('Penyakit Penyerta', tahap2Data.penyakit_penyerta, ['Tidak', 'Ya'], (v) => handleUpdateTahap2('penyakit_penyerta', v))}
-            {tahap2Data.penyakit_penyerta === 'Ya' && renderTextField('Alasan Penyakit', tahap2Data.alasan_penyakit || '', (v) => handleUpdateTahap2('alasan_penyakit', v))}
+            <View style={{ marginBottom: 16 }}>
+              {renderLabel('Penyakit Penyerta')}
+              <View style={{ backgroundColor: '#fff', borderRadius: 20, borderWidth: 1.5, borderColor: '#FDE68A', overflow: 'hidden' }}>
+                {PENYAKIT_PENYERTA_OPTIONS.map((penyakit, idx) => {
+                  const selected = (tahap2Data.penyakit_penyerta ? String(tahap2Data.penyakit_penyerta).split(', ') : []).includes(penyakit);
+                  return (
+                    <View key={penyakit}>
+                      <TouchableOpacity
+                        onPress={() => handleTogglePenyakit(penyakit)}
+                        style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 16, backgroundColor: selected ? '#FFFBEB' : '#fff' }}
+                      >
+                        <View style={{
+                          width: 22, height: 22, borderRadius: 6,
+                          borderWidth: 2,
+                          borderColor: selected ? '#F59E0B' : '#CBD5E1',
+                          backgroundColor: selected ? '#F59E0B' : 'transparent',
+                          alignItems: 'center', justifyContent: 'center',
+                          marginRight: 12,
+                        }}>
+                          {selected && <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: '#fff' }} />}
+                        </View>
+                        <Text style={{ color: selected ? '#92400E' : '#475569', fontWeight: selected ? '700' : '500', fontSize: 14, flex: 1 }}>
+                          {penyakit}
+                        </Text>
+                      </TouchableOpacity>
+                      {idx < PENYAKIT_PENYERTA_OPTIONS.length - 1 && <View style={{ height: 1, backgroundColor: '#FEF3C7' }} />}
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
             {renderSelectField('Menggunakan Obat Herbal', tahap2Data.herbal, ['Tidak', 'Ya'], (v) => handleUpdateTahap2('herbal', v))}
 
             {tahap2Data.herbal === 'Ya' && (
@@ -1300,8 +1353,8 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
 
       {/* ── SELECT MODAL ── */}
       <Modal visible={selectModal.visible} transparent animationType="slide">
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' }}>
-          <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: 24 }}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'center' }}>
+          <View style={{ backgroundColor: '#fff', borderRadius: 24, marginHorizontal: 24, padding: 24 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
               <Text style={{ fontSize: 16, fontWeight: '900', color: '#1E293B' }}>{selectModal.label}</Text>
               <TouchableOpacity onPress={closeSelectModal} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#FEF3C7', alignItems: 'center', justifyContent: 'center' }}>
@@ -1318,7 +1371,7 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
                   }}
                   style={{ paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#FEF3C7' }}
                 >
-                  <Text style={{ fontSize: 14, color: '#475569', fontWeight: '500' }}>{String(opt)}</Text>
+                  <Text style={{ fontSize: 17, color: '#475569', fontWeight: '500' }}>{String(opt)}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -1328,8 +1381,8 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
 
       {/* ── ADD OBAT MODAL ── */}
       <Modal visible={isAddObatModalOpen} transparent animationType="slide">
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' }}>
-          <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: 24 }}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'center' }}>
+          <View style={{ backgroundColor: '#fff', borderRadius: 24, marginHorizontal: 24, padding: 24 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
               <Text style={{ fontSize: 16, fontWeight: '900', color: '#1E293B' }}>Tambah Obat Gagal Jantung</Text>
               <TouchableOpacity onPress={() => setIsAddObatModalOpen(false)} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#FEF3C7', alignItems: 'center', justifyContent: 'center' }}>
@@ -1339,7 +1392,7 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
             {['nama_obat', 'dosis', 'frekuensi', 'keterangan'].map((field) => (
               <TextInput
                 key={field}
-                style={{ borderWidth: 2, borderColor: '#FCD34D', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12, marginBottom: 10, backgroundColor: '#FFFBEB', color: '#1E293B', fontSize: 14 }}
+                style={{ borderWidth: 2, borderColor: '#FCD34D', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12, marginBottom: 10, backgroundColor: '#FFFBEB', color: '#1E293B', fontSize: 16 }}
                 placeholder={{ nama_obat: 'Nama Obat', dosis: 'Dosis', frekuensi: 'Frekuensi', keterangan: 'Keterangan (opsional)' }[field]}
                 placeholderTextColor="#94A3B8"
                 value={newObat[field]}
@@ -1361,8 +1414,8 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
 
       {/* ── ADD HERBAL MODAL ── */}
       <Modal visible={isAddHerbalModalOpen} transparent animationType="slide">
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' }}>
-          <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: 24 }}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'center' }}>
+          <View style={{ backgroundColor: '#fff', borderRadius: 24, marginHorizontal: 24, padding: 24 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
               <Text style={{ fontSize: 16, fontWeight: '900', color: '#1E293B' }}>Tambah Obat Herbal</Text>
               <TouchableOpacity onPress={() => setIsAddHerbalModalOpen(false)} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#FEF3C7', alignItems: 'center', justifyContent: 'center' }}>
@@ -1372,7 +1425,7 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
             {['nama_obat', 'dosis', 'frekuensi', 'keterangan'].map((field) => (
               <TextInput
                 key={field}
-                style={{ borderWidth: 2, borderColor: '#FCD34D', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12, marginBottom: 10, backgroundColor: '#FFFBEB', color: '#1E293B', fontSize: 14 }}
+                style={{ borderWidth: 2, borderColor: '#FCD34D', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12, marginBottom: 10, backgroundColor: '#FFFBEB', color: '#1E293B', fontSize: 16 }}
                 placeholder={{ nama_obat: 'Nama Obat Herbal', dosis: 'Dosis', frekuensi: 'Frekuensi', keterangan: 'Keterangan (opsional)' }[field]}
                 placeholderTextColor="#94A3B8"
                 value={newHerbal[field]}

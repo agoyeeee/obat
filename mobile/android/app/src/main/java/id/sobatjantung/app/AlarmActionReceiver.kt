@@ -1,4 +1,4 @@
-package id.myheart.app
+package id.sobatjantung.app
 
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -7,8 +7,8 @@ import android.content.Intent
 class AlarmActionReceiver : BroadcastReceiver() {
 
     companion object {
-        const val ACTION_STOP_ALARM = "id.myheart.app.ACTION_STOP_FLOATING_ALARM"
-        const val ACTION_TAKE_MEDICINE = "id.myheart.app.ACTION_TAKE_MEDICINE_FROM_NOTIF"
+        const val ACTION_STOP_ALARM = "id.sobatjantung.app.ACTION_STOP_FLOATING_ALARM"
+        const val ACTION_TAKE_MEDICINE = "id.sobatjantung.app.ACTION_TAKE_MEDICINE_FROM_NOTIF"
     }
 
     override fun onReceive(context: Context, intent: Intent) {

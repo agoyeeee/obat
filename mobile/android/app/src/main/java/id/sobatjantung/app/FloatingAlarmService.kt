@@ -1,4 +1,4 @@
-package id.myheart.app
+package id.sobatjantung.app
 
 import android.annotation.SuppressLint
 import android.app.Notification
@@ -44,9 +44,9 @@ class FloatingAlarmService : Service() {
     private var vibrator: Vibrator? = null
 
     companion object {
-        const val CHANNEL_ID = "myheart_heads_up_alarm_v4"
+        const val CHANNEL_ID = "sobatjantung_heads_up_alarm_v4"
         const val NOTIFICATION_ID = 90210
-        const val ACTION_STOP = "id.myheart.app.ACTION_STOP_FLOATING_ALARM"
+        const val ACTION_STOP = "id.sobatjantung.app.ACTION_STOP_FLOATING_ALARM"
 
         const val EXTRA_TITLE = "extra_title"
         const val EXTRA_MEDICINE_NAME = "extra_medicine_name"
