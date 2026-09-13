@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View, Text, Pressable, ScrollView, TextInput, Alert,
-  RefreshControl, ActivityIndicator, Modal, SafeAreaView, TouchableOpacity, Linking, AppState,
+  RefreshControl, ActivityIndicator, Modal, SafeAreaView, TouchableOpacity, Linking, AppState, StyleSheet,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -1118,74 +1118,121 @@ export default function PatientReminderObatScreen({ navigation, onBack, profile,
                 </Text>
               ) : null}
             </View>
-
-            {/* Modal Selector */}
-            <Modal
-              visible={selectModal.visible}
-              transparent
-              animationType="fade"
-              onRequestClose={() => setSelectModal({ visible: false, label: '', options: [], onSelect: null })}
-            >
-              <View style={{
-                flex: 1,
-                backgroundColor: 'rgba(0, 0, 0, 0.4)',
-                justifyContent: 'center',
-              }}>
-                <View style={{
-                  backgroundColor: '#fff',
-                  borderRadius: 24,
-                  marginHorizontal: 24,
-                  paddingHorizontal: 20,
-                  paddingTop: 24,
-                  paddingBottom: 24,
-                  maxHeight: '70%',
-                }}>
-                  <Text style={{
-                    fontSize: 17,
-                    fontWeight: '700',
-                    color: '#1E293B',
-                    marginBottom: 16,
-                  }}>
-                    {selectModal.label}
-                  </Text>
-
-                  <ScrollView
-                    style={{ maxHeight: 400 }}
-                    showsVerticalScrollIndicator={false}
-                  >
-                    {selectModal.options.map((option, i) => (
-                      <Pressable
-                        key={`${i}-${option.value}`}
-                        onPress={() => {
-                          if (selectModal.onSelect) {
-                            selectModal.onSelect(option.value);
-                          }
-                          setSelectModal({ visible: false, label: '', options: [], onSelect: null });
-                        }}
-                        style={({ pressed }) => ({
-                          paddingHorizontal: 16,
-                          paddingVertical: 14,
-                          marginVertical: 6,
-                          borderBottomWidth: 0,
-                          backgroundColor: pressed ? '#F5F3FF' : '#fff',
-                        })}
-                      >
-                        <Text style={{
-                          color: '#1E293B',
-                          fontWeight: '500',
-                          fontSize: 17,
-                        }}>
-                          {option.label}
-                        </Text>
-                      </Pressable>
-                    ))}
-                  </ScrollView>
-                </View>
-              </View>
-            </Modal>
           </ScrollView>
         </SafeAreaView>
       </Modal>
+
+      {/* ── SELECT MODAL (POP UP) ── */}
+      <Modal
+        visible={selectModal.visible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectModal({ visible: false, label: '', options: [], onSelect: null })}
+      >
+        <View style={{
+          flex: 1,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: 20,
+        }}>
+          {/* Backdrop dismiss */}
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={() => setSelectModal({ visible: false, label: '', options: [], onSelect: null })}
+          />
+
+          {/* Popup Card */}
+          <View style={{
+            backgroundColor: '#FFFFFF',
+            borderRadius: 24,
+            width: '100%',
+            maxWidth: 380,
+            maxHeight: '75%',
+            padding: 22,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 12 },
+            shadowOpacity: 0.15,
+            shadowRadius: 24,
+            elevation: 12,
+            zIndex: 10,
+          }}>
+            {/* Header */}
+            <View style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingBottom: 14,
+              borderBottomWidth: 1,
+              borderBottomColor: '#F1F5F9',
+              marginBottom: 12,
+            }}>
+              <Text style={{
+                fontSize: 17,
+                fontWeight: '800',
+                color: '#1E293B',
+              }}>
+                {selectModal.label}
+              </Text>
+              <Pressable
+                onPress={() => setSelectModal({ visible: false, label: '', options: [], onSelect: null })}
+                style={({ pressed }) => ({
+                  width: 32,
+                  height: 32,
+                  borderRadius: 10,
+                  backgroundColor: pressed ? '#E2E8F0' : '#F1F5F9',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                })}
+              >
+                <X color="#64748B" size={18} />
+              </Pressable>
+            </View>
+
+            {/* List options */}
+            <ScrollView
+              style={{ maxHeight: 360 }}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingVertical: 4 }}
+            >
+              {selectModal.options.map((option, i) => {
+                const optValue = option && typeof option === 'object' && option.value !== undefined ? option.value : option;
+                const optLabel = option && typeof option === 'object' && option.label !== undefined ? option.label : String(option);
+
+                return (
+                  <Pressable
+                    key={`${i}-${optValue}`}
+                    onPress={() => {
+                      if (selectModal.onSelect) {
+                        selectModal.onSelect(optValue);
+                      }
+                      setSelectModal({ visible: false, label: '', options: [], onSelect: null });
+                    }}
+                    style={({ pressed }) => ({
+                      paddingHorizontal: 16,
+                      paddingVertical: 14,
+                      borderRadius: 14,
+                      marginVertical: 4,
+                      backgroundColor: pressed ? '#EEF2FF' : '#F8FAFC',
+                      borderWidth: 1,
+                      borderColor: pressed ? '#C7D2FE' : '#F1F5F9',
+                    })}
+                  >
+                    <Text style={{
+                      color: '#1E293B',
+                      fontWeight: '600',
+                      fontSize: 15,
+                    }}>
+                      {optLabel}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
       <Modal
         visible={showObatInfoModal}
         animationType="slide"

@@ -9,6 +9,8 @@ import {
   Alert,
   Modal,
   Platform,
+  Pressable,
+  StyleSheet,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Slider from '@react-native-community/slider';
@@ -1351,27 +1353,28 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
         </View>
       </View>
 
-      {/* ── SELECT MODAL ── */}
-      <Modal visible={selectModal.visible} transparent animationType="slide">
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'center' }}>
-          <View style={{ backgroundColor: '#fff', borderRadius: 24, marginHorizontal: 24, padding: 24 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-              <Text style={{ fontSize: 16, fontWeight: '900', color: '#1E293B' }}>{selectModal.label}</Text>
-              <TouchableOpacity onPress={closeSelectModal} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#FEF3C7', alignItems: 'center', justifyContent: 'center' }}>
+      {/* ── SELECT MODAL (POP UP) ── */}
+      <Modal visible={selectModal.visible} transparent animationType="fade" onRequestClose={closeSelectModal}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={closeSelectModal} />
+          <View style={{ backgroundColor: '#fff', borderRadius: 24, width: '100%', maxWidth: 380, maxHeight: '75%', padding: 22, shadowColor: '#000', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.15, shadowRadius: 24, elevation: 12, zIndex: 10 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: '#F1F5F9', marginBottom: 12 }}>
+              <Text style={{ fontSize: 17, fontWeight: '800', color: '#1E293B' }}>{selectModal.label}</Text>
+              <TouchableOpacity onPress={closeSelectModal} style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: '#FEF3C7', alignItems: 'center', justifyContent: 'center' }}>
                 <X color="#92400E" size={18} />
               </TouchableOpacity>
             </View>
-            <ScrollView style={{ maxHeight: 320 }}>
-              {(selectModal.options || []).map((opt) => (
+            <ScrollView style={{ maxHeight: 360 }} showsVerticalScrollIndicator={false}>
+              {(selectModal.options || []).map((opt, i) => (
                 <TouchableOpacity
-                  key={String(opt)}
+                  key={`${i}-${String(opt)}`}
                   onPress={() => {
                     try { selectModal.onSelect && selectModal.onSelect(opt); } catch (e) { console.warn(e); }
                     closeSelectModal();
                   }}
-                  style={{ paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#FEF3C7' }}
+                  style={{ paddingVertical: 14, paddingHorizontal: 16, borderRadius: 14, marginVertical: 4, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#F1F5F9' }}
                 >
-                  <Text style={{ fontSize: 17, color: '#475569', fontWeight: '500' }}>{String(opt)}</Text>
+                  <Text style={{ fontSize: 15, color: '#1E293B', fontWeight: '600' }}>{String(opt)}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
