@@ -280,9 +280,23 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
   const dailyTargetMin = 900;
   const dailyTargetMax = 1200;
   const isTargetReached = totalMlToday >= dailyTargetMin && totalMlToday <= dailyTargetMax;
+  const isOverhydrated = totalMlToday > dailyTargetMax;
+  const isUnderhydrated = totalMlToday < dailyTargetMin;
   const dailyScore = isTargetReached ? 1 : 0;
-  const dailyStatus = isTargetReached ? 'Tercukupi' : 'Tidak tercukupi';
-  const targetStatusColor = isTargetReached ? '#059669' : '#D97706';
+
+  let dailyStatus = 'Tercukupi';
+  let targetStatusColor = '#059669';
+  let statusBadgeBg = '#DCFCE7';
+
+  if (isOverhydrated) {
+    dailyStatus = 'Overhidrasi';
+    targetStatusColor = '#EF4444';
+    statusBadgeBg = '#FEE2E2';
+  } else if (isUnderhydrated) {
+    dailyStatus = 'Kurang hidrasi';
+    targetStatusColor = '#D97706';
+    statusBadgeBg = '#FEF3C7';
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: '#F0F4FF' }}>
@@ -378,7 +392,11 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
               900 - 1200 ml
             </Text>
             <Text style={{ color: '#475569', fontSize: 13, marginTop: 8, lineHeight: 20 }}>
-              Hari ini kamu sudah mencatat {totalMlToday} ml cairan dari target harian.
+              {isOverhydrated
+                ? `Hari ini kamu sudah mencatat ${totalMlToday} ml cairan (melebihi 1200 ml - overhidrasi).`
+                : isUnderhydrated
+                ? `Hari ini kamu sudah mencatat ${totalMlToday} ml cairan dari target 900 - 1200 ml (kurang hidrasi).`
+                : `Hari ini kamu sudah mencatat ${totalMlToday} ml cairan. Asupan cairan tercukupi.`}
             </Text>
 
             <View style={{ marginTop: 14, height: 10, borderRadius: 999, backgroundColor: '#E2E8F0', overflow: 'hidden' }}>
@@ -409,7 +427,7 @@ export default function PatientReminderCairanScreen({ onBack, profile }) {
                 paddingHorizontal: 12,
                 paddingVertical: 6,
                 borderRadius: 999,
-                backgroundColor: isTargetReached ? '#DCFCE7' : '#FEF3C7',
+                backgroundColor: statusBadgeBg,
               }}>
                 <Text style={{ color: targetStatusColor, fontSize: 12, fontWeight: '900' }}>
                   {dailyScore}

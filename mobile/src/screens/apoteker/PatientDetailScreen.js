@@ -171,11 +171,17 @@ export default function PatientDetailScreen({ route, navigation }) {
     if (detailData.type === 'cairan') {
       return groupedLogs.map((entry) => {
         const totalMl = entry.logs.reduce((sum, log) => sum + Number(log.jumlah_ml || 0), 0);
+        let status_kepatuhan = 'PATUH';
+        if (totalMl > 1200) {
+          status_kepatuhan = 'OVERHIDRASI';
+        } else if (totalMl < 900) {
+          status_kepatuhan = 'KURANG HIDRASI';
+        }
 
         return {
           ...entry,
           totalMl,
-          status_kepatuhan: totalMl >= 900 ? 'PATUH' : 'TIDAK PATUH',
+          status_kepatuhan,
         };
       });
     }
@@ -499,12 +505,28 @@ export default function PatientDetailScreen({ route, navigation }) {
                 </Text>
                 {detailData?.type === 'cairan' && (
                   <View className="flex-row items-center mt-3 gap-3">
-                    <View className={`px-3 py-1.5 rounded-full ${detailData.status_kepatuhan === 'PATUH' ? 'bg-blue-50' : 'bg-rose-50'}`}>
-                      <Text className={`text-xs font-black uppercase tracking-wider ${detailData.status_kepatuhan === 'PATUH' ? 'text-[#0D9488]' : 'text-[#F43F5E]'}`}>
-                        {detailData.status_kepatuhan === 'PATUH' ? 'PATUH' : 'TIDAK PATUH'}
+                    <View className={`px-3 py-1.5 rounded-full ${
+                      (detailData.total_ml > 1200)
+                        ? 'bg-rose-50'
+                        : (detailData.total_ml >= 900)
+                        ? 'bg-teal-50'
+                        : 'bg-amber-50'
+                    }`}>
+                      <Text className={`text-xs font-black uppercase tracking-wider ${
+                        (detailData.total_ml > 1200)
+                          ? 'text-[#F43F5E]'
+                          : (detailData.total_ml >= 900)
+                          ? 'text-[#0D9488]'
+                          : 'text-[#D97706]'
+                      }`}>
+                        {detailData.total_ml > 1200
+                          ? 'OVERHIDRASI'
+                          : detailData.total_ml >= 900
+                          ? 'TERCUKUPI'
+                          : 'KURANG HIDRASI'}
                       </Text>
                     </View>
-                    <Text className="text-xs font-bold text-[#0D9488]">{detailData.total_ml ?? 0} / 900 ml</Text>
+                    <Text className="text-xs font-bold text-[#0D9488]">{detailData.total_ml ?? 0} / 900 - 1200 ml</Text>
                   </View>
                 )}
               </View>
@@ -598,9 +620,21 @@ export default function PatientDetailScreen({ route, navigation }) {
                               <Text className="text-xs font-bold text-[#94A3B8] mt-1 uppercase tracking-wider">{formatDateDDMMYY(day.date)}</Text>
                               <Text className="text-sm font-bold text-[#0D9488] mt-2">{dayTotalMl} ml</Text>
                               {detailData.type === 'cairan' && dayStatus && (
-                                <View className={`self-start px-3 py-1.5 rounded-full mt-3 ${dayStatus === 'PATUH' ? 'bg-teal-50' : 'bg-rose-50'}`}>
-                                  <Text className={`text-xs font-black uppercase tracking-wider ${dayStatus === 'PATUH' ? 'text-[#0D9488]' : 'text-[#F43F5E]'}`}>
-                                    {dayStatus === 'PATUH' ? 'PATUH' : 'TIDAK PATUH'}
+                                <View className={`self-start px-3 py-1.5 rounded-full mt-3 ${
+                                  dayStatus === 'PATUH' || dayStatus === 'TERCUKUPI'
+                                    ? 'bg-teal-50'
+                                    : dayStatus === 'OVERHIDRASI'
+                                    ? 'bg-rose-50'
+                                    : 'bg-amber-50'
+                                }`}>
+                                  <Text className={`text-xs font-black uppercase tracking-wider ${
+                                    dayStatus === 'PATUH' || dayStatus === 'TERCUKUPI'
+                                      ? 'text-[#0D9488]'
+                                      : dayStatus === 'OVERHIDRASI'
+                                      ? 'text-[#F43F5E]'
+                                      : 'text-[#D97706]'
+                                  }`}>
+                                    {dayStatus}
                                   </Text>
                                 </View>
                               )}
