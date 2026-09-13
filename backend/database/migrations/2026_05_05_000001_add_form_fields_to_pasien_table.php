@@ -15,7 +15,6 @@ return new class extends Migration
             $table->string('pendidikan')->nullable()->after('suku');
             $table->string('pekerjaan')->nullable()->after('pendidikan');
             $table->string('nomor_hp', 30)->nullable()->after('pekerjaan');
-            $table->string('pendapatan')->nullable()->after('nomor_hp');
         });
     }
 
@@ -29,7 +28,6 @@ return new class extends Migration
                 'pendidikan',
                 'pekerjaan',
                 'nomor_hp',
-                'pendapatan',
             ]);
         });
     }

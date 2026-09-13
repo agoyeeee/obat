@@ -21,7 +21,6 @@ class Pasien extends Model
         'pendidikan',
         'pekerjaan',
         'nomor_hp',
-        'pendapatan',
     ];
 
     protected function casts(): array

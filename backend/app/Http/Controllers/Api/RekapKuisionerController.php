@@ -64,7 +64,6 @@ class RekapKuisionerController extends Controller
                 'pendidikan' => $tahap1['pendidikan'] ?? $pasien->pendidikan,
                 'pekerjaan' => $tahap1['pekerjaan'] ?? $pasien->pekerjaan,
                 'nomor_hp' => $tahap1['nomor_hp'] ?? $pasien->nomor_hp,
-                'pendapatan' => $tahap1['pendapatan'] ?? $pasien->pendapatan,
             ]);
 
             return RekapKuisioner::query()->create([
@@ -150,7 +149,6 @@ class RekapKuisionerController extends Controller
                 'pendidikan' => $tahap1['pendidikan'] ?? $pasien->pendidikan,
                 'pekerjaan' => $tahap1['pekerjaan'] ?? $pasien->pekerjaan,
                 'nomor_hp' => $tahap1['nomor_hp'] ?? $pasien->nomor_hp,
-                'pendapatan' => $tahap1['pendapatan'] ?? $pasien->pendapatan,
             ]);
 
             return RekapKuisioner::query()->create([
