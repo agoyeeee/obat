@@ -46,6 +46,7 @@ const JUMLAH_PER_MINUM_OPTIONS = [
   { label: '2 tablet', value: '2' },
   { label: '2½ tablet', value: '2.5' },
   { label: '3 tablet', value: '3' },
+  { label: '4 tablet', value: '4' },
 ];
 
 const TIME_PRESETS = {
@@ -53,6 +54,15 @@ const TIME_PRESETS = {
   2: ['06.00 - 20.00', '07.00 - 21.00', '08.00 - 22.00', '06.00 - 21.00', '06.00 - 22.00'],
   3: ['06.00 - 14.00 - 20.00', '07.00 - 15.00 - 21.00', '08.00 - 16.00 - 22.00'],
 };
+
+const ATURAN_MINUM_OPTIONS = [
+  { label: 'Tidak ada / Kosongkan', value: '' },
+  { label: 'Sesudah makan', value: 'Sesudah makan' },
+  { label: 'Sebelum makan', value: 'Sebelum makan' },
+  { label: 'Bersama makan / saat makan', value: 'Bersama makan' },
+  { label: 'Saat perut kosong', value: 'Saat perut kosong' },
+  { label: 'Sesuai petunjuk dokter', value: 'Sesuai petunjuk dokter' },
+];
 
 const formatDoseOption = (item) => {
   if (item && typeof item === 'object' && item.dosis !== undefined) {
@@ -141,7 +151,7 @@ const renderLabel = (label) => (
 );
 
 // ── SELECT FIELD ──────────────────────────────────────────────
-const renderSelectField = (label, value, options, onChangeText, setSelectModal, rightElement) => (
+const renderSelectField = (label, value, options, onChangeText, setSelectModal, rightElement, placeholder) => (
   <View style={{ marginBottom: 16 }}>
     {renderLabel(label)}
     <TouchableOpacity
@@ -159,7 +169,7 @@ const renderSelectField = (label, value, options, onChangeText, setSelectModal, 
       }}
     >
       <Text style={{ color: value ? '#1E293B' : '#94A3B8', fontWeight: value ? '600' : '400', fontSize: 14, flex: 1 }}>
-        {value || 'Pilih opsi...'}
+        {value || placeholder || 'Pilih opsi...'}
       </Text>
       {rightElement ? rightElement : <ChevronRight color={value ? '#14B8A6' : '#CBD5E1'} size={18} />}
     </TouchableOpacity>
@@ -278,11 +288,22 @@ export default function PatientReminderObatScreen({ navigation, onBack, profile,
     return presets.map((item) => ({ label: item, value: item }));
   }, [frekuensiNumber]);
 
+  const aturanMinumOptions = useMemo(() => {
+    const list = [...ATURAN_MINUM_OPTIONS];
+    if (selectedObat?.cara_pemakaian && !list.some((o) => o.value === selectedObat.cara_pemakaian)) {
+      list.splice(1, 0, {
+        label: `${selectedObat.cara_pemakaian} (Bawaan Obat)`,
+        value: selectedObat.cara_pemakaian,
+      });
+    }
+    return list;
+  }, [selectedObat]);
+
   const canSubmit = useMemo(() => {
-    if (!selectedObatId || !dosis || !jumlahPerMinum || !aturanMinum) return false;
+    if (!selectedObatId || !dosis || !jumlahPerMinum) return false;
     if (!waktuKonsumsi) return false;
     return true;
-  }, [selectedObatId, dosis, jumlahPerMinum, aturanMinum, waktuKonsumsi]);
+  }, [selectedObatId, dosis, jumlahPerMinum, waktuKonsumsi]);
 
   useEffect(() => {
     if (!selectedObat) {
@@ -290,7 +311,9 @@ export default function PatientReminderObatScreen({ navigation, onBack, profile,
       return;
     }
 
-    setAturanMinum(selectedObat.cara_pemakaian || '');
+    if (!aturanMinum && selectedObat.cara_pemakaian) {
+      setAturanMinum(selectedObat.cara_pemakaian);
+    }
   }, [selectedObat]);
 
   const handleSelectObat = (obatId) => {
@@ -338,6 +361,7 @@ export default function PatientReminderObatScreen({ navigation, onBack, profile,
     setWaktuKonsumsi(item.waktu_konsumsi || '');
     setJumlahObat(String(item.jumlah_obat || ''));
     setJumlahPerMinum(String(item.jumlah_per_minum || '1'));
+    setAturanMinum(item.aturan_minum || 'Sesudah makan');
     setSelectModal({ visible: false, label: '', options: [], onSelect: null });
     setIsAddModalOpen(true);
   };
@@ -379,7 +403,7 @@ export default function PatientReminderObatScreen({ navigation, onBack, profile,
       waktu_konsumsi: waktuKonsumsi,
       jumlah_obat: parseFloat(jumlahObat) || 100,
       jumlah_per_minum: parseFloat(jumlahPerMinum) || 1,
-      aturan_minum: aturanMinum,
+      aturan_minum: aturanMinum || '-',
     };
     try {
       setIsSaving(true);
@@ -817,7 +841,7 @@ export default function PatientReminderObatScreen({ navigation, onBack, profile,
                     { label: 'Dosis', value: `${item.dosis} · ${item.frekuensi}x per hari` },
                     { label: '1x Minum', value: getPerMinumLabel(item.jumlah_per_minum || 1) },
                     { label: 'Waktu', value: item.waktu_konsumsi },
-                    { label: 'Aturan', value: item.aturan_minum },
+                    { label: 'Aturan', value: item.aturan_minum || '-' },
                   ].map((row, i) => (
                     <View key={i} style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
                       <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '600', width: 52 }}>{row.label}</Text>
@@ -1036,24 +1060,15 @@ export default function PatientReminderObatScreen({ navigation, onBack, profile,
               <View style={{ marginBottom: 0 }}>
               </View>
 
-              <View style={{ marginBottom: 16 }}>
-                {renderLabel('Aturan Minum Obat')}
-                <View style={{
-                  borderWidth: 1.5,
-                  borderColor: aturanMinum ? '#14B8A6' : '#E2E8F0',
-                  borderRadius: 16,
-                  paddingHorizontal: 16,
-                  paddingVertical: 14,
-                  backgroundColor: aturanMinum ? '#F5F3FF' : '#F8FAFC',
-                }}>
-                  <Text style={{ color: aturanMinum ? '#1E293B' : '#94A3B8', fontWeight: aturanMinum ? '600' : '400', fontSize: 14, lineHeight: 20 }}>
-                    {aturanMinum || 'Akan terisi otomatis dari data obat yang dipilih'}
-                  </Text>
-                </View>
-                <Text style={{ color: '#94A3B8', fontSize: 11, marginTop: 6 }}>
-                  Aturan minum mengikuti data bawaan obat dan tidak perlu dipilih lagi.
-                </Text>
-              </View>
+              {renderSelectField(
+                'Aturan Minum Obat (Opsional)',
+                aturanMinum || '',
+                aturanMinumOptions,
+                (value) => { setAturanMinum(value); setSelectModal({ visible: false, label: '', options: [], onSelect: null }); },
+                setSelectModal,
+                null,
+                'Pilih aturan minum (opsional)'
+              )}
             </View>
 
             {/* Submit button - Integrated with comfortable bottom margin */}

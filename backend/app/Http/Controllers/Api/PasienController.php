@@ -75,7 +75,7 @@ class PasienController extends Controller
             'reminders.*.jumlah_per_minum' => ['nullable', 'numeric', 'min:0.25'],
             'reminders.*.frekuensi' => ['required', 'integer', 'min:1', 'max:24'],
             'reminders.*.waktu_konsumsi' => ['required', 'string', 'max:255'],
-            'reminders.*.aturan_minum' => ['required', 'string', 'max:255'],
+            'reminders.*.aturan_minum' => ['nullable', 'string', 'max:255'],
         ]);
 
         $result = DB::transaction(function () use ($validated) {
