@@ -51,6 +51,22 @@ export const openNotificationChannelSettings = async () => {
 };
 
 /**
+ * Membuka dialog izin pengecualian penghemat baterai (Battery Optimization Unrestricted)
+ * @returns {Promise<boolean>}
+ */
+export const requestIgnoreBatteryOptimizations = async () => {
+  if (Platform.OS !== 'android' || !FloatingAlarmModule?.requestIgnoreBatteryOptimizations) {
+    return false;
+  }
+  try {
+    return await FloatingAlarmModule.requestIgnoreBatteryOptimizations();
+  } catch (error) {
+    console.log('[FloatingAlarm] Error requestIgnoreBatteryOptimizations:', error);
+    return false;
+  }
+};
+
+/**
  * Menampilkan Floating Pop-up mengambang di atas layar
  */
 export const showFloatingAlarm = async ({

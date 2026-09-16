@@ -24,8 +24,19 @@ class AlarmReceiver : BroadcastReceiver() {
             try {
                 val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
                 val requestCode = intent.getIntExtra("extra_request_code", 0)
+                val timeStr = intent.getStringExtra(FloatingAlarmService.EXTRA_TIME)
                 if (alarmManager != null && requestCode != 0) {
+                    val parts = timeStr?.split(":")
+                    val hour = parts?.getOrNull(0)?.toIntOrNull()
+                    val minute = parts?.getOrNull(1)?.toIntOrNull()
+
                     val nextCalendar = Calendar.getInstance().apply {
+                        if (hour != null && minute != null) {
+                            set(Calendar.HOUR_OF_DAY, hour)
+                            set(Calendar.MINUTE, minute)
+                            set(Calendar.SECOND, 0)
+                            set(Calendar.MILLISECOND, 0)
+                        }
                         add(Calendar.DAY_OF_YEAR, 1)
                     }
                     val pendingIntent = PendingIntent.getBroadcast(
@@ -34,7 +45,19 @@ class AlarmReceiver : BroadcastReceiver() {
                         intent,
                         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                     )
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        val showIntent = Intent(context, MainActivity::class.java)
+                        val showPendingIntent = PendingIntent.getActivity(
+                            context,
+                            requestCode,
+                            showIntent,
+                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                        )
+                        alarmManager.setAlarmClock(
+                            AlarmManager.AlarmClockInfo(nextCalendar.timeInMillis, showPendingIntent),
+                            pendingIntent
+                        )
+                    } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                         alarmManager.setExactAndAllowWhileIdle(
                             AlarmManager.RTC_WAKEUP,
                             nextCalendar.timeInMillis,

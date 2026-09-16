@@ -360,6 +360,34 @@ export const scheduleReminderObatAlarms = async (reminderItem) => {
   return notificationIds;
 };
 
+export const rescheduleAllActiveAlarms = async (items) => {
+  if (!Array.isArray(items) || items.length === 0) return;
+  for (const item of items) {
+    if (Number(item.jumlah_obat || 0) <= 0) continue;
+    const times = parseTimes(item.waktu_konsumsi);
+    for (let index = 0; index < times.length; index++) {
+      const time = times[index];
+      let hash = 0;
+      const str = `${item.local_id || item.server_id || 'rem'}_${index}_${time.hour}_${time.minute}`;
+      for (let i = 0; i < str.length; i++) {
+        hash = (hash << 5) - hash + str.charCodeAt(i);
+        hash |= 0;
+      }
+      const nativeAlarmId = Math.abs(hash) % 100000;
+      await scheduleNativeAlarm({
+        id: nativeAlarmId,
+        hour: time.hour,
+        minute: time.minute,
+        title: `Waktunya minum ${item.nama_obat}`,
+        medicineName: item.nama_obat,
+        dose: item.dosis || '1 dosis',
+        reminderId: item.local_id,
+        isTest: false,
+      }).catch(() => {});
+    }
+  }
+};
+
 export const cancelReminderObatAlarms = async (notificationIds = []) => {
   if (!Array.isArray(notificationIds) || notificationIds.length === 0) {
     return;

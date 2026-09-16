@@ -22,6 +22,8 @@ import { syncPendingReminderObat } from '../../services/patientSyncService';
 import {
   scheduleReminderObatAlarms,
   cancelReminderObatAlarms,
+  rescheduleAllActiveAlarms,
+  triggerTestReminderAlarm,
 } from '../../services/reminderAlarmService';
 import {
   addPatientReminderObat,
@@ -210,6 +212,7 @@ export default function PatientReminderObatScreen({ navigation, onBack, profile,
     setPendingCount(pending);
     setSyncedCount(synced);
     setReminderItems(queue);
+    rescheduleAllActiveAlarms(queue).catch(() => {});
   }, []);
 
   const loadObat = useCallback(async () => {
@@ -517,6 +520,19 @@ export default function PatientReminderObatScreen({ navigation, onBack, profile,
   useEffect(() => {
     autoScheduleAlarms(reminderItems);
   }, [reminderItems, autoScheduleAlarms]);
+
+  const handleTestAlarm = async (item) => {
+    try {
+      Alert.alert(
+        'Menguji Alarm (5 Detik)',
+        'Alarm akan berbunyi dan pop-up mengambang akan muncul dalam 5 detik. Anda bisa keluar dari aplikasi atau mengunci layar HP sekarang untuk mengetesnya.',
+        [{ text: 'OK' }]
+      );
+      await triggerTestReminderAlarm({ reminderItem: item, delaySeconds: 5 });
+    } catch (err) {
+      Alert.alert('Gagal uji alarm', err?.message || 'Pastikan izin notifikasi sudah diaktifkan.');
+    }
+  };
 
   const handleActivateAlarm = async (item) => {
     if (!item.server_id) {
@@ -882,31 +898,44 @@ export default function PatientReminderObatScreen({ navigation, onBack, profile,
                   )}
 
                   {/* Actions */}
-                  <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
+                  <View style={{ flexDirection: 'row', gap: 8, marginTop: 14 }}>
+                    <Pressable
+                      onPress={() => handleTestAlarm(item)}
+                      style={({ pressed }) => ({
+                        flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5,
+                        backgroundColor: '#FEF3C7',
+                        paddingVertical: 10, borderRadius: 12,
+                        opacity: pressed ? 0.7 : 1,
+                      })}
+                    >
+                      <BellRing color="#D97706" size={14} />
+                      <Text style={{ color: '#D97706', fontWeight: '800', fontSize: 12 }}>Tes Alarm</Text>
+                    </Pressable>
+
                     <Pressable
                       onPress={() => openEditModal(item)}
                       style={({ pressed }) => ({
-                        flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+                        flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5,
                         backgroundColor: '#EEF2FF',
                         paddingVertical: 10, borderRadius: 12,
                         opacity: pressed ? 0.7 : 1,
                       })}
                     >
                       <Pencil color="#6366F1" size={14} />
-                      <Text style={{ color: '#6366F1', fontWeight: '800', fontSize: 13 }}>Edit</Text>
+                      <Text style={{ color: '#6366F1', fontWeight: '800', fontSize: 12 }}>Edit</Text>
                     </Pressable>
 
                     <Pressable
                       onPress={() => handleDeleteReminder(item)}
                       style={({ pressed }) => ({
-                        flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+                        flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5,
                         backgroundColor: '#FFF1F2',
                         paddingVertical: 10, borderRadius: 12,
                         opacity: pressed ? 0.7 : 1,
                       })}
                     >
                       <Trash2 color="#F43F5E" size={14} />
-                      <Text style={{ color: '#F43F5E', fontWeight: '800', fontSize: 13 }}>Hapus</Text>
+                      <Text style={{ color: '#F43F5E', fontWeight: '800', fontSize: 12 }}>Hapus</Text>
                     </Pressable>
                   </View>
                 </View>
