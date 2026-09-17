@@ -41,9 +41,8 @@ const SEDIAAN_OPTIONS = [
 ];
 
 const JUMLAH_PER_MINUM_OPTIONS = [
-  { label: '¼ tablet', value: '0.25' },
-  { label: '½ tablet', value: '0.5' },
   { label: '1 tablet', value: '1' },
+  { label: '½ tablet', value: '0.5' },
   { label: '1½ tablet', value: '1.5' },
   { label: '2 tablet', value: '2' },
   { label: '2½ tablet', value: '2.5' },
@@ -52,8 +51,8 @@ const JUMLAH_PER_MINUM_OPTIONS = [
 ];
 
 const TIME_PRESETS = {
-  1: ['06.00', '07.00', '08.00', '09.00', '10.00', '20.00', '21.00', '22.00'],
-  2: ['06.00 - 20.00', '07.00 - 21.00', '08.00 - 22.00', '06.00 - 21.00', '06.00 - 22.00'],
+  1: ['06.00', '07.00', '08.00', '09.00', '10.00', '18.00', '19.00', '20.00', '21.00', '22.00'],
+  2: ['06.00 - 18.00', '07.00 - 19.00', '08.00 - 20.00', '09.00 - 21.00', '10.00 - 22.00', '06.00 - 21.00', '06.00 - 22.00'],
   3: ['06.00 - 14.00 - 20.00', '07.00 - 15.00 - 21.00', '08.00 - 16.00 - 22.00'],
 };
 
@@ -126,6 +125,9 @@ const resolveDoseOptions = (obat) => {
   }
   return options;
 };
+
+/** Frequency options are always 1/2/3 so patient can switch (e.g. simvastatin 1x or 2x sehari). */
+const resolveFrekuensiOptions = () => [1, 2, 3].map((n) => ({ label: `${n} x sehari`, value: String(n) }));
 
 const getDoseDisplay = (obat) => {
   if (!obat) return '';
@@ -286,6 +288,7 @@ export default function PatientReminderObatScreen({ navigation, onBack, profile,
   const doseOptions = useMemo(() => resolveDoseOptions(selectedObat), [selectedObat]);
 
   const frekuensiNumber = Number(frekuensi);
+  const frekuensiOptions = useMemo(() => resolveFrekuensiOptions(), [selectedObat]);
   const presetOptions = useMemo(() => {
     const presets = TIME_PRESETS[frekuensiNumber] || [];
     return presets.map((item) => ({ label: item, value: item }));
@@ -324,17 +327,24 @@ export default function PatientReminderObatScreen({ navigation, onBack, profile,
     setSelectModal({ visible: false, label: '', options: [], onSelect: null });
     const obat = obatList.find((item) => String(item.id) === String(obatId));
     if (!obat) return;
-    const freq = Number(obat.frekuensi_default || 0);
+    const freqOptions = resolveFrekuensiOptions(obat);
+    const defaultFreq = String(Number(obat.frekuensi_default || 0));
+    const freq = freqOptions.some((o) => o.value === defaultFreq) ? defaultFreq : (freqOptions[0]?.value || defaultFreq);
     const options = resolveDoseOptions(obat);
     if (options.length === 1) {
       setDosis(options[0].value);
     } else {
       setDosis('');
     }
-    setFrekuensi(String(freq || ''));
+    setFrekuensi(freq);
     setAturanMinum(obat.cara_pemakaian || '');
-    const defaults = TIME_PRESETS[freq] || [];
-    setWaktuKonsumsi(defaults[0] || '');
+    setWaktuKonsumsi((TIME_PRESETS[Number(freq)] || [])[0] || '');
+  };
+
+  const handleSelectFrekuensi = (value) => {
+    setFrekuensi(value);
+    setSelectModal({ visible: false, label: '', options: [], onSelect: null });
+    setWaktuKonsumsi((TIME_PRESETS[Number(value)] || [])[0] || '');
   };
 
   const resetForm = () => {
@@ -1053,21 +1063,29 @@ export default function PatientReminderObatScreen({ navigation, onBack, profile,
                 </View>
               )}
 
-              {/* Frekuensi (read-only) */}
-              <View style={{ marginBottom: 16 }}>
-                <Text style={{ fontSize: 10, fontWeight: '700', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 6 }}>
-                  Frekuensi
-                </Text>
-                <View style={{
-                  borderWidth: 1.5, borderColor: '#E2E8F0', borderRadius: 14,
-                  paddingHorizontal: 16, paddingVertical: 14,
-                  backgroundColor: '#F8FAFC',
-                }}>
-                  <Text style={{ color: frekuensi ? '#1E293B' : '#94A3B8', fontWeight: '500', fontSize: 14 }}>
-                    {frekuensi ? `${frekuensi} kali sehari` : 'Akan terisi otomatis dari nama obat'}
+              {/* Frekuensi — dropdown; opsi diambil dari data obat (mis. 1x dan 2x sehari) */}
+              {selectedObat ? renderSelectField(
+                'Frekuensi',
+                frekuensi ? `${frekuensi} x sehari` : '',
+                frekuensiOptions,
+                handleSelectFrekuensi,
+                setSelectModal
+              ) : (
+                <View style={{ marginBottom: 16 }}>
+                  <Text style={{ fontSize: 10, fontWeight: '700', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 6 }}>
+                    Frekuensi
                   </Text>
+                  <View style={{
+                    borderWidth: 1.5, borderColor: '#E2E8F0', borderRadius: 14,
+                    paddingHorizontal: 16, paddingVertical: 14,
+                    backgroundColor: '#F8FAFC',
+                  }}>
+                    <Text style={{ color: '#94A3B8', fontWeight: '500', fontSize: 14 }}>
+                      Akan terisi otomatis dari nama obat
+                    </Text>
+                  </View>
                 </View>
-              </View>
+              )}
 
               {/* Waktu konsumsi — pilihan digital preset */}
               {frekuensi ? renderSelectField(

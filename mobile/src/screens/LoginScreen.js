@@ -85,7 +85,7 @@ export default function LoginScreen({ onLogin, onBack }) {
 
           <View className="flex-row justify-between py-1">
             <Text className="text-sm font-medium text-slate-500">Nama:</Text>
-            <Text className="text-sm font-bold text-slate-900">Siti Rahmawati</Text>
+            <Text className="text-sm font-bold text-slate-900">apt. Meta Kartika Untari, M.Sc.</Text>
           </View>
 
           <View className="flex-row justify-between py-1">
