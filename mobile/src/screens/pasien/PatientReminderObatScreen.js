@@ -317,10 +317,10 @@ export default function PatientReminderObatScreen({ navigation, onBack, profile,
       return;
     }
 
-    if (!aturanMinum && selectedObat.cara_pemakaian) {
+    if (selectedObat.cara_pemakaian && !editingReminder) {
       setAturanMinum(selectedObat.cara_pemakaian);
     }
-  }, [selectedObat]);
+  }, [selectedObat, editingReminder]);
 
   const handleSelectObat = (obatId) => {
     setSelectedObatId(obatId);

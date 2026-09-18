@@ -42,6 +42,7 @@ export default function MedicineListScreen({ navigation }) {
   const [doseTargetList, setDoseTargetList] = useState([]);
   const [doseTargetDraft, setDoseTargetDraft] = useState('');
   const [frekuensiDefault, setFrekuensiDefault] = useState('');
+  const [caraPemakaian, setCaraPemakaian] = useState('');
   const [kontraindikasi, setKontraindikasi] = useState('');
   const [efekSamping, setEfekSamping] = useState('');
   const [monitoring, setMonitoring] = useState('');
@@ -75,6 +76,7 @@ export default function MedicineListScreen({ navigation }) {
     setDoseTargetList([]);
     setDoseTargetDraft('');
     setFrekuensiDefault('');
+    setCaraPemakaian('');
     setKontraindikasi('');
     setEfekSamping('');
     setMonitoring('');
@@ -89,6 +91,7 @@ export default function MedicineListScreen({ navigation }) {
     setDoseTargetList(parseDoseLines(medicine.dosis_target));
     setDoseTargetDraft('');
     setFrekuensiDefault(String(medicine.frekuensi_default || ''));
+    setCaraPemakaian(medicine.cara_pemakaian || '');
     setKontraindikasi(medicine.kontraindikasi || '');
     setEfekSamping(medicine.efek_samping || '');
     setMonitoring(medicine.monitoring || '');
@@ -143,6 +146,7 @@ export default function MedicineListScreen({ navigation }) {
         dosis_inisiasi: dosisInisiasiList.map((item) => `${item} mg`),
         dosis_target: doseTargetList.map((item) => `${item} mg`).join('\n'),
         frekuensi_default: freq,
+        cara_pemakaian: caraPemakaian.trim() || null,
         kontraindikasi: kontraindikasi.trim() || null,
         efek_samping: efekSamping.trim() || null,
         monitoring: monitoring.trim() || null,
@@ -480,6 +484,30 @@ export default function MedicineListScreen({ navigation }) {
                 value={frekuensiDefault}
                 onChangeText={(text) => setFrekuensiDefault(text.replace(/[^0-9]/g, ''))}
               />
+
+              <Text className="text-xs font-bold text-[#94A3B8] mb-1.5 uppercase tracking-wider">Aturan Minum Obat (opsional)</Text>
+              <TextInput
+                className="border-2 border-[#E2E8F0] rounded-2xl px-4 py-3.5 mb-2 bg-[#F1F5F9] text-[#1E293B] font-medium"
+                placeholder="Contoh: Sesudah makan / Diminum pagi hari"
+                value={caraPemakaian}
+                onChangeText={setCaraPemakaian}
+                multiline
+              />
+              <View className="flex-row flex-wrap mb-4">
+                {['Sesudah makan', 'Sebelum makan', 'Bersama makan', 'Saat perut kosong'].map((opt) => (
+                  <Pressable
+                    key={opt}
+                    onPress={() => setCaraPemakaian(opt)}
+                    className={`rounded-full px-3 py-1.5 mr-2 mb-2 border ${
+                      caraPemakaian === opt ? 'bg-teal-600 border-teal-600' : 'bg-teal-50 border-teal-200'
+                    }`}
+                  >
+                    <Text className={`text-xs font-semibold ${caraPemakaian === opt ? 'text-white' : 'text-teal-800'}`}>
+                      {opt}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
 
               <Text className="text-xs font-bold text-[#94A3B8] mb-1.5 uppercase tracking-wider">Kontraindikasi (opsional)</Text>
               <TextInput

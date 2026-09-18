@@ -13,7 +13,7 @@ class ApotekerSeeder extends Seeder
         $apotekers = [
             [
                 'nama'       => 'apt. Meta Kartika Untari, M.Sc.',
-                'no_hp'      => '081234567890',
+                'no_hp'      => '081329005000',
                 'password'   => Hash::make('coba'),
                 'created_at' => now(),
                 'updated_at' => now(),

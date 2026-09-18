@@ -65,44 +65,24 @@ const setCachedApotekerContacts = async (data) => {
 
 export const openRandomApotekerWhatsApp = async (profile) => {
   try {
-    // Try cache first
-    let apotekerList = await getCachedApotekerContacts();
-    
-    // If not cached, fetch from API
-    if (!apotekerList) {
-      apotekerList = await fetchPublicApotekerContacts();
-      if (Array.isArray(apotekerList) && apotekerList.length > 0) {
-        await setCachedApotekerContacts(apotekerList);
-      }
-    }
-    
-    const apoteker = pickRandomApoteker(apotekerList);
-
-    if (!apoteker) {
-      Alert.alert(
-        'Kontak Apoteker',
-        'Nomor WhatsApp apoteker belum tersedia. Silakan hubungi administrator untuk menambahkan nomor apoteker.'
-      );
-      return;
-    }
-
+    const defaultPhone = '6281329005000';
     const patientName = profile?.nama || 'Pasien';
     const message = encodeURIComponent(
-      `Halo Kak ${apoteker.nama}, saya ${patientName}. Saya ingin konsultasi terkait terapi obat saya.`
+      `Halo Kak Apoteker, saya ${patientName}. Saya ingin konsultasi terkait terapi obat saya.`
     );
-    const phone = formatPhoneForWhatsApp(apoteker.no_hp);
-    const url = `https://wa.me/${phone}?text=${message}`;
+    const url = `https://wa.me/${defaultPhone}?text=${message}`;
 
-    const canOpen = await Linking.canOpenURL(url);
-    if (!canOpen) {
-      Alert.alert(
-        'WhatsApp Tidak Tersedia',
-        'Aplikasi WhatsApp tidak terinstall di perangkat Anda. Silakan instal WhatsApp terlebih dahulu.'
-      );
-      return;
+    const canOpen = await Linking.canOpenURL(url).catch(() => false);
+    if (canOpen) {
+      await Linking.openURL(url);
+    } else {
+      await Linking.openURL(url).catch(() => {
+        Alert.alert(
+          'WhatsApp Tidak Tersedia',
+          'Tidak dapat membuka WhatsApp. Pastikan aplikasi WhatsApp terinstal di perangkat Anda.'
+        );
+      });
     }
-
-    await Linking.openURL(url);
   } catch (error) {
     console.error('[Helper] openRandomApotekerWhatsApp error:', error?.message || error);
     Alert.alert(
@@ -114,8 +94,8 @@ export const openRandomApotekerWhatsApp = async (profile) => {
 
 export const openWhatsAppHelper = (medicineName) => {
   const name = medicineName || 'obat';
-  const message = encodeURIComponent(`Halo, saya ingin bertanya terkait obat ${name}.`);
-  Linking.openURL(`https://wa.me/6281234567890?text=${message}`).catch(() => {
+  const message = encodeURIComponent(`Halo Kak Apoteker, saya ingin bertanya terkait obat ${name}.`);
+  Linking.openURL(`https://wa.me/6281329005000?text=${message}`).catch(() => {
     Alert.alert('Error', 'Tidak dapat membuka WhatsApp.');
   });
 };

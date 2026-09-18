@@ -41,6 +41,13 @@ export default function MedicineModal({ medicine, onClose, onManageMerk, onEditM
               </View>
             )}
 
+            {medicine.cara_pemakaian ? (
+              <View className="mb-4 bg-teal-50/70 p-4 rounded-xl border border-teal-100">
+                <Text className="text-xs font-bold text-teal-700 uppercase tracking-[1.5px] mb-1.5">Aturan Minum Obat</Text>
+                <Text className="text-teal-950 text-sm font-semibold leading-relaxed">{medicine.cara_pemakaian}</Text>
+              </View>
+            ) : null}
+
             <View className="mb-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
               <Text className="text-xs font-bold text-slate-400 uppercase tracking-[1.5px] mb-1.5">Indikasi</Text>
               <Text className="text-slate-700 text-sm font-medium leading-relaxed">{medicine.indikasi || '-'}</Text>
