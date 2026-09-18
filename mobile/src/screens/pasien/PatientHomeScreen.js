@@ -195,18 +195,21 @@ export default function PatientHomeScreen({ onBack, onSubmitSuccess, existingPro
             <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Tanggal Lahir</Text>
             {Platform.OS === 'web' ? (
               <input
-                type="text"
-                value={formatDisplayDate(tanggalLahir)}
-                onChange={(e) => {
-                  const iso = parseDisplayToIso(e.target.value);
-                  setTanggalLahir(iso || '');
-                }}
-                placeholder="dd-mm-yyyy"
+                type="date"
+                max={new Date().toISOString().split('T')[0]}
+                value={tanggalLahir || ''}
+                onChange={(e) => setTanggalLahir(e.target.value)}
                 style={{
-                  padding: 10,
-                  borderRadius: 10,
-                  border: '1px solid #ccc',
-                  marginBottom: 10
+                  padding: '12px 16px',
+                  borderRadius: 16,
+                  border: '2px solid #E2E8F0',
+                  backgroundColor: '#F8FAFC',
+                  fontSize: 15,
+                  marginBottom: 10,
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  fontFamily: 'inherit',
+                  color: '#0F172A'
                 }}
               />
             ) : (
@@ -224,6 +227,7 @@ export default function PatientHomeScreen({ onBack, onSubmitSuccess, existingPro
                   <DateTimePicker
                     value={tanggalLahir ? new Date(tanggalLahir) : new Date(1980, 0, 1)}
                     mode="date"
+                    minimumDate={new Date(1900, 0, 1)}
                     maximumDate={new Date()}
                     onChange={(event, selectedDate) => {
                       setShowLahirDate(false);
@@ -280,18 +284,21 @@ export default function PatientHomeScreen({ onBack, onSubmitSuccess, existingPro
             <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Tanggal Diagnosa</Text>
             {Platform.OS === 'web' ? (
             <input
-              type="text"
-              value={formatDisplayDate(tanggalDiagnosa)}
-              onChange={(e) => {
-                const iso = parseDisplayToIso(e.target.value);
-                setTanggalDiagnosa(iso || '');
-              }}
-              placeholder="dd-mm-yyyy"
+              type="date"
+              max={new Date().toISOString().split('T')[0]}
+              value={tanggalDiagnosa || ''}
+              onChange={(e) => setTanggalDiagnosa(e.target.value)}
               style={{
-                padding: 10,
-                borderRadius: 10,
-                border: '1px solid #ccc',
-                marginBottom: 10
+                padding: '12px 16px',
+                borderRadius: 16,
+                border: '2px solid #E2E8F0',
+                backgroundColor: '#F8FAFC',
+                fontSize: 15,
+                marginBottom: 10,
+                width: '100%',
+                boxSizing: 'border-box',
+                fontFamily: 'inherit',
+                color: '#0F172A'
               }}
             />
           ) : (
@@ -309,6 +316,7 @@ export default function PatientHomeScreen({ onBack, onSubmitSuccess, existingPro
               <DateTimePicker
                 value={tanggalDiagnosa ? new Date(tanggalDiagnosa) : new Date()}
                 mode="date"
+                minimumDate={new Date(1900, 0, 1)}
                 maximumDate={new Date()}
                 onChange={(event, selectedDate) => {
                   if (event.type === 'dismissed') {

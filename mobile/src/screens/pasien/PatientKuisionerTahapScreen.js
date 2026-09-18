@@ -797,16 +797,16 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
               {renderLabel('Tanggal Lahir')}
               {Platform.OS === 'web' ? (
                 <input
-                  type="text"
-                  value={formatDisplayDate(tahap1Data.tanggal_lahir)}
+                  type="date"
+                  max={new Date().toISOString().split('T')[0]}
+                  value={tahap1Data.tanggal_lahir || ''}
                   onChange={(e) => {
-                    const iso = parseDisplayToIso(e.target.value);
-                    handleUpdateTahap1('tanggal_lahir', iso || '');
+                    handleUpdateTahap1('tanggal_lahir', e.target.value);
                   }}
-                  placeholder="dd-mm-yyyy"
                   style={{
                     padding: 14, borderRadius: 16, border: '2px solid #FCD34D',
                     backgroundColor: '#FFFBEB', width: '100%', fontSize: 14,
+                    boxSizing: 'border-box', fontFamily: 'inherit', color: '#1E293B'
                   }}
                 />
               ) : (
@@ -827,6 +827,7 @@ export default function PatientKuisionerTahapScreen({ route, navigation, onBack 
                     <DateTimePicker
                       value={tahap1Data.tanggal_lahir ? new Date(tahap1Data.tanggal_lahir) : new Date()}
                       mode="date"
+                      minimumDate={new Date(1900, 0, 1)}
                       maximumDate={new Date()}
                       onChange={(event, selectedDate) => {
                         if (event?.type === 'dismissed') { setShowDatePicker(false); return; }
