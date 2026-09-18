@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, TextInput, Pressable, SafeAreaView } from 'react-native';
+import { View, Text, TextInput, Pressable, SafeAreaView, Image } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 
 export default function LoginScreen({ onLogin, onBack }) {
@@ -30,18 +30,17 @@ export default function LoginScreen({ onLogin, onBack }) {
         </Pressable>
 
         {/* Header */}
-        <View className="items-center mb-10">
-          <View className="w-16 h-16 rounded-3xl bg-teal-100 items-center justify-center mb-4">
-            <Text className="text-3xl">💊</Text>
+        <View className="items-center mb-8">
+          <Image
+            source={require('../../assets/logo sobatjantung.png')}
+            style={{ width: 340, height: 110, marginBottom: 8 }}
+            resizeMode="contain"
+          />
+          <View className="bg-teal-50 px-4 py-1.5 rounded-full border border-teal-200">
+            <Text className="text-xs font-bold text-teal-700 tracking-wide">
+              Portal Apoteker
+            </Text>
           </View>
-
-          <Text className="text-3xl font-black text-slate-900 tracking-tight">
-            MedReminder
-          </Text>
-
-          <Text className="text-base font-semibold text-teal-600 mt-1">
-            Portal Apoteker
-          </Text>
         </View>
 
         {/* Form */}
