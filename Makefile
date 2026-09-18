@@ -18,8 +18,8 @@ help:
 	@echo "  make android-avd-list - List available Android Virtual Devices"
 	@echo "  make android-emulator-start - Start first available Android emulator"
 	@echo "  make serve-mobile-build - Build and install Android development build"
-	@echo "  make run             - Start backend and mobile (dev client) in separate PowerShell windows"
-	@echo "  make stop            - Stop php and node processes (Windows)"
+	@echo "  make run             - Start backend and mobile (dev client)"
+	@echo "  make stop            - Stop php and node processes"
 
 install: install-backend install-mobile
 
@@ -45,35 +45,36 @@ route-list:
 	cd backend && php artisan route:list
 
 serve-backend:
-	cd backend && php artisan serve
+	cd backend && php artisan serve --host 0.0.0.0 --port 8000
 
 serve-mobile:
 	cd mobile && npm run start
 
 ensure-android-localprops:
-	powershell -NoProfile -Command '$$androidDir = Join-Path (Get-Location) "mobile\\android"; $$localProps = Join-Path $$androidDir "local.properties"; $$sdk = $$env:ANDROID_SDK_ROOT; if (-not $$sdk) { $$sdk = $$env:ANDROID_HOME }; if (-not $$sdk) { $$defaultSdk = Join-Path $$env:USERPROFILE "AppData\\Local\\Android\\Sdk"; if (Test-Path $$defaultSdk) { $$sdk = $$defaultSdk } }; if (-not $$sdk) { Write-Error "Android SDK tidak ditemukan. Set ANDROID_SDK_ROOT/ANDROID_HOME atau install Android Studio SDK terlebih dahulu."; exit 1 }; $$sdkNormalized = ($$sdk -replace "\\", "/") -replace "/+", "/"; $$content = "sdk.dir=" + $$sdkNormalized; Set-Content -Path $$localProps -Value $$content -Encoding ASCII; Write-Host ("local.properties updated: " + $$localProps); Write-Host ("sdk.dir=" + $$sdkNormalized)'
+	@if [ -d "$$HOME/Android/Sdk" ]; then \
+		mkdir -p mobile/android; \
+		echo "sdk.dir=$$HOME/Android/Sdk" > mobile/android/local.properties; \
+		echo "local.properties updated for Linux: $$HOME/Android/Sdk"; \
+	elif command -v powershell >/dev/null 2>&1; then \
+		powershell -NoProfile -Command '$$androidDir = Join-Path (Get-Location) "mobile\\android"; $$localProps = Join-Path $$androidDir "local.properties"; $$sdk = $$env:ANDROID_SDK_ROOT; if (-not $$sdk) { $$sdk = $$env:ANDROID_HOME }; if (-not $$sdk) { $$defaultSdk = Join-Path $$env:USERPROFILE "AppData\\Local\\Android\\Sdk"; if (Test-Path $$defaultSdk) { $$sdk = $$defaultSdk } }; if (-not $$sdk) { Write-Error "Android SDK tidak ditemukan. Set ANDROID_SDK_ROOT/ANDROID_HOME atau install Android Studio SDK terlebih dahulu."; exit 1 }; $$sdkNormalized = ($$sdk -replace "\\", "/") -replace "/+", "/"; $$content = "sdk.dir=" + $$sdkNormalized; Set-Content -Path $$localProps -Value $$content -Encoding ASCII; Write-Host ("local.properties updated: " + $$localProps); Write-Host ("sdk.dir=" + $$sdkNormalized)'; \
+	fi
 
 android-doctor: ensure-android-localprops
-	powershell -NoProfile -Command '$$sdk = $$env:ANDROID_SDK_ROOT; if (-not $$sdk) { $$sdk = $$env:ANDROID_HOME }; if (-not $$sdk) { $$defaultSdk = Join-Path $$env:USERPROFILE "AppData\\Local\\Android\\Sdk"; if (Test-Path $$defaultSdk) { $$sdk = $$defaultSdk } }; $$adb = if ($$sdk) { Join-Path $$sdk "platform-tools\\adb.exe" } else { "adb" }; $$emu = if ($$sdk) { Join-Path $$sdk "emulator\\emulator.exe" } else { "emulator" }; Write-Host "ANDROID_HOME=" $$env:ANDROID_HOME; Write-Host "ANDROID_SDK_ROOT=" $$env:ANDROID_SDK_ROOT; Write-Host "Resolved SDK=" $$sdk; Write-Host "Resolved adb=" $$adb; Write-Host "Resolved emulator=" $$emu; if (-not (Test-Path $$adb)) { Write-Error "adb tidak ditemukan. Install Android SDK Platform-Tools."; exit 1 }; if (-not (Test-Path $$emu)) { Write-Warning "emulator tidak ditemukan. Tidak masalah jika Anda hanya pakai device fisik." }; & $$adb devices'
-
-android-avd-list:
-	powershell -NoProfile -Command '$$sdk = $$env:ANDROID_SDK_ROOT; if (-not $$sdk) { $$sdk = $$env:ANDROID_HOME }; if (-not $$sdk) { $$defaultSdk = Join-Path $$env:USERPROFILE "AppData\\Local\\Android\\Sdk"; if (Test-Path $$defaultSdk) { $$sdk = $$defaultSdk } }; $$emu = if ($$sdk) { Join-Path $$sdk "emulator\\emulator.exe" } else { "emulator" }; if (-not (Test-Path $$emu)) { Write-Error "emulator tidak ditemukan. Install Android Emulator dari SDK Manager."; exit 1 }; & $$emu -list-avds'
-
-android-emulator-start:
-	powershell -NoProfile -Command '$$sdk = $$env:ANDROID_SDK_ROOT; if (-not $$sdk) { $$sdk = $$env:ANDROID_HOME }; if (-not $$sdk) { $$defaultSdk = Join-Path $$env:USERPROFILE "AppData\\Local\\Android\\Sdk"; if (Test-Path $$defaultSdk) { $$sdk = $$defaultSdk } }; $$emu = if ($$sdk) { Join-Path $$sdk "emulator\\emulator.exe" } else { "emulator" }; if (-not (Test-Path $$emu)) { Write-Error "emulator tidak ditemukan. Install Android Emulator dari SDK Manager."; exit 1 }; $$avd = & $$emu -list-avds | Select-Object -First 1; if (-not $$avd) { Write-Error "Tidak ada AVD. Buat emulator dulu di Android Studio Device Manager."; exit 1 }; Start-Process $$emu -ArgumentList ("-avd " + $$avd); Write-Host ("Starting emulator: " + $$avd)'
-
-serve-mobile-build: ensure-android-localprops
-	powershell -NoProfile -Command '$$sdk = $$env:ANDROID_SDK_ROOT; if (-not $$sdk) { $$sdk = $$env:ANDROID_HOME }; if (-not $$sdk) { $$defaultSdk = Join-Path $$env:USERPROFILE "AppData\\Local\\Android\\Sdk"; if (Test-Path $$defaultSdk) { $$sdk = $$defaultSdk } }; $$adb = if ($$sdk) { Join-Path $$sdk "platform-tools\\adb.exe" } else { "adb" }; $$emu = if ($$sdk) { Join-Path $$sdk "emulator\\emulator.exe" } else { "emulator" }; if (-not (Test-Path $$adb)) { Write-Error "adb tidak ditemukan. Install Android SDK Platform-Tools."; exit 1 }; $$adbOut = & $$adb devices; $$readyCount = ($$adbOut | Select-String "\sdevice$$" | Measure-Object).Count; $$unauthorizedCount = ($$adbOut | Select-String "\sunauthorized$$" | Measure-Object).Count; $$offlineCount = ($$adbOut | Select-String "\soffline$$" | Measure-Object).Count; if ($$readyCount -gt 0) { exit 0 }; if ($$unauthorizedCount -gt 0) { Write-Error "Device terdeteksi tapi masih unauthorized. Cek layar HP dan tekan Allow USB debugging, lalu jalankan: adb kill-server; adb start-server; make serve-mobile-build"; exit 1 }; if ($$offlineCount -gt 0) { Write-Error "Device status offline. Coba cabut/pasang kabel, aktifkan ulang USB debugging, lalu jalankan: adb kill-server; adb start-server"; exit 1 }; if (Test-Path $$emu) { $$avd = & $$emu -list-avds | Select-Object -First 1; if ($$avd) { Start-Process $$emu -ArgumentList ("-avd " + $$avd); Write-Host ("Starting emulator: " + $$avd + ". Tunggu sampai boot selesai lalu jalankan ulang make serve-mobile-build."); exit 1 } else { Write-Error "Tidak ada device terhubung dan tidak ada AVD. Buat emulator dulu atau sambungkan HP (USB debugging)."; exit 1 } } else { Write-Error "Tidak ada device fisik terhubung. Sambungkan HP (USB debugging) atau install Android Emulator."; exit 1 }'
-	cd mobile && npm run android:dev
+	@if [ -d "$$HOME/Android/Sdk" ]; then \
+		$$HOME/Android/Sdk/platform-tools/adb devices; \
+	elif command -v powershell >/dev/null 2>&1; then \
+		powershell -NoProfile -Command '$$sdk = $$env:ANDROID_SDK_ROOT; if (-not $$sdk) { $$sdk = $$env:ANDROID_HOME }; if (-not $$sdk) { $$defaultSdk = Join-Path $$env:USERPROFILE "AppData\\Local\\Android\\Sdk"; if (Test-Path $$defaultSdk) { $$sdk = $$defaultSdk } }; $$adb = if ($$sdk) { Join-Path $$sdk "platform-tools\\adb.exe" } else { "adb" }; $$emu = if ($$sdk) { Join-Path $$sdk "emulator\\emulator.exe" } else { "emulator" }; Write-Host "ANDROID_HOME=" $$env:ANDROID_HOME; Write-Host "ANDROID_SDK_ROOT=" $$env:ANDROID_SDK_ROOT; Write-Host "Resolved SDK=" $$sdk; Write-Host "Resolved adb=" $$adb; Write-Host "Resolved emulator=" $$emu; if (-not (Test-Path $$adb)) { Write-Error "adb tidak ditemukan. Install Android SDK Platform-Tools."; exit 1 }; if (-not (Test-Path $$emu)) { Write-Warning "emulator tidak ditemukan. Tidak masalah jika Anda hanya pakai device fisik." }; & $$adb devices'; \
+	fi
 
 build-apk: ensure-android-localprops
-	cd mobile/android && cmd.exe /c "set JAVA_HOME=C:\Program Files\Java\jdk-17&& set ANDROID_HOME=C:\2022.3.44f1\Editor\Data\PlaybackEngines\AndroidPlayer\SDK&& gradlew.bat assembleRelease -PreactNativeArchitectures=arm64-v8a,armeabi-v7a"
+	@if [ -d "/home/agoy/.jdk/jdk-17" ]; then \
+		cd mobile/android && chmod +x gradlew && JAVA_HOME=/home/agoy/.jdk/jdk-17 ANDROID_HOME=/home/agoy/Android/Sdk PATH=/home/agoy/.jdk/jdk-17/bin:$$PATH ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a,armeabi-v7a; \
+	elif command -v cmd.exe >/dev/null 2>&1; then \
+		cd mobile/android && cmd.exe /c "set JAVA_HOME=C:\Program Files\Java\jdk-17&& set ANDROID_HOME=C:\2022.3.44f1\Editor\Data\PlaybackEngines\AndroidPlayer\SDK&& gradlew.bat assembleRelease -PreactNativeArchitectures=arm64-v8a,armeabi-v7a"; \
+	else \
+		cd mobile/android && chmod +x gradlew && ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a,armeabi-v7a; \
+	fi
 
 run:
-	powershell -NoProfile -Command "Start-Process powershell -ArgumentList '-NoExit','-Command','cd ''$(CURDIR)\\backend''; php artisan serve --host 0.0.0.0 --port 8000'"
-	powershell -NoProfile -Command "Start-Process powershell -ArgumentList '-NoExit','-Command','cd ''$(CURDIR)\\mobile''; npm run start'"
-	@echo "Backend and mobile (development build dev client) started in separate windows."
-
-stop:
-	powershell -NoProfile -Command "Get-Process php,node -ErrorAction SilentlyContinue | Stop-Process -Force"
-	@echo "Stopped php/node processes if any were running."
+	@echo "Starting backend on 0.0.0.0:8000..."
+	cd backend && php artisan serve --host 0.0.0.0 --port 8000
