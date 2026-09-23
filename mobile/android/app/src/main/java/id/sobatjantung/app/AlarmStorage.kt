@@ -58,7 +58,7 @@ object AlarmStorage {
                         title = obj.optString("title", "Waktunya Minum Obat"),
                         medicineName = obj.optString("medicineName", "Obat Anda"),
                         dose = obj.optString("dose", "1 dosis"),
-                        reminderId = obj.optString("reminderId", null),
+                        reminderId = if (obj.isNull("reminderId")) null else obj.optString("reminderId"),
                         isTest = obj.optBoolean("isTest", false)
                     )
                 )
