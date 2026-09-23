@@ -168,6 +168,23 @@ class FloatingAlarmModule(private val reactContext: ReactApplicationContext) :
                 )
             }
 
+            // Simpan data alarm ke SharedPreferences agar bisa di-reschedule setelah reboot
+            if (!isTest) {
+                AlarmStorage.saveAlarm(
+                    reactContext,
+                    AlarmStorage.AlarmData(
+                        id = id,
+                        hour = hour,
+                        minute = minute,
+                        title = title ?: "Waktunya Minum Obat",
+                        medicineName = medicineName ?: "Obat Anda",
+                        dose = dose ?: "1 dosis",
+                        reminderId = reminderId,
+                        isTest = false
+                    )
+                )
+            }
+
             promise.resolve(id)
         } catch (e: Exception) {
             promise.reject("ERR_SCHEDULE_ALARM", e.message, e)
@@ -186,6 +203,10 @@ class FloatingAlarmModule(private val reactContext: ReactApplicationContext) :
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             alarmManager?.cancel(pendingIntent)
+
+            // Hapus data alarm dari SharedPreferences
+            AlarmStorage.removeAlarm(reactContext, id)
+
             promise.resolve(true)
         } catch (e: Exception) {
             promise.reject("ERR_CANCEL_ALARM", e.message, e)
